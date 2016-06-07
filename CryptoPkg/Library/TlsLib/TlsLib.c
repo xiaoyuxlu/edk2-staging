@@ -616,6 +616,8 @@ TlsDoHandshake (
 {
   TLS_CONNECTION  *TlsConn;
   UINTN           PendingBufferSize;
+  int             ret;
+  unsigned long   e;
 
   TlsConn           = (TLS_CONNECTION *) Tls;
   PendingBufferSize = 0;
@@ -638,15 +640,38 @@ TlsDoHandshake (
     PendingBufferSize = (UINTN) BIO_ctrl_pending (TlsConn->OutBio);
     if (PendingBufferSize == 0) {
       SSL_set_connect_state (TlsConn->Ssl);
-      SSL_do_handshake (TlsConn->Ssl);
+      ret = SSL_do_handshake (TlsConn->Ssl);
       PendingBufferSize = (UINTN) BIO_ctrl_pending (TlsConn->OutBio);
     }
   } else {
     PendingBufferSize = (UINTN) BIO_ctrl_pending (TlsConn->OutBio);
     if (PendingBufferSize == 0) {
       BIO_write (TlsConn->InBio, BufferIn, (UINT32) BufferInSize);
-      SSL_do_handshake (TlsConn->Ssl);
+      ret = SSL_do_handshake (TlsConn->Ssl);
       PendingBufferSize = (UINTN) BIO_ctrl_pending (TlsConn->OutBio);
+    }
+  }
+
+  if (ret < 1) {
+    ret = SSL_get_error (TlsConn->Ssl, ret);
+    if (ret == SSL_ERROR_SSL ||
+        ret == SSL_ERROR_SYSCALL ||
+        ret == SSL_ERROR_ZERO_RETURN) {
+      DEBUG ((DEBUG_ERROR, "%a SSL_HANDSHAKE_ERROR State=0x%x SSL_ERROR_%a\n", __FUNCTION__, SSL_state (TlsConn->Ssl),
+            ret == SSL_ERROR_SSL ? "SSL":
+            ret == SSL_ERROR_SYSCALL ? "SYSCALL":
+            "ZERO_RETURN"
+            ));
+      DEBUG_CODE_BEGIN ();
+      while (1) {
+        e = ERR_get_error ();
+        if (e == 0) {
+          break;
+        }
+        DEBUG ((DEBUG_ERROR, "%a ERROR 0x%x=L%x:F%x:R%x\n", __FUNCTION__, e, ERR_GET_LIB (e), ERR_GET_FUNC (e), ERR_GET_REASON (e)));
+      }
+      DEBUG_CODE_END ();
+      return EFI_PROTOCOL_ERROR;
     }
   }
 
