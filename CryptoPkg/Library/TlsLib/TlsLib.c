@@ -53,7 +53,6 @@ typedef struct {
 // OpenSSL-used Cipher Suite name.
 //
 STATIC CONST TLS_CIPHER_PAIR TlsCipherMappingTable[] = {
-  { 0x0000, "NULL" },                 /// TLS_NULL_WITH_NULL_NULL
   { 0x0001, "NULL-MD5" },             /// TLS_RSA_WITH_NULL_MD5
   { 0x0002, "NULL-SHA" },             /// TLS_RSA_WITH_NULL_SHA
   { 0x0004, "RC4-MD5" },              /// TLS_RSA_WITH_RC4_128_MD5
@@ -62,6 +61,7 @@ STATIC CONST TLS_CIPHER_PAIR TlsCipherMappingTable[] = {
   { 0x000A, "DES-CBC3-SHA" },         /// TLS_RSA_WITH_3DES_EDE_CBC_SHA
   { 0x002F, "AES128-SHA" },           /// TLS_RSA_WITH_AES_128_CBC_SHA
   { 0x0035, "AES256-SHA" },           /// TLS_RSA_WITH_AES_256_CBC_SHA
+  { 0x003B, "NULL-SHA256" },          /// TLS_RSA_WITH_NULL_SHA256
   { 0x003C, "AES128-SHA256" },        /// TLS_RSA_WITH_AES_128_CBC_SHA256
   { 0x003D, "AES256-SHA256" }         /// TLS_RSA_WITH_AES_256_CBC_SHA256
 };
