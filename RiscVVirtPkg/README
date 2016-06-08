@@ -1,0 +1,97 @@
+## @file
+#  Readme of how to build and launch RiscVVirtPkg on QEMU.
+#
+#  Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+=== EDKII RISC-V Virtual Package OVERVIEW ===
+
+The RISC-V virtual package project is RISC-V UEFI port on QEMU.
+The binary built from RiscVVirtPkg can be lanuched on RISC_V QEMU port for emulating RISC-V ISA.
+
+More information about UEFI can be found at http://www.tianocore.org
+More information about OVMF can be found at http://www.tianocore.org/ovmf/
+More information about RISC-V can be found at http://riscv.org
+
+=== STATUS ===
+
+Current capabilities:
+  Current implementation can boot UEFI to internal shell with USB keybaord support.
+
+* Currently we only have the implementation of RISC-V 64 arch.
+* We preserved the capability of supporting RISC-V 32/128 arch.
+* ACPI, SMBIOS, SMM and MP are not yet supported.
+* QEMU RISC-V port
+  - Video, USB keyboard
+* Only GCC can build RISC-V arch
+
+=== FUTURE PLANS ===
+
+* Implement ACPI, MP, SMBIO and SMM for RISC-V.
+
+=== Get source code ===
+* QEMU RISC-V PC/AT port.
+ git clone https://github.com/AbnerChang/RiscVQemuPcat.git
+
+* RISC-V tools
+ $git clone https://github.com/riscv/riscv-tools.git (Lastest commit 419f1b5 2016/4/1)
+
+* EDK2 open source
+
+=== Build RISC-V tool chain ===
+Before you build RISC-V tool chain, you need below packages.
+*sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc
+*Change directory to riscv-tools
+ git submodule update --init --recursive
+ export RISCV=~/riscv
+ ./build.sh
+
+The binaries needed for building EDK2 open source to RISC-V ISA are built in to ~/riscv
+
+More information on below link,
+http://riscv.org/software-tools/
+
+**** Build QEMU RISC-V PC/AT
+Before you build QEMU RISC-V, you need belwo packages.
+*sudo apt-get install libpixman-1-dev
+*sudo apt-get install gcc libc6-dev pkg-config bridge-utils uml-utilities zlib1g-dev libglib2.0-dev autoconf automake libtool libsdl1.2-dev
+*Change directory to RiscVQemuPcat
+*./configure --target-list=riscvpcat-softmmu
+*make
+
+More information on below link,
+http://riscv.org/software-tools/riscv-qemu/
+https://github.com/AbnerChang/RiscVQemuPcat.git
+
+**** Build RISC-V EDK2
+Before you build QEMU RISC-V EDK2, you need belwo package.
+*$sudo apt-get install uuid-dev
+*Change to your EDK2 open source directory.
+*$. edksetup.sh
+*Conf/target.txt
+ACTIVE_PLATFORM       = RiscVVirtPkg/RiscVVirt64.dsc
+TARGET_ARCH           = RISCV64
+TOOL_CHAIN_TAG        = GCC53RISCV
+
+*$export PATH=$PATH:~/riscv/bin
+*$make -C BaseTools
+*$build
+ - Without searil port debug log output.
+*$build -D DEBUG_ON_SERIAL_PORT
+ - With searil port debug log output.
+
+**** Launch QEMU RISC-V PC/AT
+* Change directory to ~/RiscVQemuPcat/riscvpcat-softmmu
+* $./qemu-system-riscvpcat -bios RISCVVIRT.fd -usb -usbdevice keyboard
+  - Launch RISC-V image *without* serial output.
+* $./qemu-system-riscvpcat -serial /dev/pts/8 -bios RISCVVIRT.fd -usb -usbdevice keyboard
+  - Launch RISC-V image *with* serial output. The serial port in this case is /dev/pts/8.
