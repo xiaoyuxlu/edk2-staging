@@ -4,6 +4,7 @@ This file contains the internal functions required to generate a Firmware Volume
 Copyright (c) 2004 - 2014, Intel Corporation. All rights reserved.<BR>
 Portions Copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
 Portions Copyright (c) 2016 HP Development Company, L.P.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -43,6 +44,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define ARM64_UNCONDITIONAL_JUMP_INSTRUCTION      0x14000000
 
 BOOLEAN mArm = FALSE;
+BOOLEAN mRiscV = FALSE;
 STATIC UINT32   MaxFfsAlignment = 0;
 
 EFI_GUID  mEfiFirmwareVolumeTopFileGuid       = EFI_FFS_VOLUME_TOP_FILE_GUID;
@@ -1808,6 +1810,305 @@ Returns:
 }
 
 EFI_STATUS
+RiscvPatchVtfTrapHandler (EFI_FFS_FILE_HEADER *VtfFileImage, UINTN UserTrapAddressInFile)
+/*++
+
+Routine Description:
+  This patches RISC-V trap handler in VTF.
+    0xF...FE00    Trap from user-mode
+    0xF...FE40    Trap from supervisor-mode
+    0xF...FE80    Trap from hypervisor-mode
+    0xF...FEC0    Trap from machine-mode
+    0xF...FEFC    Non-maskable interrupt(s)
+ 
+Arguments:
+  VtfFileImage            VTF file.
+  UserTrapAddressInFile   User Trap address in file image.
+
+Returns:
+
+  EFI_SUCCESS             Function Completed successfully.
+  EFI_ABORTED             Error encountered.
+  EFI_INVALID_PARAMETER   A required parameter was NULL.
+  EFI_NOT_FOUND           PEI Core file not found.
+
+--*/
+{
+  EFI_STATUS Status;
+  EFI_FILE_SECTION_POINTER  Pe32Section;
+  UINT32 EntryPoint;
+  UINT32 BaseOfCode;
+  UINT16 MachineType;
+  UINT8 *HighTrapVectorAddress;
+  UINTN TrapPrivilegeNum;
+
+  if (UserTrapAddressInFile == 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = GetSectionByType (VtfFileImage, EFI_SECTION_PE32, 1, &Pe32Section); // Get PE32 section.
+  if (!EFI_ERROR (Status)) {
+    Status = GetPe32Info ( // Get entry point.
+        (VOID *) ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)),
+        &EntryPoint,
+        &BaseOfCode,
+        &MachineType
+        );
+    if (!EFI_ERROR (Status)) {
+      //
+      // Pacth trap handler.
+      //
+      HighTrapVectorAddress = (UINT8 *)((UINTN)EntryPoint + ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)));
+      HighTrapVectorAddress -= (0x10 + 0x100);
+
+      //
+      // Patch all privilege trap bases.
+      //
+      for (TrapPrivilegeNum = 0; TrapPrivilegeNum < 4; TrapPrivilegeNum ++) {
+        *((UINT32 *)HighTrapVectorAddress) = (*((UINT32 *)HighTrapVectorAddress) & 0xfff) | (*((UINT32 *)(UINTN)UserTrapAddressInFile) & 0xfffff000); 
+        *((UINT32 *)(HighTrapVectorAddress + 4)) = (*((UINT32 *)(HighTrapVectorAddress + 4)) & 0x000fffff) | ((*((UINT32 *)(UINTN)UserTrapAddressInFile) & 0xfff) << 20);
+        HighTrapVectorAddress += 0x40;
+        UserTrapAddressInFile += 8;
+      }
+
+      return EFI_SUCCESS;
+    } else {
+      Error (NULL, 0, 3000, "Invalid", "Patch RISC-V trap: Incorrect PE32 format of RISC-V VTF");
+    }
+  } else {
+    Error (NULL, 0, 3000, "Invalid", "atch RISC-V trap: Can't find PE32 section of RISC-V VTF.");
+  }
+  return EFI_UNSUPPORTED;
+}
+
+EFI_STATUS
+RiscvPatchVtf (EFI_FFS_FILE_HEADER *VtfFileImage, UINT32 ResetVector)
+/*++
+
+Routine Description:
+  This patches the entry point of either SecCore or 
+
+  For RISC-V ISA, the reset vector is at 0xfff~ff00h or 200h
+
+Arguments:
+  VtfFileImage  VTF file.
+  ResetVector   Entry point for reset vector.
+
+Returns:
+
+  EFI_SUCCESS             Function Completed successfully.
+  EFI_ABORTED             Error encountered.
+  EFI_INVALID_PARAMETER   A required parameter was NULL.
+  EFI_NOT_FOUND           PEI Core file not found.
+
+--*/
+{
+  EFI_STATUS Status;
+  EFI_FILE_SECTION_POINTER  Pe32Section;
+  UINT32 EntryPoint;
+  UINT8 *EntryPointAddress;
+  UINT32 *LoadHigh20BitInstrcutionAddr;
+  UINT32 *JmpLow12BitInstrcutionAddr;
+  UINT32 LoadHigh20BitAddressOffset;
+  UINT32 JmpLow12BitAddressOffset;
+  UINT32 BaseOfCode;
+  UINT16 MachineType;
+  UINT32 LoadHigh20BitOpc;
+  UINT32 JmpLow12BitOpc;
+
+  if (ResetVector == 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = GetSectionByType (VtfFileImage, EFI_SECTION_PE32, 1, &Pe32Section); // Get PE32 section.
+  if (!EFI_ERROR (Status)) {
+    Status = GetPe32Info ( // Get entry point.
+        (VOID *) ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)),
+        &EntryPoint,
+        &BaseOfCode,
+        &MachineType
+        );
+    if (!EFI_ERROR (Status)) {
+      EntryPointAddress = (UINT8 *)((UINTN)EntryPoint + ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)));
+      LoadHigh20BitAddressOffset = *((UINT32 *)(EntryPointAddress - 16)); // (Entrypoint - 16) map to the second qword from Entrypoint
+      JmpLow12BitAddressOffset = *((UINT32 *)(EntryPointAddress - 8)); // (Entrypoint - 8) map to the second qword from Entrypoint
+      LoadHigh20BitInstrcutionAddr = (UINT32 *)(EntryPointAddress + LoadHigh20BitAddressOffset);
+      JmpLow12BitInstrcutionAddr = (UINT32 *)(EntryPointAddress + JmpLow12BitAddressOffset);
+      //
+      // Patch RISC-V instruction : li a0, 0x12345000
+      //
+      LoadHigh20BitOpc = *LoadHigh20BitInstrcutionAddr;
+      LoadHigh20BitOpc = (LoadHigh20BitOpc & 0xfff) | (ResetVector & 0xfffff000);
+      *((UINT32 *)(EntryPointAddress - 16)) = LoadHigh20BitOpc;
+      //
+      // Patch RISC-V instruction : jalr x0, a0, 0x678
+      //
+      JmpLow12BitOpc = *JmpLow12BitInstrcutionAddr;
+      JmpLow12BitOpc = (JmpLow12BitOpc & 0x000fffff) | ((ResetVector & 0xfff) << 20);
+      *((UINT32 *)(EntryPointAddress - 12)) = JmpLow12BitOpc;
+      return EFI_SUCCESS;
+    } else {
+      Error (NULL, 0, 3000, "Invalid", "Incorrect PE32 format of RISC-V VTF");
+    }
+  } else {
+    Error (NULL, 0, 3000, "Invalid", "Can't find PE32 section of RISC-V VTF.");
+  }
+  return EFI_UNSUPPORTED;
+}
+
+EFI_STATUS
+UpdateRiscvResetVectorIfNeeded (
+  MEMORY_FILE            *FvImage,
+  FV_INFO                *FvInfo,
+  EFI_FFS_FILE_HEADER    *VtfFileImage
+  )
+/*++
+
+Routine Description:
+  This parses the FV looking for SEC and patches that address into the 
+  beginning of the FV header.
+
+  For RISC-V ISA, the reset vector is at 0xfff~ff00h or 200h
+
+Arguments:
+  FvImage       Memory file for the FV memory image/
+  FvInfo        Information read from INF file.
+  VtfFileImage  Instance of VTF file.
+
+Returns:
+
+  EFI_SUCCESS             Function Completed successfully.
+  EFI_ABORTED             Error encountered.
+  EFI_INVALID_PARAMETER   A required parameter was NULL.
+  EFI_NOT_FOUND           PEI Core file not found.
+
+--*/
+{
+  EFI_FFS_FILE_HEADER       *PeiCoreFile;
+  EFI_FFS_FILE_HEADER       *SecCoreFile;
+  EFI_STATUS                Status;
+  EFI_FILE_SECTION_POINTER  Pe32Section;
+  UINT32                    EntryPoint;
+  UINT32                    BaseOfCode;
+  UINT16                    MachineType;
+  EFI_PHYSICAL_ADDRESS      PeiCorePhysicalAddress;
+  EFI_PHYSICAL_ADDRESS      SecCorePhysicalAddress;
+  EFI_PHYSICAL_ADDRESS      TrapAddress;
+
+  //
+  // Verify input parameters
+  //
+  if (FvImage == NULL || FvInfo == NULL) {
+    Error (NULL, 0, 3000, "Invalid", "FvImage or FvInfo is NULL");
+    return EFI_INVALID_PARAMETER;
+  }
+  //
+  // Initialize FV library
+  //
+  InitializeFvLib (FvImage->FileImage, FvInfo->Size);
+
+  //
+  // Find the Sec Core
+  //
+  Status = GetFileByType (EFI_FV_FILETYPE_SECURITY_CORE, 1, &SecCoreFile);
+  if (EFI_ERROR (Status) || SecCoreFile == NULL) {
+    //
+    // Maybe hardware does SEC job and we only have PEI Core?
+    //
+
+    //
+    // Find the PEI Core. It may not exist if SEC loads DXE core directly
+    //
+    PeiCorePhysicalAddress = 0;
+    Status = GetFileByType (EFI_FV_FILETYPE_PEI_CORE, 1, &PeiCoreFile);
+    if (!EFI_ERROR(Status) && PeiCoreFile != NULL) {
+      //
+      // PEI Core found, now find PE32 or TE section
+      //
+      Status = GetSectionByType (PeiCoreFile, EFI_SECTION_PE32, 1, &Pe32Section);
+      if (Status == EFI_NOT_FOUND) {
+        Status = GetSectionByType (PeiCoreFile, EFI_SECTION_TE, 1, &Pe32Section);
+      }
+    
+      if (EFI_ERROR (Status)) {
+        Error (NULL, 0, 3000, "Invalid", "could not find either a PE32 or a TE section in PEI core file!");
+        return EFI_ABORTED;
+      }
+    
+      Status = GetPe32Info (
+                (VOID *) ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)),
+                &EntryPoint,
+                &BaseOfCode,
+                &MachineType
+                );
+    
+      if (EFI_ERROR (Status)) {
+        Error (NULL, 0, 3000, "Invalid", "could not get the PE32 entry point for the PEI core!");
+        return EFI_ABORTED;
+      }
+      //
+      // Physical address is FV base + offset of PE32 + offset of the entry point
+      //
+      PeiCorePhysicalAddress = FvInfo->BaseAddress;
+      PeiCorePhysicalAddress += (UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader) - (UINTN) FvImage->FileImage;
+      PeiCorePhysicalAddress += EntryPoint;
+      DebugMsg (NULL, 0, 9, "PeiCore physical entry point address", "Address = 0x%llX", (unsigned long long) PeiCorePhysicalAddress);
+      RiscvPatchVtf (VtfFileImage, (UINT32)PeiCorePhysicalAddress);
+    }
+    return EFI_SUCCESS;
+  }
+  
+  //
+  // Sec Core found, now find PE32 section
+  //
+  Status = GetSectionByType (SecCoreFile, EFI_SECTION_PE32, 1, &Pe32Section);
+  if (Status == EFI_NOT_FOUND) {
+    Status = GetSectionByType (SecCoreFile, EFI_SECTION_TE, 1, &Pe32Section);
+  }
+
+  if (EFI_ERROR (Status)) {
+    Error (NULL, 0, 3000, "Invalid", "could not find a PE32 section in the SEC core file.");
+    return EFI_ABORTED;
+  }
+
+  Status = GetPe32Info (
+            (VOID *) ((UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader)),
+            &EntryPoint,
+            &BaseOfCode,
+            &MachineType
+            );
+  if (EFI_ERROR (Status)) {
+    Error (NULL, 0, 3000, "Invalid", "could not get the PE32 entry point for the SEC core.");
+    return EFI_ABORTED;
+  }
+  
+  if ((MachineType != EFI_IMAGE_MACHINE_RISCV32) && (MachineType != EFI_IMAGE_MACHINE_RISCV64)) {
+    //
+    // If SEC is not RISC-V we have nothing to do
+    //
+    return EFI_SUCCESS;
+  }
+  
+  //
+  // Physical address is FV base + offset of PE32 + offset of the entry point
+  //
+  SecCorePhysicalAddress = FvInfo->BaseAddress;
+  SecCorePhysicalAddress += (UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader) - (UINTN) FvImage->FileImage;
+  SecCorePhysicalAddress += EntryPoint;
+  DebugMsg (NULL, 0, 0x14, "SecCore physical entry point address", "Address = 0x%llX", (unsigned long long) SecCorePhysicalAddress);
+  RiscvPatchVtf (VtfFileImage, (UINT32)SecCorePhysicalAddress);
+  //
+  // Update RISC-V trap handler.
+  //
+  TrapAddress = (UINTN) Pe32Section.Pe32Section + GetSectionHeaderLength(Pe32Section.CommonHeader) + EntryPoint;
+  TrapAddress -= 40;
+  RiscvPatchVtfTrapHandler (VtfFileImage, TrapAddress);
+
+  DebugMsg (NULL, 0, 9, "Update Reset vector in FV Header", NULL);
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
 FindCorePeSection(
   IN VOID                       *FvImageBuffer,
   IN UINT64                     FvSize,
@@ -2370,8 +2671,9 @@ Returns:
   //
   // Verify machine type is supported
   //
-  if ((*MachineType != EFI_IMAGE_MACHINE_IA32) && (*MachineType != EFI_IMAGE_MACHINE_IA64) && (*MachineType != EFI_IMAGE_MACHINE_X64) && (*MachineType != EFI_IMAGE_MACHINE_EBC) && 
-      (*MachineType != EFI_IMAGE_MACHINE_ARMT) && (*MachineType != EFI_IMAGE_MACHINE_AARCH64)) {
+  if ((*MachineType != EFI_IMAGE_MACHINE_IA32) && (*MachineType != EFI_IMAGE_MACHINE_IA64) && (*MachineType != EFI_IMAGE_MACHINE_X64) && (*MachineType != EFI_IMAGE_MACHINE_EBC) &&
+      (*MachineType != EFI_IMAGE_MACHINE_ARMT) && (*MachineType != EFI_IMAGE_MACHINE_AARCH64) &&
+      (*MachineType != EFI_IMAGE_MACHINE_RISCV32) && (*MachineType != EFI_IMAGE_MACHINE_RISCV64) && (*MachineType != EFI_IMAGE_MACHINE_RISCV128)) {
     Error (NULL, 0, 3000, "Invalid", "Unrecognized machine type in the PE32 file.");
     return EFI_UNSUPPORTED;
   }
@@ -2766,22 +3068,40 @@ Returns:
       Error (NULL, 0, 4002, "Resource", "FV space is full, cannot add pad file between the last file and the VTF file.");
       goto Finish;
     }
-    if (!mArm) {
+
+    if (mRiscV) {
       //
-      // Update reset vector (SALE_ENTRY for IPF)
-      // Now for IA32 and IA64 platform, the fv which has bsf file must have the 
-      // EndAddress of 0xFFFFFFFF. Thus, only this type fv needs to update the   
-      // reset vector. If the PEI Core is found, the VTF file will probably get  
-      // corrupted by updating the entry point.                                  
+      // Update RISCV reset vector.
       //
-      if ((mFvDataInfo.BaseAddress + mFvDataInfo.Size) == FV_IMAGES_TOP_ADDRESS) {       
-        Status = UpdateResetVector (&FvImageMemoryFile, &mFvDataInfo, VtfFileImage);
-        if (EFI_ERROR(Status)) {                                               
-          Error (NULL, 0, 3000, "Invalid", "Could not update the reset vector.");
-          goto Finish;                                              
-        }
-        DebugMsg (NULL, 0, 9, "Update Reset vector in VTF file", NULL);
+      DebugMsg (NULL, 0, INFO_LOG_LEVEL, "Update RISCV reset vector", NULL);
+      Status = UpdateRiscvResetVectorIfNeeded (&FvImageMemoryFile, &mFvDataInfo, VtfFileImage);
+      if (EFI_ERROR (Status)) {
+          Error (NULL, 0, 3000, "Invalid", "Could not update the reset vector for RISC-V.");
+          goto Finish;
       }
+      //
+      // Update Checksum for FvHeader
+      //
+      FvHeader->Checksum = 0;
+      FvHeader->Checksum = CalculateChecksum16 ((UINT16 *) FvHeader, FvHeader->HeaderLength / sizeof (UINT16));
+    } else {
+        if (!mArm) {
+          //
+          // Update reset vector (SALE_ENTRY for IPF)
+          // Now for IA32 and IA64 platform, the fv which has bsf file must have the
+          // EndAddress of 0xFFFFFFFF. Thus, only this type fv needs to update the
+          // reset vector. If the PEI Core is found, the VTF file will probably get
+          // corrupted by updating the entry point.
+          //
+          if ((mFvDataInfo.BaseAddress + mFvDataInfo.Size) == FV_IMAGES_TOP_ADDRESS) {
+            Status = UpdateResetVector (&FvImageMemoryFile, &mFvDataInfo, VtfFileImage);
+            if (EFI_ERROR(Status)) {
+              Error (NULL, 0, 3000, "Invalid", "Could not update the reset vector.");
+              goto Finish;
+            }
+            DebugMsg (NULL, 0, 9, "Update Reset vector in VTF file", NULL);
+          }
+        }
     }
   } 
 
@@ -2798,7 +3118,7 @@ Returns:
     FvHeader->Checksum = 0;
     FvHeader->Checksum = CalculateChecksum16 ((UINT16 *) FvHeader, FvHeader->HeaderLength / sizeof (UINT16));
   }
-  
+
   //
   // Update FV Alignment attribute to the largest alignment of all the FFS files in the FV
   //
@@ -3378,6 +3698,12 @@ Returns:
     if ( (ImageContext.Machine == EFI_IMAGE_MACHINE_ARMT) ||
          (ImageContext.Machine == EFI_IMAGE_MACHINE_AARCH64) ) {
       mArm = TRUE;
+    }
+
+    if ( (ImageContext.Machine == EFI_IMAGE_MACHINE_RISCV32) ||
+         (ImageContext.Machine == EFI_IMAGE_MACHINE_RISCV64) ||
+         (ImageContext.Machine == EFI_IMAGE_MACHINE_RISCV128)) {
+      mRiscV = TRUE;
     }
 
     //

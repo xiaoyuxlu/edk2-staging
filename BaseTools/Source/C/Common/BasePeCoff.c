@@ -4,6 +4,7 @@
 
 Copyright (c) 2004 - 2010, Intel Corporation. All rights reserved.<BR>
 Portions Copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -67,6 +68,14 @@ PeCoffLoaderRelocateIpfImage (
 RETURN_STATUS
 PeCoffLoaderRelocateArmImage (
   IN UINT16      **Reloc,
+  IN OUT CHAR8   *Fixup,
+  IN OUT CHAR8   **FixupData,
+  IN UINT64      Adjust
+  );
+
+RETURN_STATUS
+PeCoffLoaderRelocateRiscVImage (
+  IN UINT16      *Reloc,
   IN OUT CHAR8   *Fixup,
   IN OUT CHAR8   **FixupData,
   IN UINT64      Adjust
@@ -188,7 +197,10 @@ Returns:
       ImageContext->Machine != EFI_IMAGE_MACHINE_X64  && \
       ImageContext->Machine != EFI_IMAGE_MACHINE_ARMT && \
       ImageContext->Machine != EFI_IMAGE_MACHINE_EBC  && \
-      ImageContext->Machine != EFI_IMAGE_MACHINE_AARCH64) {
+      ImageContext->Machine != EFI_IMAGE_MACHINE_AARCH64 && \
+      ImageContext->Machine != EFI_IMAGE_MACHINE_RISCV32 && \
+      ImageContext->Machine != EFI_IMAGE_MACHINE_RISCV64 && \
+      ImageContext->Machine != EFI_IMAGE_MACHINE_RISCV128) {
     if (ImageContext->Machine == IMAGE_FILE_MACHINE_ARM) {
       //
       // There are two types of ARM images. Pure ARM and ARM/Thumb. 
@@ -792,6 +804,11 @@ Returns:
           break;
         case EFI_IMAGE_MACHINE_IA64:
           Status = PeCoffLoaderRelocateIpfImage (Reloc, Fixup, &FixupData, Adjust);
+          break;
+        case EFI_IMAGE_MACHINE_RISCV32:
+        case EFI_IMAGE_MACHINE_RISCV64:
+        case EFI_IMAGE_MACHINE_RISCV128:
+          Status = PeCoffLoaderRelocateRiscVImage (Reloc, Fixup, &FixupData, Adjust);
           break;
         default:
           Status = RETURN_UNSUPPORTED;

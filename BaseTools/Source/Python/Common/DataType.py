@@ -3,6 +3,7 @@
 #
 # Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.<BR>
 # Portions copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
+# Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution.  The full text of the license may be found at
@@ -54,7 +55,11 @@ TAB_ARCH_ARM = 'ARM'
 TAB_ARCH_EBC = 'EBC'
 TAB_ARCH_AARCH64 = 'AARCH64'
 
-ARCH_LIST = [TAB_ARCH_IA32, TAB_ARCH_X64, TAB_ARCH_IPF, TAB_ARCH_ARM, TAB_ARCH_EBC, TAB_ARCH_AARCH64]
+TAB_ARCH_RISCV32 = 'RISCV32'
+TAB_ARCH_RISCV64 = 'RISCV64'
+TAB_ARCH_RISCV128 = 'RISCV128'
+
+ARCH_LIST = [TAB_ARCH_IA32, TAB_ARCH_X64, TAB_ARCH_IPF, TAB_ARCH_ARM, TAB_ARCH_EBC, TAB_ARCH_AARCH64, TAB_ARCH_RISCV128, TAB_ARCH_RISCV64, TAB_ARCH_RISCV32]
 ARCH_LIST_FULL = [TAB_ARCH_COMMON] + ARCH_LIST
 
 SUP_MODULE_BASE = 'BASE'

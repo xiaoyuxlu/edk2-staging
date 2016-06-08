@@ -2,6 +2,7 @@
 # Contains several utilitities shared by migration tools.
 #
 # Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution.  The full text of the license may be found at
@@ -383,7 +384,7 @@ def AddToSection(Section, Arch, Item):
 # @retval Section            The string content of a section.
 #
 def GetSection(SectionName, Method, ObjectList):
-    SupportedArches = ["common", "Ia32", "X64", "Ipf", "Ebc", "ARM", "AARCH64"]
+    SupportedArches = ["common", "Ia32", "X64", "Ipf", "Ebc", "ARM", "AARCH64", "RISCV128", "RISCV64", "RISCV32"]
     SectionDict = {}
     for Object in ObjectList:
         Item = Method(Object)

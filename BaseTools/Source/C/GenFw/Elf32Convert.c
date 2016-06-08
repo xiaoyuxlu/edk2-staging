@@ -3,6 +3,7 @@ Elf32 Convert solution
 
 Copyright (c) 2010 - 2016, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2013, ARM Ltd. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -148,8 +149,9 @@ InitializeElf32 (
     Error (NULL, 0, 3000, "Unsupported", "ELF e_type not ET_EXEC or ET_DYN");
     return FALSE;
   }
-  if (!((mEhdr->e_machine == EM_386) || (mEhdr->e_machine == EM_ARM))) { 
-    Error (NULL, 0, 3000, "Unsupported", "ELF e_machine not EM_386 or EM_ARM");
+
+  if (!((mEhdr->e_machine == EM_386) || (mEhdr->e_machine == EM_ARM) || (mEhdr->e_machine == EM_RISCV))) {
+    Error (NULL, 0, 3000, "Unsupported", "ELF e_machine not EM_386, EM_ARM or EM_RISCV");
     return FALSE;
   }
   if (mEhdr->e_version != EV_CURRENT) {
