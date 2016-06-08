@@ -4,6 +4,7 @@
 
 Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -178,6 +179,71 @@ typedef struct {
 
 #endif  // defined (MDE_CPU_AARCH64)
 
+#if defined (MDE_CPU_RISCV64)
+///
+/// The RISC-V architecture context buffer used by SetJump() and LongJump().
+///
+typedef struct {
+  UINT64                            RA;
+  UINT64                            S0;
+  UINT64                            S1;
+  UINT64                            S2;
+  UINT64                            S3;
+  UINT64                            S4;
+  UINT64                            S5;
+  UINT64                            S6;
+  UINT64                            S7;
+  UINT64                            S8;
+  UINT64                            S9;
+  UINT64                            S10;
+  UINT64                            S11;
+  UINT64                            SP;
+} BASE_LIBRARY_JUMP_BUFFER;
+
+#define BASE_LIBRARY_JUMP_BUFFER_ALIGNMENT 8
+
+/**
+  RISC-V read CSR register.
+
+**/
+UINT32
+EFIAPI
+RiscVReadCsr (
+  UINT32 CsrIndex
+  );
+
+/**
+  RISC-V write CSR register.
+
+**/
+VOID
+EFIAPI
+RiscVwriteCsr (
+  UINT32 CsrIndex,
+  UINT32 Value
+  );
+
+/**
+  RISC-V invalidate instruction cache.
+
+**/
+VOID
+EFIAPI
+RiscVInvdInstCacheAsm (
+  VOID
+  );
+
+/**
+  RISC-V invalidate data cache.
+
+**/
+VOID
+EFIAPI
+RiscVInvdDataCacheAsm (
+  VOID
+  );
+
+#endif // defined (MDE_CPU_RISCV64)
 
 //
 // String Services

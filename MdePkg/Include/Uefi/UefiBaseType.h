@@ -3,6 +3,7 @@
 
 Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2011 - 2016, ARM Ltd. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available under 
 the terms and conditions of the BSD License that accompanies this distribution.  
@@ -250,6 +251,12 @@ typedef union {
 ///
 #define EFI_IMAGE_MACHINE_AARCH64  0xAA64
 
+///
+/// PE32+ Machine type for RISC-V 32/64/128
+///
+#define EFI_IMAGE_MACHINE_RISCV32   0x5032
+#define EFI_IMAGE_MACHINE_RISCV64   0x5064
+#define EFI_IMAGE_MACHINE_RISCV128  0x5128
 
 #if   defined (MDE_CPU_IA32)
 
@@ -283,6 +290,24 @@ typedef union {
 
 #define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
   (((Machine) == EFI_IMAGE_MACHINE_AARCH64) || ((Machine) == EFI_IMAGE_MACHINE_EBC))
+
+#define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine) (FALSE)
+
+#elif defined (MDE_CPU_RISCV128)
+#define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
+  (((Machine) == EFI_IMAGE_MACHINE_RISCV128) || ((Machine) == EFI_IMAGE_MACHINE_EBC))
+
+#define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine) (FALSE)
+
+#elif defined (MDE_CPU_RISCV64)
+#define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
+  (((Machine) == EFI_IMAGE_MACHINE_RISCV64) || ((Machine) == EFI_IMAGE_MACHINE_EBC))
+
+#define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine) (FALSE)
+
+#elif defined (MDE_CPU_RISCV32)
+#define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
+  (((Machine) == EFI_IMAGE_MACHINE_RISCV32) || ((Machine) == EFI_IMAGE_MACHINE_EBC))
 
 #define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine) (FALSE)
 

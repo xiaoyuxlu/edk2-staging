@@ -3,6 +3,7 @@
   devices for network access and network booting.
 
 Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials are licensed and made available under 
 the terms and conditions of the BSD License that accompanies this distribution.  
 The full text of the license may be found at
@@ -161,6 +162,12 @@ typedef UINT16  EFI_PXE_BASE_CODE_UDP_PORT;
 #define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE    0x000A
 #elif defined (MDE_CPU_AARCH64)
 #define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE    0x000B
+#elif defined (MDE_CPU_RISCV32)
+#define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE    0x0019
+#elif defined (MDE_CPU_RISCV64)
+#define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE    0x001B
+#elif defined (MDE_CPU_RISCV128)
+#define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE    0x001D
 #endif
 
 

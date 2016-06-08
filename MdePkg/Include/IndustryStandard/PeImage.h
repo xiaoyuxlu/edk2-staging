@@ -9,6 +9,7 @@
 
 Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
+Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -40,6 +41,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define IMAGE_FILE_MACHINE_X64             0x8664
 #define IMAGE_FILE_MACHINE_ARMTHUMB_MIXED  0x01c2
 #define IMAGE_FILE_MACHINE_ARM64           0xAA64
+#define IMAGE_FILE_MACHINE_RISCV32         0x5032
+#define IMAGE_FILE_MACHINE_RISCV64         0x5064
+#define IMAGE_FILE_MACHINE_RISCV128        0x5128
 
 //
 // EXE file formats
@@ -484,9 +488,9 @@ typedef struct {
 ///
 #define EFI_IMAGE_SIZEOF_BASE_RELOCATION  8
 
-//
-// Based relocation types.
-//
+///
+/// Based relocation types.
+///
 #define EFI_IMAGE_REL_BASED_ABSOLUTE        0
 #define EFI_IMAGE_REL_BASED_HIGH            1
 #define EFI_IMAGE_REL_BASED_LOW             2
@@ -494,7 +498,10 @@ typedef struct {
 #define EFI_IMAGE_REL_BASED_HIGHADJ         4
 #define EFI_IMAGE_REL_BASED_MIPS_JMPADDR    5
 #define EFI_IMAGE_REL_BASED_ARM_MOV32A      5
+#define EFI_IMAGE_REL_BASED_RISCV_HI20      5
 #define EFI_IMAGE_REL_BASED_ARM_MOV32T      7
+#define EFI_IMAGE_REL_BASED_RISCV_LOW12I    7
+#define EFI_IMAGE_REL_BASED_RISCV_LOW12S    8
 #define EFI_IMAGE_REL_BASED_IA64_IMM64      9
 #define EFI_IMAGE_REL_BASED_MIPS_JMPADDR16  9
 #define EFI_IMAGE_REL_BASED_DIR64           10
