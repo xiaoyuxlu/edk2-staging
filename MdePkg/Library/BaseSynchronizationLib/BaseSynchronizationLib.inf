@@ -3,7 +3,6 @@
 #
 #  Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.<BR>
 #  Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-#  Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -97,11 +96,6 @@
 [Sources.AARCH64]
   Synchronization.c
   AArch64/Synchronization.S
-
-[Sources.RISCV64]
-  Synchronization.c
-  RiscV64/Synchronization.c  | GCC
-  RiscV64/SynchronizationAsm.s
 
 [Packages]
   MdePkg/MdePkg.dec
