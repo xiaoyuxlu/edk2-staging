@@ -1,8 +1,8 @@
 /******************************************************************************
  * xen.h
- * 
+ *
  * Guest OS interface to Xen.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Copyright (c) 2004, K A Fraser
+ * Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
  */
 
 #ifndef __XEN_PUBLIC_XEN_H__
@@ -38,6 +39,8 @@
 #include "arch-x86/xen.h"
 #elif defined(__arm__) || defined (__aarch64__)
 #include "arch-arm/xen.h"
+#elif defined(MDE_CPU_RISCV32) || defined (MDE_CPU_RISCV64) || defined (MDE_CPU_RISCV128)
+#include "arch-riscv/xen.h"
 #else
 #error "Unsupported architecture"
 #endif
