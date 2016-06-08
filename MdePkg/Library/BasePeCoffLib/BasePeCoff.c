@@ -1,6 +1,6 @@
 /** @file
   Base PE/COFF loader supports loading any PE32/PE32+ or TE image, but
-  only supports relocating IA32, x64, IPF, ARM, RISC-V and EBC images.
+  only supports relocating IA32, x64, IPF, and EBC images.
 
   Caution: This file requires additional review when modified.
   This library will have external input - PE/COFF image.
@@ -17,7 +17,6 @@
 
   Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
   Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-  Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
