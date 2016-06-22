@@ -631,6 +631,7 @@ TlsDoHandshake (
     return EFI_INVALID_PARAMETER;
   }
   
+  ret = 1;
   if(BufferIn == NULL && BufferInSize == 0) {
     //
     // If RequestBuffer is NULL and RequestSize is 0, and TLS session 
