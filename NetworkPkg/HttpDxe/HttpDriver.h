@@ -24,6 +24,7 @@
 // Libraries
 //
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseLib.h>
 #include <Library/UefiLib.h>
@@ -50,8 +51,10 @@
 #include <Protocol/Dns6.h>
 #include <Protocol/Ip4Config2.h>
 #include <Protocol/Ip6Config.h>
+#include <Protocol/Tls.h>
+#include <Protocol/TlsConfig.h>
 
-
+#include <Guid/ImageAuthentication.h>
 //
 // Produced Protocols
 //
@@ -79,6 +82,7 @@ extern EFI_HTTP_UTILITIES_PROTOCOL  *mHttpUtilities;
 #include "ComponentName.h"
 #include "HttpImpl.h"
 #include "HttpProto.h"
+#include "HttpsSupport.h"
 #include "HttpDns.h"
 
 typedef struct {
