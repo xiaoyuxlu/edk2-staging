@@ -60,6 +60,8 @@
 //
 #include <Protocol/Http.h>
 
+#include <Guid/TlsAuthentication.h>
+
 //
 // Driver Version
 //

@@ -63,6 +63,7 @@
   gTlsAuthConfigGuid                            ## PRODUCES  ## GUID
   gEfiCertX509Guid                              ## CONSUMES  ## GUID  # Indicate the cert type
   gEfiIfrTianoGuid                              ## CONSUMES  ## HII
+  gEfiTlsCaCertificateGuid                      ## PRODUCES  ## GUID
 
 [Depex]
   gEfiHiiConfigRoutingProtocolGuid  AND

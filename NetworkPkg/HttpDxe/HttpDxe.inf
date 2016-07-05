@@ -26,6 +26,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  NetworkPkg/NetworkPkg.dec
 
 [Sources]
   ComponentName.h
@@ -70,6 +71,9 @@
   gEfiTlsServiceBindingProtocolGuid                ## SOMETIMES_CONSUMES
   gEfiTlsProtocolGuid                              ## SOMETIMES_CONSUMES
   gEfiTlsConfigurationProtocolGuid                 ## SOMETIMES_CONSUMES
+
+[Guids]
+  gEfiTlsCaCertificateGuid                         ## CONSUMES  ## GUID
 
 [UserExtensions.TianoCore."ExtraFiles"]
   HttpDxeExtra.uni

@@ -20,7 +20,6 @@ VOID                    *mEndOpCodeHandle   = NULL;
 EFI_IFR_GUID_LABEL      *mStartLabel        = NULL;
 EFI_IFR_GUID_LABEL      *mEndLabel          = NULL;
 
-EFI_GUID                mEfiTlsCaCertificateGuid = EFI_TLS_CA_CERTIFICATE_GUID;
 
 CHAR16                  mTlsAuthConfigStorageName[] = L"TLS_AUTH_CONFIG_IFR_NVDATA";
 
@@ -1006,7 +1005,7 @@ EnrollX509toVariable (
 
   Status = gRT->GetVariable(
                   VariableName,
-                  &mEfiTlsCaCertificateGuid,
+                  &gEfiTlsCaCertificateGuid,
                   NULL,
                   &DataSize,
                   NULL
@@ -1019,7 +1018,7 @@ EnrollX509toVariable (
 
   Status = gRT->SetVariable(
                   VariableName,
-                  &mEfiTlsCaCertificateGuid,
+                  &gEfiTlsCaCertificateGuid,
                   Attr,
                   SigDataSize,
                   Data
@@ -1220,8 +1219,8 @@ UpdatePage(
     mTlsAuthPrivateData->RegisteredHandle,
     &gTlsAuthConfigGuid,
     FormId,
-    mStartOpCodeHandle, // Label FormId
-    mEndOpCodeHandle    // LABEL_END
+    mStartOpCodeHandle, /// Label FormId
+    mEndOpCodeHandle    /// LABEL_END
     );
 
   return TRUE;
@@ -1258,7 +1257,6 @@ TlsAuthConfigFormUnload (
   IN TLS_AUTH_CONFIG_PRIVATE_DATA     *Private
   )
 {
-
   if (Private->DriverHandle != NULL) {
     //
     // Uninstall EFI_HII_CONFIG_ACCESS_PROTOCOL
@@ -1782,7 +1780,7 @@ TlsAuthConfigAccessCallback (
       UpdateDeletePage (
         Private,
         EFI_TLS_CA_CERTIFICATE_VARIABLE,
-        &mEfiTlsCaCertificateGuid,
+        &gEfiTlsCaCertificateGuid,
         LABEL_CA_DELETE,
         TLS_AUTH_CONFIG_FORMID5_FORM,
         OPTION_DEL_CA_ESTION_ID
@@ -1795,7 +1793,7 @@ TlsAuthConfigAccessCallback (
         DeleteCert (
           Private,
           EFI_TLS_CA_CERTIFICATE_VARIABLE,
-          &mEfiTlsCaCertificateGuid,
+          &gEfiTlsCaCertificateGuid,
           LABEL_CA_DELETE,
           TLS_AUTH_CONFIG_FORMID5_FORM,
           OPTION_DEL_CA_ESTION_ID,

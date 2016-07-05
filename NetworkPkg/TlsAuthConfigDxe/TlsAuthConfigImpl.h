@@ -39,6 +39,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Guid/MdeModuleHii.h>
 #include <Guid/ImageAuthentication.h>
+#include <Guid/TlsAuthentication.h>
+
 
 //
 // Include files with function prototypes
@@ -79,16 +81,6 @@ struct _TLS_AUTH_CONFIG_PRIVATE_DATA {
 
   EFI_GUID                          *CertGuid;
 };
-
-//
-// Private variable for CA Certificate configuration
-//
-#define EFI_TLS_CA_CERTIFICATE_GUID \
-  { \
-    0xfd2340D0, 0x3dab, 0x4349, { 0xa6, 0xc7, 0x3b, 0x4f, 0x12, 0xb4, 0x8e, 0xae } \
-  }
-
-#define EFI_TLS_CA_CERTIFICATE_VARIABLE     L"TlsCaCertificate"
 
 /**
   Unload the configuration form, this includes: delete all the configuration

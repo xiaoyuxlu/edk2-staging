@@ -14,8 +14,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "HttpDriver.h"
 
-EFI_GUID mEfiTlsCaCertificateGuid = EFI_TLS_CA_CERTIFICATE_GUID;
-
 /**
   Returns the first occurrence of a Null-terminated ASCII sub-string in a Null-terminated 
   ASCII string and ignore case during the search process.
@@ -397,7 +395,7 @@ TlsConfigCertificate (
   CACertSize = 0;
   Status  = gRT->GetVariable (
                    EFI_TLS_CA_CERTIFICATE_VARIABLE,
-                   &mEfiTlsCaCertificateGuid,
+                   &gEfiTlsCaCertificateGuid,
                    NULL,
                    &CACertSize,
                    NULL
@@ -414,7 +412,7 @@ TlsConfigCertificate (
 
     Status = gRT->GetVariable (
                     EFI_TLS_CA_CERTIFICATE_VARIABLE,
-                    &mEfiTlsCaCertificateGuid,
+                    &gEfiTlsCaCertificateGuid,
                     NULL,
                     &CACertSize,
                     CACert
@@ -454,7 +452,6 @@ TlsConfigCertificate (
       
       Cert = (EFI_SIGNATURE_DATA *) ((UINT8 *) Cert + CertList->SignatureSize);
     }
-
 
     ItemDataSize -= CertList->SignatureListSize;
     CertList = (EFI_SIGNATURE_LIST *) ((UINT8 *) CertList + CertList->SignatureListSize);

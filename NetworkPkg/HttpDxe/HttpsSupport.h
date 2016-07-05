@@ -22,16 +22,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define HTTPS_FLAG               "https"
 
 //
-// Private variable for CA Certificate configuration
-//
-#define EFI_TLS_CA_CERTIFICATE_GUID \
-  { \
-    0xfd2340D0, 0x3dab, 0x4349, { 0xa6, 0xc7, 0x3b, 0x4f, 0x12, 0xb4, 0x8e, 0xae } \
-  }
-
-#define EFI_TLS_CA_CERTIFICATE_VARIABLE          L"TlsCaCertificate"
-
-//
 // TLS Version
 //
 #define TLS10_PROTOCOL_VERSION_MAJOR  0x03
