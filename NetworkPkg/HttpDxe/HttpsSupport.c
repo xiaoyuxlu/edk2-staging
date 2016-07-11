@@ -876,7 +876,10 @@ TlsReceiveOnePdu (
   }
 
   Header = NetbufAllocSpace (PduHdr, Len, NET_BUF_TAIL);
-  ASSERT (Header != NULL);
+  if (Header == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto ON_EXIT;
+  }
 
   //
   // First step, receive one TLS header.
@@ -901,8 +904,6 @@ TlsReceiveOnePdu (
     Status = EFI_PROTOCOL_ERROR;
     goto ON_EXIT;
   }
-
-  ASSERT(Header != NULL);
     
   Len = SwapBytes16(RecordHeader.Length);
   if (Len == 0) {
@@ -1186,7 +1187,9 @@ TlsConnectSession (
     }
   }
 
-  ASSERT(HttpInstance->TlsSessionState == EfiTlsSessionDataTransferring);
+  if (HttpInstance->TlsSessionState != EfiTlsSessionDataTransferring) {
+    Status = EFI_ABORTED;
+  }
 
   return Status;
 }
@@ -1574,7 +1577,10 @@ HttpsReceive (
     
     BufferInSize = ((TLSRecordHeader *) (TempFragment.Bulk))->Length;
     BufferIn = AllocateZeroPool (BufferInSize);
-    ASSERT (BufferIn != NULL);
+    if (BufferIn == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
+      return Status;
+    }
 
     CopyMem (BufferIn, TempFragment.Bulk + sizeof (TLSRecordHeader), BufferInSize);
 
