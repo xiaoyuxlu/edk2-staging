@@ -15,53 +15,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #ifndef __EFI_HTTPS_SUPPORT_H__
 #define __EFI_HTTPS_SUPPORT_H__
 
-#pragma pack (push, 1)
-
 #define HTTPS_DEFAULT_PORT       443
 
 #define HTTPS_FLAG               "https"
-
-//
-// TLS Version
-//
-#define TLS10_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS10_PROTOCOL_VERSION_MINOR  0x01
-#define TLS11_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS11_PROTOCOL_VERSION_MINOR  0x02
-#define TLS12_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS12_PROTOCOL_VERSION_MINOR  0x03
-
-//
-// Cipher Suite
-//
-#define TLS_RSA_WITH_RC4_128_SHA                 {0x00, 0x05}
-#define TLS_RSA_WITH_3DES_EDE_CBC_SHA            {0x00, 0x0A}
-#define TLS_RSA_WITH_AES_128_CBC_SHA             {0x00, 0x2F}
-#define TLS_RSA_WITH_AES_256_CBC_SHA             {0x00, 0x35}
-#define TLS_RSA_WITH_AES_128_CBC_SHA256          {0x00, 0x3C}
-#define TLS_RSA_WITH_AES_256_CBC_SHA256          {0x00, 0x3D}
-
-//
-// Content Type
-//
-typedef enum {
-  TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC = 20,
-  TLS_CONTENT_TYPE_ALERT              = 21,
-  TLS_CONTENT_TYPE_HANDSHAKE          = 22,
-  TLS_CONTENT_TYPE_APPLICATION_DATA   = 23,
-} TLS_CONTENT_TYPE;
-
-//
-// Tls RecordHeader
-// 
-typedef struct {   
-  UINT8                   ContentType;
-  EFI_TLS_VERSION         Version;
-  UINT16                  Length;
-} TLSRecordHeader;
-
-#pragma pack (pop)
-
 
 /**
   Check whether the Url is from Https.

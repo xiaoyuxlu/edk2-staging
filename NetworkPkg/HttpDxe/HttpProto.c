@@ -1498,17 +1498,17 @@ HttpTransmitTcp (
     //
     // Build BufferOut data
     //
-    BufferSize = sizeof (TLSRecordHeader) + TxStringLen;
+    BufferSize = sizeof (TLS_RECORD_HEADER) + TxStringLen;
     Buffer     = AllocateZeroPool (BufferSize);
     if (Buffer == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
       return Status;
     }
-    ((TLSRecordHeader *) Buffer)->ContentType = TLS_CONTENT_TYPE_APPLICATION_DATA;
-    ((TLSRecordHeader *) Buffer)->Version.Major = HttpInstance->TlsConfigData.Version.Major;
-    ((TLSRecordHeader *) Buffer)->Version.Minor = HttpInstance->TlsConfigData.Version.Minor;
-    ((TLSRecordHeader *) Buffer)->Length = (UINT16) (TxStringLen);
-    CopyMem (Buffer + sizeof (TLSRecordHeader), TxString, TxStringLen);
+    ((TLS_RECORD_HEADER *) Buffer)->ContentType = TLS_CONTENT_TYPE_APPLICATION_DATA;
+    ((TLS_RECORD_HEADER *) Buffer)->Version.Major = HttpInstance->TlsConfigData.Version.Major;
+    ((TLS_RECORD_HEADER *) Buffer)->Version.Minor = HttpInstance->TlsConfigData.Version.Minor;
+    ((TLS_RECORD_HEADER *) Buffer)->Length = (UINT16) (TxStringLen);
+    CopyMem (Buffer + sizeof (TLS_RECORD_HEADER), TxString, TxStringLen);
     
     //
     // Encrypt Packet.

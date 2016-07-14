@@ -847,11 +847,11 @@ TlsReceiveOnePdu (
 
   UINT32          Len;
 
-  NET_BUF         *PduHdr;
-  UINT8           *Header;
-  TLSRecordHeader RecordHeader;
+  NET_BUF           *PduHdr;
+  UINT8             *Header;
+  TLS_RECORD_HEADER RecordHeader;
   
-  NET_BUF         *DataSeg;
+  NET_BUF           *DataSeg;
 
   NbufList = NULL;
   PduHdr   = NULL;
@@ -868,7 +868,7 @@ TlsReceiveOnePdu (
   //
   // Allocate buffer to receive one TLS header.
   //
-  Len     = sizeof (TLSRecordHeader);
+  Len     = sizeof (TLS_RECORD_HEADER);
   PduHdr  = NetbufAlloc (Len);
   if (PduHdr == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
@@ -889,7 +889,7 @@ TlsReceiveOnePdu (
     goto ON_EXIT;
   }
 
-  RecordHeader = *(TLSRecordHeader *) Header;
+  RecordHeader = *(TLS_RECORD_HEADER *) Header;
   if ((RecordHeader.ContentType == TLS_CONTENT_TYPE_HANDSHAKE || 
     RecordHeader.ContentType == TLS_CONTENT_TYPE_ALERT || 
     RecordHeader.ContentType == TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC ||
@@ -1441,7 +1441,7 @@ HttpsReceive (
 {
   EFI_STATUS                      Status;
   NET_BUF                         *Pdu;
-  TLSRecordHeader                 RecordHeader;
+  TLS_RECORD_HEADER               RecordHeader;
   UINT8                           *BufferIn;  
   UINTN                           BufferInSize;
   NET_FRAGMENT                    TempFragment;
@@ -1486,7 +1486,7 @@ HttpsReceive (
   //
   // Handle Receive data.
   //
-  RecordHeader = *(TLSRecordHeader *) BufferIn;
+  RecordHeader = *(TLS_RECORD_HEADER *) BufferIn;
   
   if ((RecordHeader.ContentType == TLS_CONTENT_TYPE_APPLICATION_DATA) && 
     (RecordHeader.Version.Major == 0x03) && 
@@ -1573,16 +1573,16 @@ HttpsReceive (
     //
     // Parsing buffer. 
     //
-    ASSERT (((TLSRecordHeader *) (TempFragment.Bulk))->ContentType == TLS_CONTENT_TYPE_APPLICATION_DATA);
+    ASSERT (((TLS_RECORD_HEADER *) (TempFragment.Bulk))->ContentType == TLS_CONTENT_TYPE_APPLICATION_DATA);
     
-    BufferInSize = ((TLSRecordHeader *) (TempFragment.Bulk))->Length;
+    BufferInSize = ((TLS_RECORD_HEADER *) (TempFragment.Bulk))->Length;
     BufferIn = AllocateZeroPool (BufferInSize);
     if (BufferIn == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
       return Status;
     }
 
-    CopyMem (BufferIn, TempFragment.Bulk + sizeof (TLSRecordHeader), BufferInSize);
+    CopyMem (BufferIn, TempFragment.Bulk + sizeof (TLS_RECORD_HEADER), BufferInSize);
 
     //
     // Free the buffer in TempFragment.

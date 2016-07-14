@@ -62,6 +62,8 @@
 
 #include <Guid/TlsAuthentication.h>
 
+#include <IndustryStandard/Tls1.h>
+
 //
 // Driver Version
 //
