@@ -518,7 +518,7 @@ TlsBuildResponsePacket (
       //
       // Must be alert message, Decrypt it and build the ResponsePacket.
       //
-      ASSERT (((TLSRecordHeader *) RequestBuffer)->ContentType == TLS_CONTENT_TYPE_ALERT);
+      ASSERT (((TLS_RECORD_HEADER *) RequestBuffer)->ContentType == TLS_CONTENT_TYPE_ALERT);
 
       Status = TlsHandeAlert (
                  Instance->TlsConn, 

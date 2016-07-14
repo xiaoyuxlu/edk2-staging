@@ -35,6 +35,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/Tls.h>
 #include <Protocol/TlsConfig.h>
 
+#include <IndustryStandard/Tls1.h>
+
 #include "TlsDriver.h"
 
 //
@@ -47,34 +49,6 @@ extern EFI_TLS_CONFIGURATION_PROTOCOL  mTlsConfigurationProtocol;
 #define RECORD_HEADER_LEN 5 /// ContentType(1) + Version(2) + Length(2)
 
 #define MAX_BUFFER_SIZE   32768
-
-#pragma pack (push, 1)
-
-//TLS Version
-#define TLS10_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS10_PROTOCOL_VERSION_MINOR  0x01
-#define TLS11_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS11_PROTOCOL_VERSION_MINOR  0x02
-#define TLS12_PROTOCOL_VERSION_MAJOR  0x03
-#define TLS12_PROTOCOL_VERSION_MINOR  0x03
-
-//
-//Content Type
-//
-typedef enum {
-  TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC = 20,
-  TLS_CONTENT_TYPE_ALERT              = 21,
-  TLS_CONTENT_TYPE_HANDSHAKE          = 22,
-  TLS_CONTENT_TYPE_APPLICATION_DATA   = 23,
-} TLS_CONTENT_TYPE;
-
-typedef struct {   
-  UINT8                   ContentType;
-  EFI_TLS_VERSION         Version;
-  UINT16                  Length;
-} TLSRecordHeader;
-
-#pragma pack (pop)
 
 /**
   Encrypt the message listed in fragment.

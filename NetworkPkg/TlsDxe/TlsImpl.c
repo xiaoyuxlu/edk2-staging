@@ -38,18 +38,18 @@ TlsEcryptPacket (
   IN     UINT32                        *FragmentCount
   )
 {
-  UINTN           Index;
-  UINT32          BytesCopied;
-  UINT32          BufferInSize;
-  UINT8           *BufferIn;
-  UINT8           *BufferInPtr;
-  TLSRecordHeader *RecordHeaderIn;
-  UINT16          ThisPlainMessageSize;
-  TLSRecordHeader *TempRecordHeader;
-  UINT16          ThisMessageSize;
-  UINT32          BufferOutSize;
-  UINT8           *BufferOut;
-  INTN            Ret;
+  UINTN               Index;
+  UINT32              BytesCopied;
+  UINT32              BufferInSize;
+  UINT8               *BufferIn;
+  UINT8               *BufferInPtr;
+  TLS_RECORD_HEADER   *RecordHeaderIn;
+  UINT16              ThisPlainMessageSize;
+  TLS_RECORD_HEADER   *TempRecordHeader;
+  UINT16              ThisMessageSize;
+  UINT32              BufferOutSize;
+  UINT8               *BufferOut;
+  INTN                Ret;
   
   BytesCopied      = 0;
   BufferInSize     = 0;
@@ -98,9 +98,9 @@ TlsEcryptPacket (
   // Parsing buffer. 
   //
   BufferInPtr = BufferIn;
-  TempRecordHeader = (TLSRecordHeader *) BufferOut;
+  TempRecordHeader = (TLS_RECORD_HEADER *) BufferOut;
   while ((UINTN) BufferInPtr < (UINTN) BufferIn + BufferInSize) {
-    RecordHeaderIn = (TLSRecordHeader *) BufferInPtr;
+    RecordHeaderIn = (TLS_RECORD_HEADER *) BufferInPtr;
     ASSERT (RecordHeaderIn->ContentType == TLS_CONTENT_TYPE_APPLICATION_DATA);
     ThisPlainMessageSize = RecordHeaderIn->Length;
 
@@ -166,18 +166,18 @@ TlsDecryptPacket (
   IN     UINT32                        *FragmentCount
   )
 {
-  UINTN           Index;
-  UINT32          BytesCopied;
-  UINT8           *BufferIn;
-  UINT32          BufferInSize;
-  UINT8           *BufferInPtr;
-  TLSRecordHeader *RecordHeaderIn;
-  UINT16          ThisCipherMessageSize;
-  TLSRecordHeader *TempRecordHeader;
-  UINT16          ThisPlainMessageSize;
-  UINT8           *BufferOut;
-  UINT32          BufferOutSize;
-  INTN            Ret;
+  UINTN               Index;
+  UINT32              BytesCopied;
+  UINT8               *BufferIn;
+  UINT32              BufferInSize;
+  UINT8               *BufferInPtr;
+  TLS_RECORD_HEADER   *RecordHeaderIn;
+  UINT16              ThisCipherMessageSize;
+  TLS_RECORD_HEADER   *TempRecordHeader;
+  UINT16              ThisPlainMessageSize;
+  UINT8               *BufferOut;
+  UINT32              BufferOutSize;
+  INTN                Ret;
   
   BytesCopied      = 0;
   BufferIn         = NULL; 
@@ -226,9 +226,9 @@ TlsDecryptPacket (
   // Parsing buffer. Received packet may have multiply TLS record message.
   //
   BufferInPtr = BufferIn;
-  TempRecordHeader = (TLSRecordHeader *) BufferOut;
+  TempRecordHeader = (TLS_RECORD_HEADER *) BufferOut;
   while ((UINTN) BufferInPtr < (UINTN) BufferIn + BufferInSize) {
-    RecordHeaderIn = (TLSRecordHeader *) BufferInPtr;
+    RecordHeaderIn = (TLS_RECORD_HEADER *) BufferInPtr;
     ASSERT (RecordHeaderIn->ContentType == TLS_CONTENT_TYPE_APPLICATION_DATA);
     ThisCipherMessageSize = NTOHS (RecordHeaderIn->Length);
 
