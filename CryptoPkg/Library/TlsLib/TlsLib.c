@@ -673,7 +673,7 @@ TlsDoHandshake (
   }
 
   if (Ret < 1) {
-    Ret = SSL_get_error (TlsConn->Ssl, Ret);
+    Ret = SSL_get_error (TlsConn->Ssl, (int) Ret);
     if (Ret == SSL_ERROR_SSL ||
         Ret == SSL_ERROR_SYSCALL ||
         Ret == SSL_ERROR_ZERO_RETURN) {
@@ -1057,7 +1057,12 @@ TlsSetCompressionMethod (
   Ret = 0;
 
   if (CompMethod == 0) {
-    Cm = NULL;
+    //
+    // TLS defines one standard compression method, CompressionMethod.null (0), 
+    // which specifies that data exchanged via the record protocol will not be compressed.  
+    // So, return EFI_SUCCESS directly (RFC 3749).
+    //
+    return EFI_SUCCESS;
   } else if (CompMethod == 1) {
     Cm = COMP_zlib();
   } else {
@@ -1069,7 +1074,7 @@ TlsSetCompressionMethod (
   // compression methods.
   //
   Ret = SSL_COMP_add_compression_method (CompMethod, Cm);
-  if (Ret != 1) {
+  if (Ret != 0) {
     return EFI_UNSUPPORTED;
   }
 
@@ -1254,7 +1259,7 @@ TlsGetCurrentCipher (
 
   @retval  EFI_SUCCESS           The compression method was returned successfully.
   @retval  EFI_INVALID_PARAMETER The parameter is invalid.
-  @retval  EFI_UNSUPPORTED       Unsupported compression method.
+  @retval  EFI_ABORTED           Invalid Compression method.
 
 **/
 EFI_STATUS
@@ -1281,13 +1286,12 @@ TlsGetCurrentCompressionId (
   }
 
   StackSslComp = SSL_COMP_get_compression_methods ();
-  if (StackSslComp == NULL) {
-    return EFI_UNSUPPORTED;
-  }
 
   CompMethod = SSL_get_current_compression (TlsConn->Ssl);
-  if (CompMethod == NULL) {
-    return EFI_UNSUPPORTED;
+  
+  if (StackSslComp == NULL || CompMethod == NULL) {
+    *CompressionId = 0;
+    return EFI_SUCCESS;
   }
 
   for (Index = 0; Index < (UINTN) sk_SSL_COMP_num (StackSslComp); Index++) {
@@ -1300,7 +1304,7 @@ TlsGetCurrentCompressionId (
   }
 
   if (SslComp == NULL) {
-    return EFI_UNSUPPORTED;
+    return EFI_ABORTED;
   }
 
   *CompressionId = (UINT8) (SslComp->id);
@@ -1794,7 +1798,7 @@ TlsGetHostPublicCert (
     return EFI_BUFFER_TOO_SMALL;
   }
 
-  i2d_X509 (Cert, Data);
+  *DataSize = (UINTN) i2d_X509 (Cert, (unsigned char **) &Data);
 
   return Status;
 }

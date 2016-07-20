@@ -502,7 +502,7 @@ TlsGetCurrentCipher (
 
   @retval  EFI_SUCCESS           The compression method was returned successfully.
   @retval  EFI_INVALID_PARAMETER The parameter is invalid.
-  @retval  EFI_UNSUPPORTED       Unsupported compression method.
+  @retval  EFI_ABORTED           Invalid Compression method.
 
 **/
 EFI_STATUS
