@@ -4,8 +4,7 @@ The branch owner:
 Jiaxin Wu < jiaxin.wu@intel.com >
 
 ## Feature Introduction
-The security of HTTPS boot is that of the underlying TLS. In simple terms, HTTPS boot refers to the use of HTTP boot over TLS session. **TlsDxe** driver takes advantage of OpenSLL library, including **BaseCryptLib** and new wrapped **TlsLib**, And also, **OpensslTlsLib** module is required to enable 'openssl/ssl' function. **HttpDxe** driver in this branch consumes TlsDxe driver to support HTTPS feature. The HTTP instance can be able to determine whether to use HTTP or HTTPS feature by according to the different schemes ("http://" or "https://") in the boot file URI.
-
+The security of HTTPS boot is that of the underlying TLS. In simple terms, HTTPS boot refers to the use of HTTP boot over TLS session. **TlsDxe** driver takes advantage of OpenSLL library, including **BaseCryptLib** and new wrapped **TlsLib**, And also, **OpensslTlsLib** module is required to enable 'openssl/ssl' function. **HttpDxe** driver in this branch consumes TlsDxe driver to support HTTPS feature. The HTTP instance can be able to determine whether to use HTTP or HTTPS feature by according to the different schemes ("http://" or "https://") in the boot file URI. For detailed feature introduction, please refer to [EDKII HTTPS Boot Getting Started Guide](https://github.com/tianocore-docs/Docs/blob/master/White_Papers/EDKIIHttps_TLS_BootGettingStartedGuide_07.pdf).
 
 #### Related Protocols
 The following protocols are related to HTTPS boot:
@@ -44,3 +43,11 @@ Currently, HTTPS boot feature only support server authentication with an unauthe
 #define EFI_TLS_CA_CERTIFICATE_VARIABLE          L"TlsCaCertificate"
 ```
 **TlsAuthConfigDxe** is a temporary driver to provide an UI to support the required certificate configuration.
+
+## Timeline
+| Time | Event | Related Module |
+|:----:|:-----:|:--------------:|
+| 2015.12 | Initial implementation for HTTPS boot feature by leveraging OpenSSL. | HttpDxe, OpensslTlsLib, TlsLib, TlsDxe |
+| 2016.3 | Provided an UI configured driver to support TLS server authentication. | TlsAuthConfigDxe |
+| 2016.4-7 | Hotfix and code refine according community feedback. | Tls1.h, TlsLib, HttpDxe |
+|...|...|...|
