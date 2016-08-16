@@ -33,7 +33,13 @@ NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf
 ```
 
 #### HTTPS Authentication
-Currently, HTTPS boot feature only support server authentication with an unauthenticated client mode [RFC5246](https://tools.ietf.org/html/rfc5246). To support this mode, server CA certificate is required by Client. Private variable is used to configure this CA certificate. **EFI_SIGNATURE_LIST** format is used for this variable. In sum, the Server CA certificate must be configured first to enable HTTPS boot feature. The variable name and GUID are defined as below.
+TLS supports three authentication modes ([RFC5246](https://tools.ietf.org/html/rfc5246)):
+```
+1. Total anonymity: the server and client won’t authenticate each other.
+2. One-way authentication: server authentication with an unauthenticated client.
+3. Two-way authentication: authentication of both parties.
+```
+Currently, HTTPS boot feature only support server authentication with an unauthenticated client mode. Others are not in our current feature support scope. To support one-way authentication mode, server CA certificate is required by Client. Private variable is used to configure this CA certificate. **EFI_SIGNATURE_LIST** format is used for this variable. In sum, the Server CA certificate must be configured first to enable HTTPS boot feature. The variable name and GUID are defined as below.
 ```
 #define EFI_TLS_CA_CERTIFICATE_GUID \
   { \
