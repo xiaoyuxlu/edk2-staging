@@ -1001,7 +1001,7 @@ EnrollX509toVariable (
   // If true, use EFI_VARIABLE_APPEND_WRITE attribute to append the
   // new signature data to original variable
   //
-  Attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS;
+  Attr = TLS_AUTH_CONFIG_VAR_BASE_ATTR;
 
   Status = gRT->GetVariable(
                   VariableName,
