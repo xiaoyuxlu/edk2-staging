@@ -195,26 +195,38 @@ TlsCtxNew (
 
   ProtoVersion = (MajorVer << 8) | MinorVer;
 
-  TlsCtx = NULL;
+  TlsCtx = SSL_CTX_new (SSLv23_client_method ());
+  if (TlsCtx == NULL) {
+    return NULL;
+  }
 
+  //
+  // Ensure SSLv3 is disabled
+  //
+  SSL_CTX_set_options (TlsCtx, SSL_OP_NO_SSLv3);
+
+  //
+  // Treat as minimum accepted versions.  Client can use higher
+  // TLS version if server supports it
+  //
   switch (ProtoVersion) {
   case TLS1_VERSION:
     //
     // TLS 1.0
     //
-    TlsCtx = SSL_CTX_new (TLSv1_method ());
     break;
   case TLS1_1_VERSION:
     //
     // TLS 1.1
     //
-    TlsCtx = SSL_CTX_new (TLSv1_1_method ());
+    SSL_CTX_set_options (TlsCtx, SSL_OP_NO_TLSv1);
     break;
   case TLS1_2_VERSION:
     //
     // TLS 1.2
     //
-    TlsCtx = SSL_CTX_new (TLSv1_2_method ());
+    SSL_CTX_set_options (TlsCtx, SSL_OP_NO_TLSv1);
+    SSL_CTX_set_options (TlsCtx, SSL_OP_NO_TLSv1_1);
     break;
   default:
     //
