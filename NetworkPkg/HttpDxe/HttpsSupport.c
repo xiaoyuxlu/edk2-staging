@@ -2,6 +2,7 @@
   Miscellaneous routines specific to Https for HttpDxe driver.
 
 Copyright (c) 2016, Intel Corporation. All rights reserved.<BR>
+(C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -480,28 +481,15 @@ TlsConfigureSession (
   //
   // TlsConfigData initialization
   //
-  HttpInstance->TlsConfigData.Version.Major = TLS10_PROTOCOL_VERSION_MAJOR;
-  HttpInstance->TlsConfigData.Version.Minor = TLS10_PROTOCOL_VERSION_MINOR;
   HttpInstance->TlsConfigData.ConnectionEnd = EfiTlsClient;
   HttpInstance->TlsConfigData.VerifyMethod = EFI_TLS_VERIFY_PEER;
   HttpInstance->TlsConfigData.SessionState = EfiTlsSessionNotStarted;
 
   //
-  // EfiTlsVersion
   // EfiTlsConnectionEnd,
   // EfiTlsVerifyMethod
   // EfiTlsSessionState
   //
-  Status = HttpInstance->Tls->SetSessionData (
-                                HttpInstance->Tls,
-                                EfiTlsVersion,
-                                &(HttpInstance->TlsConfigData.Version),
-                                sizeof (EFI_TLS_VERSION)
-                                );
-  if (EFI_ERROR (Status)) {
-    goto ERROR;
-  }
-  
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsConnectionEnd,
