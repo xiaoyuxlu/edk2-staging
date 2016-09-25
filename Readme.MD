@@ -56,4 +56,23 @@ Currently, HTTPS boot feature only support server authentication with an unauthe
 | 2015.12 | Initial implementation for HTTPS boot feature by leveraging OpenSSL. | HttpDxe, OpensslTlsLib, TlsLib, TlsDxe |
 | 2016.3 | Provided an UI configured driver to support TLS server authentication. | TlsAuthConfigDxe |
 | 2016.4-7 | Hotfix and code refine according community feedback. | Tls1.h, TlsLib, HttpDxe |
+| 2016.9 | Support TLS Version negotiation. | TlsLib, HttpDxe |
 |...|...|...|
+
+## Feature Verification
+Tomcat and IIS8 are selected as the HTTPS server to verifiy the result, Detiled see below table.
+
+| HTTPS Server | TLS 1.0 | TLS 1.1 | TLS1.2 |
+|:------------:|:-------:|:-------:|:------:|
+|Tomcat | Pass |Pass | Pass |
+|IIS8 | Pass | Pass | Failure |
+
+### NOTES
+TLS version 1.2 in windows server 2012 R2 IIS8 (As HTTPS server) CAN NOT collaborate with UEFI HTTPS client while version 1.1/1.0 works well. To make the UEFI HTTPS client in staging works properly, we have to disable TLS version 1.2 in windows server 2012 R2 by the below PowerShell script:
+```
+New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'Enabled' -value 0 -PropertyType 'DWord' -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'DisabledByDefault' -value 1 -PropertyType 'DWord' -Force | Out-Null
+Write-Host 'TLS 1.2 server has been disabled.'
+Write-Host 'NOTE: Need to restart the OS to take effect!'
+```
