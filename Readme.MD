@@ -35,7 +35,7 @@ NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf
 #### HTTPS Authentication
 TLS supports three authentication modes ([RFC5246](https://tools.ietf.org/html/rfc5246)):
 ```
-1. Total anonymity: the server and client won’t authenticate each other.
+1. Total anonymity: the server and client will not authenticate each other.
 2. One-way authentication: server authentication with an unauthenticated client.
 3. Two-way authentication: authentication of both parties.
 ```
@@ -56,16 +56,25 @@ Currently, HTTPS boot feature only support server authentication with an unauthe
 | 2015.12 | Initial implementation for HTTPS boot feature by leveraging OpenSSL. | HttpDxe, OpensslTlsLib, TlsLib, TlsDxe |
 | 2016.3 | Provided an UI configured driver to support TLS server authentication. | TlsAuthConfigDxe |
 | 2016.4-7 | Hotfix and code refine according community feedback. | Tls1.h, TlsLib, HttpDxe |
+| 2016.8 | Prevent the CA certificates from the runtime phase attack. | TlsAuthConfigDxe |
 | 2016.9 | Support TLS Version negotiation. | TlsLib, HttpDxe |
 |...|...|...|
 
+## Feature Support Scope
+*	Feature usage: Load the specified file from the remote HTTPS server successfully and steadily.
+* UEFI Arch: IA32 and X64 platform.
+*	TLS version: TLS1.0/1.1/1.2, version negotiation.
+*	HTTPS authentication mode: One-way authentication.
+*	CA certificates management: Private variable, prevent runtime phase attack.
+
 ## Feature Verification
-Tomcat and IIS8 are selected as the HTTPS server to verifiy the result, Detiled see below table.
+Tomcat, IIS 8 and Apache2 are selected as the HTTPS server to verify the result of loading the UEFI shell boot file (Shell.efi), detailed see below table.
 
 | HTTPS Server | TLS 1.0 | TLS 1.1 | TLS1.2 |
 |:------------:|:-------:|:-------:|:------:|
 |Tomcat | Pass |Pass | Pass |
-|IIS8 | Pass | Pass | Failure |
+|IIS 8 | Pass | Pass | Failure |
+|Apache2 | Pass | Pass | Pass |
 
 ### NOTES
 TLS version 1.2 in windows server 2012 R2 IIS8 (As HTTPS server) CAN NOT collaborate with UEFI HTTPS client while version 1.1/1.0 works well. To make the UEFI HTTPS client in staging works properly, we have to disable TLS version 1.2 in windows server 2012 R2 by the below PowerShell script:
