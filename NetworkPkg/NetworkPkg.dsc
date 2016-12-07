@@ -55,7 +55,6 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
-  OpensslTlsLib|CryptoPkg/Library/OpensslLib/OpensslTlsLib.inf
   TlsLib|CryptoPkg/Library/TlsLib/TlsLib.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
