@@ -4,7 +4,7 @@ The branch owner:
 Jiaxin Wu < jiaxin.wu@intel.com >
 
 ## Feature Introduction
-The security of HTTPS boot is that of the underlying TLS. In simple terms, HTTPS boot refers to the use of HTTP boot over TLS session. **TlsDxe** driver takes advantage of OpenSLL library, including **BaseCryptLib** and new wrapped **TlsLib**, And also, **OpensslTlsLib** module is required to enable 'openssl/ssl' function. **HttpDxe** driver in this branch consumes TlsDxe driver to support HTTPS feature. The HTTP instance can be able to determine whether to use HTTP or HTTPS feature by according to the different schemes ("http://" or "https://") in the boot file URI. For detailed feature introduction, please refer to [EDKII HTTPS Boot Getting Started Guide](https://github.com/tianocore-docs/Docs/blob/master/White_Papers/EDKIIHttps_TLS_BootGettingStartedGuide_07.pdf).
+The security of HTTPS boot is that of the underlying TLS. In simple terms, HTTPS boot refers to the use of HTTP boot over TLS session. **TlsDxe** driver takes advantage of OpenSLL library, including **BaseCryptLib** and new wrapped **TlsLib**, And also, **OpensslLib** module is required to enable 'openssl/ssl' function. **HttpDxe** driver in this branch consumes TlsDxe driver to support HTTPS feature. The HTTP instance can be able to determine whether to use HTTP or HTTPS feature by according to the different schemes ("http://" or "https://") in the boot file URI. For detailed feature introduction, please refer to [EDKII HTTPS Boot Getting Started Guide](https://github.com/tianocore-docs/Docs/blob/master/White_Papers/EDKIIHttps_TLS_BootGettingStartedGuide_07.pdf).
 
 #### Related Protocols
 The following protocols are related to HTTPS boot:
@@ -25,7 +25,6 @@ NetworkPkg/HttpBootDxe/HttpBootDxe.inf
 NetworkPkg/HttpDxe/HttpDxe.inf
 NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
 CryptoPkg/Library/OpensslLib/OpensslLib.inf
-CryptoPkg/Library/OpensslLib/OpensslTlsLib.inf
 CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 CryptoPkg/Library/TlsLib/TlsLib.inf
 NetworkPkg/TlsDxe/TlsDxe.inf
@@ -53,7 +52,7 @@ Currently, HTTPS boot feature only support server authentication with an unauthe
 ## Timeline
 | Time | Event | Related Module |
 |:----:|:-----:|:--------------:|
-| 2015.12 | Initial implementation for HTTPS boot feature by leveraging OpenSSL. | HttpDxe, OpensslTlsLib, TlsLib, TlsDxe |
+| 2015.12 | Initial implementation for HTTPS boot feature by leveraging OpenSSL. | HttpDxe, TlsLib, TlsDxe |
 | 2016.3 | Provided an UI configured driver to support TLS server authentication. | TlsAuthConfigDxe |
 | 2016.4-7 | Hotfix and code refine according community feedback. | Tls1.h, TlsLib, HttpDxe |
 | 2016.8 | Prevent the CA certificates from the runtime phase attack. | TlsAuthConfigDxe |
