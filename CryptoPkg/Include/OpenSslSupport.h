@@ -280,7 +280,7 @@ extern FILE  *stdout;
 #define assert(expression)
 #define localtime(timer)                  NULL
 #define gmtime_r(timer,result)            (result = NULL)
-#define gettimeofday(tvp,tz)              do { (tvp)->tv_sec = time(NULL); (tvp)->tv_usec = 0; } while (0)
 #define atoi(nptr)                        AsciiStrDecimalToUintn(nptr)
+#define gettimeofday(tvp,tz)              do { (tvp)->tv_sec = time(NULL); (tvp)->tv_usec = 0; } while (0)
 
 #endif
