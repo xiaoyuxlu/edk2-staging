@@ -436,7 +436,7 @@ TlsBuildResponsePacket (
       //
       // *BufferSize should not be zero when ClientHello. 
       //
-      if (*BufferSize == 0 || TlsInStateError (Instance->TlsConn)) {
+      if (*BufferSize == 0) {
         Status = EFI_ABORTED;
         goto ON_EXIT;
       }
@@ -509,10 +509,6 @@ TlsBuildResponsePacket (
       
       if (!TlsInHandshake (Instance->TlsConn)) {
         Instance->TlsSessionState = EfiTlsSessionDataTransferring;
-      }
-
-      if (TlsInStateError (Instance->TlsConn)) {
-        Instance->TlsSessionState = EfiTlsSessionError;
       }
     } else {
       //

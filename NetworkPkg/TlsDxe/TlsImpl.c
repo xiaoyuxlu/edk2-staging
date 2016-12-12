@@ -28,7 +28,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
-  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -105,11 +104,6 @@ TlsEcryptPacket (
     ThisPlainMessageSize = RecordHeaderIn->Length;
 
     TlsWrite (TlsInstance->TlsConn, (UINT8 *) (RecordHeaderIn + 1), ThisPlainMessageSize);
-    if (TlsInStateError (TlsInstance->TlsConn)) {
-      FreePool (BufferIn);
-      TlsInstance->TlsSessionState = EfiTlsSessionError;
-      return EFI_ABORTED;
-    }
     
     Ret = TlsCtrlTrafficOut (TlsInstance->TlsConn, (UINT8 *)(TempRecordHeader), MAX_BUFFER_SIZE);
     
@@ -156,7 +150,6 @@ TlsEcryptPacket (
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
-  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -241,11 +234,6 @@ TlsDecryptPacket (
 
     Ret = 0;
     Ret = TlsRead (TlsInstance->TlsConn, (UINT8 *) (TempRecordHeader + 1), MAX_BUFFER_SIZE);
-    if (TlsInStateError (TlsInstance->TlsConn)) {
-      FreePool (BufferIn);
-      TlsInstance->TlsSessionState = EfiTlsSessionError;
-      return EFI_ABORTED;
-    }
 
     if (Ret > 0) {
       ThisPlainMessageSize = (UINT16) Ret;

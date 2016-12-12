@@ -63,7 +63,6 @@ extern EFI_TLS_CONFIGURATION_PROTOCOL  mTlsConfigurationProtocol;
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
-  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -86,7 +85,6 @@ TlsEcryptPacket (
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
-  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
