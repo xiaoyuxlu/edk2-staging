@@ -29,7 +29,10 @@
 #
 
 [Sources]
-  TlsLib.c
+  InternalTlsLib.h
+  TlsInit.c
+  TlsConfig.c
+  TlsProcess.c
 
 [Packages]
   MdePkg/MdePkg.dec
