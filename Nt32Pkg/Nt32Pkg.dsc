@@ -51,7 +51,7 @@
   # These can be changed on the command line.
   # -D FLAG=VALUE
   #
-  DEFINE HTTPS_BOOT_ENABLE      = FALSE
+  DEFINE HTTPS_BOOT_ENABLE      = TRUE
 
 ################################################################################
 #
@@ -142,7 +142,6 @@
   LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
-  OpensslTlsLib|CryptoPkg/Library/OpensslLib/OpensslTlsLib.inf
   
 !if $(SECURE_BOOT_ENABLE) == TRUE
   PlatformSecureLib|Nt32Pkg/Library/PlatformSecureLib/PlatformSecureLib.inf
