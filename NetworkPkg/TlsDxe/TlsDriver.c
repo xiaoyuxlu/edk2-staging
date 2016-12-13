@@ -35,7 +35,7 @@ TlsCleanInstance (
     if (Instance->TlsConn != NULL) {
       TlsFree (Instance->TlsConn);
     }
-    
+
     FreePool (Instance);
   }
 }
@@ -59,7 +59,7 @@ TlsCreateInstance (
   TLS_INSTANCE            *TlsInstance;
 
   *Instance = NULL;
-  
+
   TlsInstance = AllocateZeroPool (sizeof (TLS_INSTANCE));
   if (TlsInstance == NULL) {
     return EFI_OUT_OF_RESOURCES;
@@ -69,12 +69,12 @@ TlsCreateInstance (
   InitializeListHead (&TlsInstance->Link);
   TlsInstance->InDestroy = FALSE;
   TlsInstance->Service   = Service;
-  
+
   CopyMem (&TlsInstance->Tls, &mTlsProtocol, sizeof (TlsInstance->Tls));
   CopyMem (&TlsInstance->TlsConfig, &mTlsConfigurationProtocol, sizeof (TlsInstance->TlsConfig));
 
   TlsInstance->TlsSessionState = EfiTlsSessionNotStarted;
-  
+
   *Instance = TlsInstance;
 
   return EFI_SUCCESS;
@@ -95,7 +95,7 @@ TlsCleanService (
     if (Service->TlsCtx != NULL) {
       TlsCtxFree (Service->TlsCtx);
     }
-    
+
     FreePool (Service);
   }
 }
@@ -118,7 +118,7 @@ TlsCreateService (
 {
   EFI_STATUS             Status;
   TLS_SERVICE            *TlsService;
-  
+
   Status = EFI_SUCCESS;
   *Service = NULL;
 
@@ -142,7 +142,7 @@ TlsCreateService (
   TlsService->ImageHandle      = Image;
 
   *Service = TlsService;
-  
+
   return Status;
 }
 
@@ -155,7 +155,7 @@ TlsCreateService (
   @retval EFI_INVALID_PARAMETER ImageHandle is not a valid image handle.
 
 **/
-EFI_STATUS 
+EFI_STATUS
 EFIAPI
 TlsUnload (
   IN EFI_HANDLE  ImageHandle
@@ -191,11 +191,11 @@ TlsUnload (
     // Firstly, find ServiceBinding interface
     //
     Status = gBS->OpenProtocol (
-                    HandleBuffer[Index], 
-                    &gEfiTlsServiceBindingProtocolGuid, 
-                    (VOID **) &ServiceBinding, 
-                    ImageHandle, 
-                    NULL, 
+                    HandleBuffer[Index],
+                    &gEfiTlsServiceBindingProtocolGuid,
+                    (VOID **) &ServiceBinding,
+                    ImageHandle,
+                    NULL,
                     EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
                     );
     if (EFI_ERROR (Status)) {
@@ -206,7 +206,7 @@ TlsUnload (
 
     //
     // Then, uninstall ServiceBinding interface
-    // 
+    //
     Status = gBS->UninstallMultipleProtocolInterfaces (
                     HandleBuffer[Index],
                     &gEfiTlsServiceBindingProtocolGuid, ServiceBinding,
@@ -245,7 +245,7 @@ TlsDriverEntryPoint (
   )
 {
   EFI_STATUS             Status;
-  
+
   TLS_SERVICE            *TlsService;
 
   //
@@ -278,14 +278,14 @@ TlsDriverEntryPoint (
   //
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &TlsService->Handle,
-                  &gEfiTlsServiceBindingProtocolGuid, 
+                  &gEfiTlsServiceBindingProtocolGuid,
                   &TlsService->ServiceBinding,
                   NULL
                   );
   if (EFI_ERROR (Status)) {
     goto ON_CLEAN_SERVICE;
   }
- 
+
   return Status;
 
 ON_CLEAN_SERVICE:
@@ -296,21 +296,21 @@ ON_CLEAN_SERVICE:
 
 /**
   Creates a child handle and installs a protocol.
-  
-  The CreateChild() function installs a protocol on ChildHandle. 
-  If ChildHandle is a pointer to NULL, then a new handle is created and returned in ChildHandle. 
+
+  The CreateChild() function installs a protocol on ChildHandle.
+  If ChildHandle is a pointer to NULL, then a new handle is created and returned in ChildHandle.
   If ChildHandle is not a pointer to NULL, then the protocol installs on the existing ChildHandle.
 
   @param[in] This        Pointer to the EFI_SERVICE_BINDING_PROTOCOL instance.
   @param[in] ChildHandle Pointer to the handle of the child to create. If it is NULL,
-                         then a new handle is created. If it is a pointer to an existing UEFI handle, 
+                         then a new handle is created. If it is a pointer to an existing UEFI handle,
                          then the protocol is added to the existing UEFI handle.
 
   @retval EFI_SUCCES            The protocol was added to ChildHandle.
   @retval EFI_INVALID_PARAMETER ChildHandle is NULL.
-  @retval EFI_OUT_OF_RESOURCES  There are not enough resources availabe to create
-                                the child
-  @retval other                 The child handle was not created
+  @retval EFI_OUT_OF_RESOURCES  There are not enough resources available to create
+                                the child.
+  @retval other                 The child handle was not created.
 
 **/
 EFI_STATUS
@@ -335,7 +335,7 @@ TlsServiceBindingCreateChild (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  
+
   ASSERT (TlsInstance != NULL);
 
   //
@@ -354,7 +354,7 @@ TlsServiceBindingCreateChild (
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
-  
+
   //
   // Install TLS protocol and configuration protocol onto ChildHandle
   //
@@ -383,7 +383,7 @@ TlsServiceBindingCreateChild (
   gBS->RestoreTPL (OldTpl);
 
   return EFI_SUCCESS;
-  
+
 ON_ERROR:
   TlsCleanInstance (TlsInstance);
   return Status;
@@ -397,14 +397,14 @@ ON_ERROR:
   last protocol on ChildHandle, then ChildHandle is destroyed.
 
   @param  This        Pointer to the EFI_SERVICE_BINDING_PROTOCOL instance.
-  @param  ChildHandle Handle of the child to destroy
+  @param  ChildHandle Handle of the child to destroy.
 
   @retval EFI_SUCCES            The protocol was removed from ChildHandle.
   @retval EFI_UNSUPPORTED       ChildHandle does not support the protocol that is being removed.
   @retval EFI_INVALID_PARAMETER Child handle is NULL.
   @retval EFI_ACCESS_DENIED     The protocol could not be removed from the ChildHandle
                                 because its services are being used.
-  @retval other                 The child handle was not destroyed
+  @retval other                 The child handle was not destroyed.
 
 **/
 EFI_STATUS
@@ -425,18 +425,18 @@ TlsServiceBindingDestroyChild (
   if ((This == NULL) || (ChildHandle == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
-  
-  TlsService = TLS_SERVICE_FROM_THIS (This);  
+
+  TlsService = TLS_SERVICE_FROM_THIS (This);
 
   //
   // Find TLS protocol interface installed in ChildHandle
   //
   Status = gBS->OpenProtocol (
-                  ChildHandle, 
-                  &gEfiTlsProtocolGuid, 
-                  (VOID **) &Tls, 
-                  TlsService->ImageHandle, 
-                  NULL, 
+                  ChildHandle,
+                  &gEfiTlsProtocolGuid,
+                  (VOID **) &Tls,
+                  TlsService->ImageHandle,
+                  NULL,
                   EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
@@ -447,11 +447,11 @@ TlsServiceBindingDestroyChild (
   // Find TLS configuration protocol interface installed in ChildHandle
   //
   Status = gBS->OpenProtocol (
-                  ChildHandle, 
-                  &gEfiTlsConfigurationProtocolGuid, 
-                  (VOID **) &TlsConfig, 
-                  TlsService->ImageHandle, 
-                  NULL, 
+                  ChildHandle,
+                  &gEfiTlsConfigurationProtocolGuid,
+                  (VOID **) &TlsConfig,
+                  TlsService->ImageHandle,
+                  NULL,
                   EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
@@ -459,11 +459,11 @@ TlsServiceBindingDestroyChild (
   }
 
   TlsInstance  = TLS_INSTANCE_FROM_PROTOCOL_THIS (Tls);
-  
+
   if (TlsInstance->Service != TlsService) {
     return EFI_INVALID_PARAMETER;
   }
-  
+
   if (TlsInstance->InDestroy) {
     return EFI_SUCCESS;
   }
@@ -493,7 +493,6 @@ TlsServiceBindingDestroyChild (
   gBS->RestoreTPL (OldTpl);
 
   TlsCleanInstance (TlsInstance);
-  
+
   return EFI_SUCCESS;
 }
-

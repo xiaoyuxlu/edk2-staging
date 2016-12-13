@@ -1,5 +1,5 @@
 /** @file
-  Header file of the Driver BInding and Service Binding Protocol for TlsDxe driver.
+  Header file of the Driver Binding and Service Binding Protocol for TlsDxe driver.
 
   Copyright (c) 2016, Intel Corporation. All rights reserved.<BR>
 
@@ -67,7 +67,7 @@ struct _TLS_SERVICE {
 struct _TLS_INSTANCE {
   UINT32                          Signature;
   LIST_ENTRY                      Link;
-  
+
   BOOLEAN                         InDestroy;
 
   TLS_SERVICE                     *Service;
@@ -75,9 +75,9 @@ struct _TLS_INSTANCE {
 
   EFI_TLS_PROTOCOL                Tls;
   EFI_TLS_CONFIGURATION_PROTOCOL  TlsConfig;
-  
+
   EFI_TLS_SESSION_STATE           TlsSessionState;
-  
+
   //
   // Main SSL Connection which is created by a server or a client
   // per established connection.
@@ -101,7 +101,7 @@ struct _TLS_INSTANCE {
 
   @param[in]  Instance        The TLS instance data.
 
-**/  
+**/
 VOID
 TlsCleanInstance (
   IN TLS_INSTANCE           *Instance
@@ -153,13 +153,13 @@ TlsCreateService (
 /**
   Unloads an image.
 
-  @param[in]  ImageHandle           Handle that identifies the image to be unloaded.
+  @param[in]  ImageHandle       Handle that identifies the image to be unloaded.
 
   @retval EFI_SUCCESS           The image has been unloaded.
   @retval EFI_INVALID_PARAMETER ImageHandle is not a valid image handle.
 
 **/
-EFI_STATUS 
+EFI_STATUS
 EFIAPI
 TlsUnload (
   IN EFI_HANDLE  ImageHandle
@@ -185,21 +185,21 @@ TlsDriverEntryPoint (
 
 /**
   Creates a child handle and installs a protocol.
-  
-  The CreateChild() function installs a protocol on ChildHandle. 
-  If ChildHandle is a pointer to NULL, then a new handle is created and returned in ChildHandle. 
+
+  The CreateChild() function installs a protocol on ChildHandle.
+  If ChildHandle is a pointer to NULL, then a new handle is created and returned in ChildHandle.
   If ChildHandle is not a pointer to NULL, then the protocol installs on the existing ChildHandle.
 
   @param[in] This        Pointer to the EFI_SERVICE_BINDING_PROTOCOL instance.
   @param[in] ChildHandle Pointer to the handle of the child to create. If it is NULL,
-                         then a new handle is created. If it is a pointer to an existing UEFI handle, 
+                         then a new handle is created. If it is a pointer to an existing UEFI handle,
                          then the protocol is added to the existing UEFI handle.
 
   @retval EFI_SUCCES            The protocol was added to ChildHandle.
   @retval EFI_INVALID_PARAMETER ChildHandle is NULL.
-  @retval EFI_OUT_OF_RESOURCES  There are not enough resources availabe to create
-                                the child
-  @retval other                 The child handle was not created
+  @retval EFI_OUT_OF_RESOURCES  There are not enough resources available to create
+                                the child.
+  @retval other                 The child handle was not created.
 
 **/
 EFI_STATUS
@@ -217,14 +217,14 @@ TlsServiceBindingCreateChild (
   last protocol on ChildHandle, then ChildHandle is destroyed.
 
   @param  This        Pointer to the EFI_SERVICE_BINDING_PROTOCOL instance.
-  @param  ChildHandle Handle of the child to destroy
+  @param  ChildHandle Handle of the child to destroy.
 
   @retval EFI_SUCCES            The protocol was removed from ChildHandle.
   @retval EFI_UNSUPPORTED       ChildHandle does not support the protocol that is being removed.
   @retval EFI_INVALID_PARAMETER Child handle is NULL.
   @retval EFI_ACCESS_DENIED     The protocol could not be removed from the ChildHandle
                                 because its services are being used.
-  @retval other                 The child handle was not destroyed
+  @retval other                 The child handle was not destroyed.
 
 **/
 EFI_STATUS

@@ -60,7 +60,7 @@ TlsSetSessionData (
   TLS_INSTANCE              *Instance;
   UINT16                    *CipherId;
   UINTN                     Index;
-  
+
   EFI_TPL                   OldTpl;
 
   Status = EFI_SUCCESS;
@@ -88,7 +88,7 @@ TlsSetSessionData (
       Status = EFI_INVALID_PARAMETER;
       goto ON_EXIT;
     }
-    
+
     Status = TlsSetVersion (Instance->TlsConn, ((EFI_TLS_VERSION *) Data)->Major, ((EFI_TLS_VERSION *) Data)->Minor);
     break;
   case EfiTlsConnectionEnd:
@@ -96,7 +96,7 @@ TlsSetSessionData (
       Status = EFI_INVALID_PARAMETER;
       goto ON_EXIT;
     }
-    
+
     Status = TlsSetConnectionEnd (Instance->TlsConn, *((EFI_TLS_CONNECTION_END *) Data));
     break;
   case EfiTlsCipherList:
@@ -105,11 +105,11 @@ TlsSetSessionData (
       Status = EFI_OUT_OF_RESOURCES;
       goto ON_EXIT;
     }
-    
+
     for (Index = 0; Index < DataSize / sizeof (EFI_TLS_CIPHER); Index++) {
       *(CipherId +Index) = HTONS (*(((UINT16 *) Data) + Index));
     }
-    
+
     Status = TlsSetCipherList (Instance->TlsConn, CipherId, DataSize / sizeof (EFI_TLS_CIPHER));
 
     FreePool (CipherId);
@@ -119,20 +119,20 @@ TlsSetSessionData (
     // TLS seems only define one CompressionMethod.null, which specifies that data exchanged via the
     // record protocol will not be compressed.
     // More information from OpenSSL: http://www.openssl.org/docs/manmaster/ssl/SSL_COMP_add_compression_method.html
-    // The TLS RFC does however not specify compression methods or their corresponding identifiers, 
-    // so there is currently no compatible way to integrate compression with unknown peers. 
-    // It is therefore currently not recommended to integrate compression into applications. 
-    // Applications for non-public use may agree on certain compression methods. 
+    // The TLS RFC does however not specify compression methods or their corresponding identifiers,
+    // so there is currently no compatible way to integrate compression with unknown peers.
+    // It is therefore currently not recommended to integrate compression into applications.
+    // Applications for non-public use may agree on certain compression methods.
     // Using different compression methods with the same identifier will lead to connection failure.
-    // 
+    //
     for (Index = 0; Index < DataSize / sizeof (EFI_TLS_COMPRESSION); Index++) {
       Status = TlsSetCompressionMethod (*((UINT8 *) Data + Index));
       if (EFI_ERROR (Status)) {
         break;
       }
     }
-    
-    break; 
+
+    break;
   case EfiTlsExtensionData:
     Status = EFI_UNSUPPORTED;
     goto ON_EXIT;
@@ -141,7 +141,7 @@ TlsSetSessionData (
       Status = EFI_INVALID_PARAMETER;
       goto ON_EXIT;
     }
-    
+
     TlsSetVerify (Instance->TlsConn, *((UINT32 *) Data));
     break;
   case EfiTlsSessionID:
@@ -149,8 +149,12 @@ TlsSetSessionData (
       Status = EFI_INVALID_PARAMETER;
       goto ON_EXIT;
     }
-    
-    Status = TlsSetSessionId (Instance->TlsConn, ((EFI_TLS_SESSION_ID *) Data)->Data, ((EFI_TLS_SESSION_ID *) Data)->Length);
+
+    Status = TlsSetSessionId (
+               Instance->TlsConn,
+               ((EFI_TLS_SESSION_ID *) Data)->Data,
+               ((EFI_TLS_SESSION_ID *) Data)->Length
+               );
     break;
   case EfiTlsSessionState:
     if (DataSize != sizeof (EFI_TLS_SESSION_STATE)) {
@@ -218,12 +222,12 @@ TlsGetSessionData (
 {
   EFI_STATUS                Status;
   TLS_INSTANCE              *Instance;
-  
+
   EFI_TPL                   OldTpl;
 
   Status = EFI_SUCCESS;
 
-  if (This == NULL || DataSize == NULL || (Data == NULL && *DataSize !=0)) {
+  if (This == NULL || DataSize == NULL || (Data == NULL && *DataSize != 0)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -231,9 +235,9 @@ TlsGetSessionData (
 
   Instance = TLS_INSTANCE_FROM_PROTOCOL_THIS (This);
 
-  if (Instance->TlsSessionState == EfiTlsSessionNotStarted && 
-    (DataType == EfiTlsSessionID || DataType == EfiTlsClientRandom || 
-    DataType == EfiTlsServerRandom || DataType == EfiTlsKeyMaterial)) { 
+  if (Instance->TlsSessionState == EfiTlsSessionNotStarted &&
+    (DataType == EfiTlsSessionID || DataType == EfiTlsClientRandom ||
+    DataType == EfiTlsServerRandom || DataType == EfiTlsKeyMaterial)) {
     Status = EFI_NOT_READY;
     goto ON_EXIT;
   }
@@ -270,7 +274,7 @@ TlsGetSessionData (
     Status = TlsGetCurrentCipher (Instance->TlsConn, (UINT16 *) Data);
     *((UINT16 *) Data) = HTONS (*((UINT16 *) Data));
     break;
-  case EfiTlsCompressionMethod: 
+  case EfiTlsCompressionMethod:
     //
     // Get the current session compression method.
     //
@@ -301,7 +305,11 @@ TlsGetSessionData (
       goto ON_EXIT;
     }
     *DataSize = sizeof (EFI_TLS_SESSION_ID);
-    Status = TlsGetSessionId (Instance->TlsConn, ((EFI_TLS_SESSION_ID *) Data)->Data, &(((EFI_TLS_SESSION_ID *) Data)->Length));
+    Status = TlsGetSessionId (
+               Instance->TlsConn,
+               ((EFI_TLS_SESSION_ID *) Data)->Data,
+               &(((EFI_TLS_SESSION_ID *) Data)->Length)
+               );
     break;
   case EfiTlsSessionState:
     if (*DataSize < sizeof (EFI_TLS_SESSION_STATE)) {
@@ -402,13 +410,13 @@ TlsBuildResponsePacket (
   EFI_STATUS                Status;
   TLS_INSTANCE              *Instance;
   EFI_TPL                   OldTpl;
-  
+
   Status = EFI_SUCCESS;
 
-  if (This == NULL || BufferSize == NULL || \
-    (RequestBuffer == NULL && RequestSize != 0) || \
-    (RequestBuffer != NULL && RequestSize == 0) || \
-    (Buffer == NULL && *BufferSize !=0)) {
+  if ((This == NULL) || (BufferSize == NULL) ||
+      (RequestBuffer == NULL && RequestSize != 0) ||
+      (RequestBuffer != NULL && RequestSize == 0) ||
+      (Buffer == NULL && *BufferSize !=0)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -423,7 +431,7 @@ TlsBuildResponsePacket (
       // ClientHello.
       //
       Status = TlsDoHandshake (
-                 Instance->TlsConn, 
+                 Instance->TlsConn,
                  NULL,
                  0,
                  Buffer,
@@ -432,33 +440,33 @@ TlsBuildResponsePacket (
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
-      
+
       //
-      // *BufferSize should not be zero when ClientHello. 
+      // *BufferSize should not be zero when ClientHello.
       //
       if (*BufferSize == 0) {
         Status = EFI_ABORTED;
         goto ON_EXIT;
       }
-      
+
       Instance->TlsSessionState = EfiTlsSessionHandShaking;
-      
+
       break;
     case EfiTlsSessionClosing:
       //
       // TLS session will be closed and response packet needs to be CloseNotify.
       //
       Status = TlsCloseNotify (
-                 Instance->TlsConn, 
+                 Instance->TlsConn,
                  Buffer,
                  BufferSize
                  );
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
-      
+
       //
-      // *BufferSize should not be zero when build CloseNotify message. 
+      // *BufferSize should not be zero when build CloseNotify message.
       //
       if (*BufferSize == 0) {
         Status = EFI_ABORTED;
@@ -468,7 +476,8 @@ TlsBuildResponsePacket (
       break;
     case EfiTlsSessionError:
       //
-      // TLS session has errors and the response packet needs to be Alert message based on error type.
+      // TLS session has errors and the response packet needs to be Alert
+      // message based on error type.
       //
       Status = TlsHandeAlert (
                  Instance->TlsConn,
@@ -480,7 +489,7 @@ TlsBuildResponsePacket (
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
-      
+
       break;
     default:
       //
@@ -497,7 +506,7 @@ TlsBuildResponsePacket (
     //
     if (TlsInHandshake (Instance->TlsConn)) {
       Status = TlsDoHandshake (
-                 Instance->TlsConn, 
+                 Instance->TlsConn,
                  RequestBuffer,
                  RequestSize,
                  Buffer,
@@ -506,7 +515,7 @@ TlsBuildResponsePacket (
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
-      
+
       if (!TlsInHandshake (Instance->TlsConn)) {
         Instance->TlsSessionState = EfiTlsSessionDataTransferring;
       }
@@ -517,7 +526,7 @@ TlsBuildResponsePacket (
       ASSERT (((TLS_RECORD_HEADER *) RequestBuffer)->ContentType == TLS_CONTENT_TYPE_ALERT);
 
       Status = TlsHandeAlert (
-                 Instance->TlsConn, 
+                 Instance->TlsConn,
                  RequestBuffer,
                  RequestSize,
                  Buffer,
@@ -527,7 +536,7 @@ TlsBuildResponsePacket (
         if (Status != EFI_BUFFER_TOO_SMALL) {
           Instance->TlsSessionState = EfiTlsSessionError;
         }
-        
+
         goto ON_EXIT;
       }
     }
@@ -550,9 +559,9 @@ ON_EXIT:
                                   it may be reallocated in TLS driver. If CryptMode is
                                   EfiTlsEncrypt, on input these fragments contain the TLS
                                   header and plain text TLS APP payload; on output these
-                                  fragments contain the TLS header and cypher text TLS
+                                  fragments contain the TLS header and cipher text TLS
                                   APP payload. If CryptMode is EfiTlsDecrypt, on input
-                                  these fragments contain the TLS header and cypher text
+                                  these fragments contain the TLS header and cipher text
                                   TLS APP payload; on output these fragments contain the
                                   TLS header and plain text TLS APP payload.
   @param[in]       FragmentCount  Number of fragment.
@@ -583,7 +592,7 @@ TlsProcessPacket (
 {
   EFI_STATUS                Status;
   TLS_INSTANCE              *Instance;
-  
+
   EFI_TPL                   OldTpl;
 
   Status = EFI_SUCCESS;
@@ -600,11 +609,11 @@ TlsProcessPacket (
     Status = EFI_NOT_READY;
     goto ON_EXIT;
   }
-  
+
   //
-  // Packet sent or received may have multiply TLS record message(Application data type). 
-  // So,on input these fragments contain the TLS header and TLS APP payload; 
-  // on output these fragments also contain the TLS header and TLS APP payload. 
+  // Packet sent or received may have multiply TLS record message(Application data type).
+  // So,on input these fragments contain the TLS header and TLS APP payload;
+  // on output these fragments also contain the TLS header and TLS APP payload.
   //
   switch (CryptMode) {
   case EfiTlsEncrypt:

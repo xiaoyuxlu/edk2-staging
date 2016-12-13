@@ -19,15 +19,16 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   Encrypt the message listed in fragment.
 
   @param[in]       TlsInstance    The pointer to the TLS instance.
-  @param[in, out]  FragmentTable  Pointer to a list of fragment. 
-                                  On input these fragments contain the TLS header and 
-                                  plain text TLS payload; 
-                                  On output these fragments contain the TLS header and 
-                                  cypher text TLS payload.
+  @param[in, out]  FragmentTable  Pointer to a list of fragment.
+                                  On input these fragments contain the TLS header and
+                                  plain text TLS payload;
+                                  On output these fragments contain the TLS header and
+                                  cipher text TLS payload.
   @param[in]       FragmentCount  Number of fragment.
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
+  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -49,7 +50,7 @@ TlsEcryptPacket (
   UINT32              BufferOutSize;
   UINT8               *BufferOut;
   INTN                Ret;
-  
+
   BytesCopied      = 0;
   BufferInSize     = 0;
   BufferIn         = NULL;
@@ -61,7 +62,7 @@ TlsEcryptPacket (
   Ret              = 0;
 
   //
-  // Calculate the size accroding to the fragment table.
+  // Calculate the size according to the fragment table.
   //
   for (Index = 0; Index < *FragmentCount; Index++) {
     BufferInSize += (*FragmentTable)[Index].FragmentLength;
@@ -92,9 +93,9 @@ TlsEcryptPacket (
     FreePool (BufferIn);
     return EFI_OUT_OF_RESOURCES;
   }
-  
+
   //
-  // Parsing buffer. 
+  // Parsing buffer.
   //
   BufferInPtr = BufferIn;
   TempRecordHeader = (TLS_RECORD_HEADER *) BufferOut;
@@ -106,7 +107,7 @@ TlsEcryptPacket (
     TlsWrite (TlsInstance->TlsConn, (UINT8 *) (RecordHeaderIn + 1), ThisPlainMessageSize);
     
     Ret = TlsCtrlTrafficOut (TlsInstance->TlsConn, (UINT8 *)(TempRecordHeader), MAX_BUFFER_SIZE);
-    
+
     if (Ret > 0) {
       ThisMessageSize = (UINT16) Ret;
     } else {
@@ -114,13 +115,13 @@ TlsEcryptPacket (
     }
 
     BufferOutSize += ThisMessageSize;
-    
+
     BufferInPtr += RECORD_HEADER_LEN + ThisPlainMessageSize;
     TempRecordHeader += ThisMessageSize;
   }
 
   FreePool (BufferIn);
-  
+
   //
   // The caller will take responsible to handle the original fragment table.
   //
@@ -129,7 +130,7 @@ TlsEcryptPacket (
     FreePool (BufferOut);
     return EFI_OUT_OF_RESOURCES;
   }
-  
+
   (*FragmentTable)[0].FragmentBuffer  = BufferOut;
   (*FragmentTable)[0].FragmentLength  = BufferOutSize;
   *FragmentCount                      = 1;
@@ -142,14 +143,15 @@ TlsEcryptPacket (
 
   @param[in]       TlsInstance    The pointer to the TLS instance.
   @param[in, out]  FragmentTable  Pointer to a list of fragment.
-                                  On input these fragments contain the TLS header and 
-                                  cypher text TLS payload; 
-                                  On output these fragments contain the TLS header and 
+                                  On input these fragments contain the TLS header and
+                                  cipher text TLS payload;
+                                  On output these fragments contain the TLS header and
                                   plain text TLS payload.
   @param[in]       FragmentCount  Number of fragment.
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
+  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -171,10 +173,10 @@ TlsDecryptPacket (
   UINT8               *BufferOut;
   UINT32              BufferOutSize;
   INTN                Ret;
-  
+
   BytesCopied      = 0;
-  BufferIn         = NULL; 
-  BufferInSize     = 0;  
+  BufferIn         = NULL;
+  BufferInSize     = 0;
   BufferInPtr      = NULL;
   RecordHeaderIn   = NULL;
   TempRecordHeader = NULL;
@@ -183,7 +185,7 @@ TlsDecryptPacket (
   Ret              = 0;
 
   //
-  // Calculate the size accroding to the fragment table.
+  // Calculate the size according to the fragment table.
   //
   for (Index = 0; Index < *FragmentCount; Index++) {
     BufferInSize += (*FragmentTable)[Index].FragmentLength;
@@ -240,17 +242,17 @@ TlsDecryptPacket (
     } else {
       ThisPlainMessageSize = 0;
     }
-    
+
     CopyMem (TempRecordHeader, RecordHeaderIn, RECORD_HEADER_LEN);
     TempRecordHeader->Length = ThisPlainMessageSize;
     BufferOutSize += RECORD_HEADER_LEN + ThisPlainMessageSize;
-    
+
     BufferInPtr += RECORD_HEADER_LEN + ThisCipherMessageSize;
     TempRecordHeader += RECORD_HEADER_LEN + ThisPlainMessageSize;
   }
 
   FreePool (BufferIn);
-  
+
   //
   // The caller will take responsible to handle the original fragment table
   //

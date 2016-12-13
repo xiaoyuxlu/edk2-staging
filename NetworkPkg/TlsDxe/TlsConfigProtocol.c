@@ -62,7 +62,7 @@ TlsConfigurationSetData (
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
   Instance = TLS_INSTANCE_FROM_CONFIGURATION_THIS (This);
-  
+
   switch (DataType) {
   case EfiTlsConfigDataTypeCACertificate:
     Status = TlsSetCaCertificate (Instance->TlsConn, Data, DataSize);

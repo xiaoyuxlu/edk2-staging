@@ -54,15 +54,16 @@ extern EFI_TLS_CONFIGURATION_PROTOCOL  mTlsConfigurationProtocol;
   Encrypt the message listed in fragment.
 
   @param[in]       TlsInstance    The pointer to the TLS instance.
-  @param[in, out]  FragmentTable  Pointer to a list of fragment. 
-                                  On input these fragments contain the TLS header and 
-                                  plain text TLS payload; 
-                                  On output these fragments contain the TLS header and 
-                                  cypher text TLS payload.
+  @param[in, out]  FragmentTable  Pointer to a list of fragment.
+                                  On input these fragments contain the TLS header and
+                                  plain text TLS payload;
+                                  On output these fragments contain the TLS header and
+                                  cipher text TLS payload.
   @param[in]       FragmentCount  Number of fragment.
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
+  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -77,14 +78,15 @@ TlsEcryptPacket (
 
   @param[in]       TlsInstance    The pointer to the TLS instance.
   @param[in, out]  FragmentTable  Pointer to a list of fragment.
-                                  On input these fragments contain the TLS header and 
-                                  cypher text TLS payload; 
-                                  On output these fragments contain the TLS header and 
+                                  On input these fragments contain the TLS header and
+                                  cipher text TLS payload;
+                                  On output these fragments contain the TLS header and
                                   plain text TLS payload.
   @param[in]       FragmentCount  Number of fragment.
 
   @retval EFI_SUCCESS             The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES    Can't allocate memory resources.
+  @retval EFI_ABORTED             TLS session state is incorrect.
   @retval Others                  Other errors as indicated.
 **/
 EFI_STATUS
@@ -220,9 +222,9 @@ TlsBuildResponsePacket (
                                   it may be reallocated in TLS driver. If CryptMode is
                                   EfiTlsEncrypt, on input these fragments contain the TLS
                                   header and plain text TLS APP payload; on output these
-                                  fragments contain the TLS header and cypher text TLS
+                                  fragments contain the TLS header and cipher text TLS
                                   APP payload. If CryptMode is EfiTlsDecrypt, on input
-                                  these fragments contain the TLS header and cypher text
+                                  these fragments contain the TLS header and cipher text
                                   TLS APP payload; on output these fragments contain the
                                   TLS header and plain text TLS APP payload.
   @param[in]       FragmentCount  Number of fragment.
@@ -311,4 +313,3 @@ TlsConfigurationGetData (
   );
 
 #endif
-
