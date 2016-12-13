@@ -22,11 +22,11 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 /**
   Check whether the Url is from Https.
 
-  @param[in]    Url             The pointer to a HTTP or HTTPS URL string.  
+  @param[in]    Url             The pointer to a HTTP or HTTPS URL string.
 
   @retval TRUE                  The Url is from HTTPS.
   @retval FALSE                 The Url is from HTTP.
-  
+
 **/
 BOOLEAN
 IsHttpsUrl (
@@ -35,13 +35,13 @@ IsHttpsUrl (
 
 /**
   Creates a Tls child handle, open EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
-  
+
   @param[in]  ImageHandle           The firmware allocated handle for the UEFI image.
   @param[out] TlsProto              Pointer to the EFI_TLS_PROTOCOL instance.
   @param[out] TlsConfiguration      Pointer to the EFI_TLS_CONFIGURATION_PROTOCOL instance.
 
   @return  The child handle with opened EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
-  
+
 **/
 EFI_HANDLE
 EFIAPI
@@ -52,7 +52,7 @@ TlsCreateChild (
   );
 
 /**
-  Create event for the TLS receive and transmit tokens which are used to receive and 
+  Create event for the TLS receive and transmit tokens which are used to receive and
   transmit TLS related messages.
 
   @param[in, out]  HttpInstance       Pointer to HTTP_PROTOCOL structure.
@@ -71,7 +71,7 @@ TlsCreateTxRxEvent (
   Close events in the TlsTxToken and TlsRxToken.
 
   @param[in]  HttpInstance   Pointer to HTTP_PROTOCOL structure.
-  
+
 **/
 VOID
 EFIAPI
@@ -115,8 +115,8 @@ TlsConfigureSession (
 
   @param[in, out]   HttpInstance    Pointer to HTTP_PROTOCOL structure.
   @param[in]        Packet          The packet to transmit.
-  
-  @retval EFI_SUCCESS            The packet is trasmitted.
+
+  @retval EFI_SUCCESS            The packet is transmitted.
   @retval EFI_INVALID_PARAMETER  HttpInstance is NULL or Packet is NULL.
   @retval EFI_OUT_OF_RESOURCES   Can't allocate memory resources.
   @retval EFI_DEVICE_ERROR       An unexpected system or network error occurred.
@@ -158,10 +158,10 @@ TlsCommonReceive (
   net buffer.
 
   @param[in, out]      HttpInstance    Pointer to HTTP_PROTOCOL structure.
-  @param[out]          Pdu             The received TLS pdu.
+  @param[out]          Pdu             The received TLS PDU.
   @param[in]           Timeout         The time to wait for connection done.
 
-  @retval EFI_SUCCESS          An TLS pdu is received.
+  @retval EFI_SUCCESS          An TLS PDU is received.
   @retval EFI_OUT_OF_RESOURCES Can't allocate memory resources.
   @retval EFI_PROTOCOL_ERROR   An unexpected TLS packet was received.
   @retval Others               Other errors as indicated.
@@ -170,7 +170,7 @@ TlsCommonReceive (
 EFI_STATUS
 EFIAPI
 TlsReceiveOnePdu (
-  IN OUT HTTP_PROTOCOL      *HttpInstance,     
+  IN OUT HTTP_PROTOCOL      *HttpInstance,
      OUT NET_BUF            **Pdu,
   IN     EFI_EVENT          Timeout
   );
@@ -198,7 +198,7 @@ TlsConnectSession (
   Close the TLS session and send out the close notification message.
 
   @param[in]  HttpInstance       The HTTP instance private data.
-  
+
   @retval EFI_SUCCESS            The TLS session is closed.
   @retval EFI_INVALID_PARAMETER  HttpInstance is NULL or Packet is NULL.
   @retval EFI_OUT_OF_RESOURCES   Can't allocate memory resources.
@@ -218,10 +218,10 @@ TlsCloseSession (
   @param[in]           Message         Pointer to the message buffer needed to processed.
   @param[in]           MessageSize     Pointer to the message buffer size.
   @param[in]           ProcessMode     Process mode.
-  @param[in, out]      Fragment        Only one Fragment returned after the Message is 
-                                       processed sucessfully.
+  @param[in, out]      Fragment        Only one Fragment returned after the Message is
+                                       processed successfully.
 
-  @retval EFI_SUCCESS          Message is processed sucessfully.
+  @retval EFI_SUCCESS          Message is processed successfully.
   @retval EFI_OUT_OF_RESOURCES   Can't allocate memory resources.
   @retval Others               Other errors as indicated.
 
