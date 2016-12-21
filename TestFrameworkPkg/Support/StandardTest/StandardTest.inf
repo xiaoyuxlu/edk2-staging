@@ -1,0 +1,51 @@
+## @file
+# Component description file for the standard test library driver.
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = StandardTest
+  FILE_GUID                      = 5AD0375B-3E31-4d1b-BAB8-12669D173D31
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = StandardTestEntryPoint
+
+[Sources]
+  StandardTest.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  TestFrameworkPkg/TestFrameworkPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  BaseMemoryLib
+  PrintLib
+  DevicePathLib
+  DebugLib
+
+  EntsLib
+
+[Protocols]
+  gEfiLoadedImageProtocolGuid
+  gEfiStandardTestLibraryGuid
+  gEfiTslInitInterfaceGuid
+
+[Guids]
+  gZeroGuid

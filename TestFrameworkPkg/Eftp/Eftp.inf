@@ -1,0 +1,58 @@
+## @file
+# Makefile for Edk\Drivers\Network\Eftp
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Eftp
+  FILE_GUID                      = 918F4B06-93BD-4963-8915-4B4A38232A2
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EftpDriverEntryPoint
+
+[Sources]
+  ComponentName.c
+  EftpDriver.c
+  EftpMain.c
+  EftpOption.c
+  EftpPacket.c
+  EftpRRQ.c
+  EftpWRQ.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  ShellPkg/ShellPkg.dec
+  TestFrameworkPkg/TestFrameworkPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  DebugLib
+  BaseMemoryLib
+  PrintLib
+  UefiLib
+  FileHandleLib
+  MemoryAllocationLib
+  DevicePathLib
+  ShellLib
+  ShellCommandLib
+  EntsLib
+
+[Protocols]
+  gEfiEftpProtocolGuid
+  gEfiEftpServiceBindingProtocolGuid

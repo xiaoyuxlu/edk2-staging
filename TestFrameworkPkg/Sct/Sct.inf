@@ -1,0 +1,140 @@
+## @file
+# The Test Framework Shell Application
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Sct
+  FILE_GUID                      = BFE5DD88-12D4-4ca7-B8FC-BD5D8A34DD6E
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeSct
+
+[Sources]
+  print.c
+
+  ENTS/EasDispatcher/Core/Eas.c
+  ENTS/EasDispatcher/Core/EasInit.c
+  ENTS/EasDispatcher/Load/EasTestFile.c
+  ENTS/EasDispatcher/Load/EasSupportFile.c
+  ENTS/EasDispatcher/Exec/EasCmdDisp.c
+  ENTS/EasDispatcher/Exec/EftpImplement.c
+  ENTS/EasDispatcher/Arg/EasArg.c
+  ENTS/EasDispatcher/Rivl/RivlType.c
+  ENTS/EasDispatcher/Rivl/RivlVariable.c
+
+  Core/Sct.c
+  Core/SctInit.c
+  Data/ApTest.c
+  Data/Category.c
+  Data/Config.c
+  Data/TestCase.c
+  Data/TestCaseEx.c
+  Data/TestNode.c
+  DeviceConfig/DeviceConfig.c
+  Execute/Execute.c
+  Execute/ExecuteSupport.c
+  Execute/ExecuteSupport.h
+  Execute/Reset.c
+  Include/ApTest.h
+  Include/Sct.h
+  Include/SctCore.h
+  Include/SctData.h
+  Include/SctDataEx.h
+  Include/SctDebug.h
+  Include/SctDef.h
+  Include/SctExecute.h
+  Include/SctLoad.h
+  Include/SctMisc.h
+  Include/SctOperation.h
+  Include/SctOutput.h
+  Include/SctReport.h
+  Include/SctTypes.h
+  Include/SctUi.h
+  Load/SupportFile.c
+  Load/TestFile.c
+  Misc/SctDebug.c
+  Misc/SctMisc.c
+  Operation/Operation.c
+  Output/Output.c
+  Report/Report.c
+  Report/ReportConfig.c
+  Report/ReportDatabase.c
+  Report/ReportSupport.c
+  Report/ReportSupport.h
+  UI/BuildMenu.c
+  UI/BuildMenu.h
+  UI/ConfigMenu.c
+  UI/Dialog.c
+  UI/Dialog.h
+  UI/DisplayUi.c
+  UI/FileDialog.c
+  UI/FileDialog.h
+  UI/KeyFunction.c
+  UI/MainMenu.c
+  UI/TestItemMgmt.h
+  UI/TestNodeMenu.c
+  UI/TestNodeMenu.h
+  UI/UI.h
+  UI/LogFileDialog.c
+  UI/LogFileDialog.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec   # Required for <Guid/BlockIoVendor.h> in EntsLib.h
+  ShellPkg/ShellPkg.dec
+  TestFrameworkPkg/TestFrameworkPkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  DebugLib
+  BaseMemoryLib
+  PrintLib
+  UefiLib
+  FileHandleLib
+  MemoryAllocationLib
+  DevicePathLib
+  ShellLib
+  ShellCommandLib
+  EntsLib
+
+[Protocols]
+  gEfiShellParametersProtocolGuid        ## CONSUMES
+  gEfiSimpleFileSystemProtocolGuid
+  gEfiTestLoggingLibraryGuid
+  gEfiTslInitInterfaceGuid
+  gEfiStandardTestLibraryGuid
+  gEfiTestOutputLibraryGuid
+  gEfiTestRecoveryLibraryGuid
+  gEfiTestProfileLibraryGuid
+  gEfiBbTestGuid
+  gEfiIHVBbTestGuid
+  gEfiWbTestGuid
+  gEfiEntsProtocolGuid
+  gEfiEntsMonitorProtocolGuid
+  gEfiEftpServiceBindingProtocolGuid
+  gEfiEftpProtocolGuid
+
+[Guids]
+  gZeroGuid
+  gTestGenericFailureGuid
+  gTestDummyGuid
+  gEfiGenericCategoryGuid
+  gEfiBootServicesCategoryGuid
+  gEfiRuntimeServicesCategoryGuid
+

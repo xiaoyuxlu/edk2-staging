@@ -1,0 +1,43 @@
+## @file
+# Component description file for the EFI common test library.
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php.
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = EfiTestLib
+  FILE_GUID                      = 95946F83-34FA-47AD-92D0-5AE02C650FA3
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = EfiTestLib
+
+[Sources]
+  EfiTestLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  TestFrameworkPkg/TestFrameworkPkg.dec
+
+[Protocols]
+  gEfiLoadedImageProtocolGuid
+  gEfiBbTestGuid
+  gEfiIHVBbTestGuid
+  gEfiWbTestGuid
+  gEfiStandardTestLibraryGuid
+
+[Guids]
+  gEfiDxeServicesTableGuid
+  gZeroGuid
+  gTestGenericFailureGuid
+  gTestDummyGuid

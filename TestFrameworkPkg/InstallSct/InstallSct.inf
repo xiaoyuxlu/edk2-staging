@@ -1,0 +1,44 @@
+## @file
+# The EFI SCT installation.
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = InstallSct
+  FILE_GUID                      = 4EB9D07B-EA00-41d7-95D3-CF6A3C7ACDBC
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InstallSct
+
+[Sources]
+  InstallSct.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  BaseLib
+  UefiLib
+  MemoryAllocationLib
+  ShellLib
+  ShellCommandLib
+
+[Protocols]
+  gEfiShellParametersProtocolGuid        ## CONSUMES
+
+[Guids]
+  gEfiFileSystemInfoGuid
