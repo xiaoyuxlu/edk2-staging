@@ -1,0 +1,39 @@
+## @file
+# Component description file for Timer Architecture Protocol testing.
+#
+# Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials
+# are licensed and made available under the terms and conditions of the BSD License
+# which accompanies this distribution. The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ArchTimerBBTest
+  FILE_GUID                      = c8f220c0-d4d8-4557-a8b5-e2ecb098a30e
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeBBTestTimerArchProtocol
+
+[Sources]
+  ArchTimerBBTestMain.c
+  ArchTimerBBTestMain.h
+  ArchTimerBBTestConformance.c
+  ArchTimerBBTestFunction.c
+  Guid.c
+  Guid.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  TestFrameworkPkg/TestFrameworkPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  EfiTestLib
