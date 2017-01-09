@@ -1,4 +1,4 @@
-This branch is used to develop the HTTPS boot feature including TLS and related libraries.
+This branch was used to develop the HTTPS boot feature including TLS and related libraries. Since the feature has been integrated into the EDK2/master branch, we will no longer maintain this branch. Please refer to the [NetworkPkg Getting Started Guide](https://github.com/tianocore/tianocore.github.io/wiki/NetworkPkg-Getting-Started-Guide) and [UEFI HTTPS Boot](https://github.com/tianocore/tianocore.github.io/wiki/HTTPS-Boot) pages.
 
 The branch owner:
 Jiaxin Wu < jiaxin.wu@intel.com >
