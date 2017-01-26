@@ -637,11 +637,11 @@ Returns:
   BOOLEAN                 WAITING;
   CHAR16                  Buffer[EFI_MAX_EDIT_LENGTH + 1];
   CHAR16                  TempStr[EFI_MAX_ITEM_VALUE_LENGTH + 1];
-  INTN                    XOffSetInScreen;
-  INTN                    XOffSetInBuffer;
-  INTN                    FirstInDisplay;
-  INTN                    LastInDisplay;
-  INTN                    CurrentLength;
+  UINTN                   XOffSetInScreen;
+  UINTN                   XOffSetInBuffer;
+  UINTN                   FirstInDisplay;
+  UINTN                   LastInDisplay;
+  UINTN                   CurrentLength;
   UINTN                   TempValue;
   EFI_DIALOG_CONTEXT      MsgDialogContext;
   CHAR16                  *MsgDialogTitle;
@@ -2187,8 +2187,8 @@ Returns:
   BOOLEAN         BufferChanged;
   CHAR16          Buffer[EFI_MAX_ITER_EDIT_LENGTH + 1];
   CHAR16          TempStr[EFI_MAX_ITER_EDIT_LENGTH + 1];
-  INTN            XOffSetInBuffer;
-  INTN            CurrentLength;
+  UINTN           XOffSetInBuffer;
+  UINTN           CurrentLength;
   UINT32          TempValue;
 
   //

@@ -647,23 +647,6 @@ DeviceConfigGetString (
 }
 
 
-EFI_STATUS
-DeviceConfigSetString (
-  IN EFI_INI_FILE_HANDLE    IniFile,
-  IN UINT32                 Order,
-  IN CHAR16                 *Key,
-  IN CHAR16                 *Buffer
-  )
-{
-  return IniFile->SetStringByOrder (
-                    IniFile,
-                    Order,
-                    EFI_SCT_SECTION_DEVICE_CONFIG,
-                    Key,
-                    Buffer
-                    );
-}
-
 STATIC
 VOID
 InsertChildHandles (
