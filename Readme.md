@@ -3,8 +3,9 @@
 edk2-staging branch for a test harness, test case SDK, and test cases for the
 edk2 repository and platform firmware that is based on the edk2 repository.
 
-## **edk2-stagaing branch owners**
+## **edk2-staging branch owners**
 * Michael Kinney <michael.d.kinney@intel.com>
+* Supreeth Venkatesh <Supreeth.Venkatesh@arm.com>
 
 ## **Features**
 * Test harness that runs from the UEFI Shell
@@ -76,13 +77,13 @@ build output directory.
 
 ```cmd
 git clone https://github.com/tianocore/edk2.git
-git clone https://github.com/tianocore/edk2-staging.git --brach edk2-test
+git clone https://github.com/tianocore/edk2-staging.git --branch edk2-test
 
 set WORKSPACE=%CD%
 set EDK_TOOLS_PATH=%WORKSPACE%\edk2\BaseTools
+set EDK_TOOLS_BIN=%EDK_TOOLS_PATH%\BinWrappers\WindowsLike
 set PACKAGES_PATH=%WORKSPACE%\edk2;%WORKSPACE%\edk2-staging
-set EDK_TOOLS_BIN=%WORKSPACE%\BaseTools\BinWrappers\WindowsLike
-path=%path%;%WORKSPACE%\edk2\BaseTools\Bin\Win32
+path=%path%;%EDK_TOOLS_PATH%\Bin\Win32
 
 cd edk2
 edkSetup.bat
@@ -92,6 +93,49 @@ build -a IA32 -a X64 -t VS2015x86 -p TestCasePkg/TestCasePkg.dsc
 ```
 
 ## **Linux Build Instructions**
+
+### Pre-requisites
+
+* GIT client: Available from https://git-scm.com/downloads
+* GCC 4.9 compiler or XCODE compiler
+
+Create a new directory for an EDK II WORKSPACE.
+
+The code block below shows the GIT clone operations required to pull the edk2
+repository, and the edk2-test branch from the edk2-staging repository.
+
+Next it sets environment variables that must be set before running
+```edksetup.bat```. Since content is being pulled from multiple repositories,
+the EDK II [Multiple Workspace](
+https://github.com/tianocore/tianocore.github.io/wiki/Multiple_Workspace)
+feature is used.
+
+Next, the ```edksetup.bat``` file is run to complete the initialization of an
+EDK II build environment.  Two example build commands are shown.  The first one
+in ```TestFrameworkPkg/TestFrameworkPkg.dsc``` builds a test harness and creates
+an installer in the build output directory.  The second one in
+```TestCasePkg/TestCasePkg.dsc``` builds a sample test case using a test library
+from the ```TestFrameworkPkg``` and adds the test case to the installer in the
+build output directory.
+
+```cmd
+git clone https://github.com/tianocore/edk2.git
+git clone https://github.com/tianocore/edk2-staging.git --branch edk2-test
+
+export WORKSPACE=`pwd`
+export EDK_TOOLS_PATH="$WORKSPACE/edk2/BaseTools"
+export PACKAGES_PATH="$WORKSPACE/edk2:$WORKSPACE/edk2-staging"
+export EDK_TOOLS_BIN="$WORKSPACE/edk2/BaseTools/BinWrappers/PosixLike"
+export CONF_PATH="$WORKSPACE/edk2/Conf"
+export PATH="$PATH:$EDK_TOOLS_BIN"
+
+cd edk2
+make -C BaseTools
+. edksetup.sh
+
+build -a IA32 -a X64 -t GCC49 -p TestFrameworkPkg/TestFrameworkPkg.dsc
+build -a IA32 -a X64 -t GCC49 -p TestCasePkg/TestCasePkg.dsc
+```
 
 ## **Installation Instructions**
 
