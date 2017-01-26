@@ -506,7 +506,7 @@ ParseHob (
     return EFI_NOT_FOUND;
   }
 
-  Status = gST->BootServices->AllocatePool (EfiBootServicesData, REPORT_BUFFER_SIZE, &(VOID*)ReportBuffer);
+  Status = gST->BootServices->AllocatePool (EfiBootServicesData, REPORT_BUFFER_SIZE, (VOID **)&ReportBuffer);
   if (EFI_ERROR (Status)) {
     gST->BootServices->FreePool ((VOID*)ReportBuffer);
     return Status;
@@ -693,7 +693,7 @@ InitManageModule (
     Fclose(InitConfig);
     goto end;
   }
-  Status = gST->BootServices->AllocatePool (EfiBootServicesData, FileSize, &(VOID*)FileBuffer);
+  Status = gST->BootServices->AllocatePool (EfiBootServicesData, FileSize, (VOID **)&FileBuffer);
   if (EFI_ERROR (Status)) {
     goto end;
   }

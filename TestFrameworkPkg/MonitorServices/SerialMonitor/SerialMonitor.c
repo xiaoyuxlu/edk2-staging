@@ -217,13 +217,13 @@ Returns:
     gBS->HandleProtocol (
           HandleBuffer[HANDLE_IN_USE - 1],
           &gEfiSerialIoProtocolGuid,
-          &SerialIo
+          (VOID **)&SerialIo
           );
   } else {
     Status = gBS->LocateProtocol (
                     &gEfiSerialIoProtocolGuid,
                     NULL,
-                    &SerialIo
+                    (VOID **)&SerialIo
                     );
     if (EFI_ERROR (Status)) {
       return Status;
@@ -506,7 +506,7 @@ Returns:
   Status = gBS->UninstallMultipleProtocolInterfaces (
                   ImageHandle,
                   &gEfiEntsMonitorProtocolGuid,
-                  gSerialMonitorInterface,
+                  (VOID **)gSerialMonitorInterface,
                   NULL
                   );
 
@@ -558,7 +558,7 @@ Returns:
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   sizeof (EFI_ENTS_MONITOR_PROTOCOL),
-                  &gSerialMonitorInterface
+                  (VOID **)&gSerialMonitorInterface
                   );
   if (EFI_ERROR (Status)) {
     goto Error;

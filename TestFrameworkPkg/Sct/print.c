@@ -431,7 +431,7 @@ _PoolCatPrint (
     ps.Output  = Output;
     ps.Context = spc;
     ps.fmt.u.pw = fmt;
-    ps.args = args;
+    VA_COPY(ps.args, args);
     _Print (&ps);
 }
 
@@ -765,7 +765,7 @@ _IPrint (
         ps.fmt.u.pc = fmta;
     }
 
-    ps.args = args;
+    VA_COPY(ps.args, args);
 
     if (Column != (UINTN) -1) {
         Out->SetCursorPosition(Out, Column, Row);
@@ -1352,8 +1352,8 @@ EnablePageBreak (
   gST->ConOut->QueryMode (
                 gST->ConOut,
                 gST->ConOut->Mode->Mode,
-                &mPrintMode.MaxColumn,
-                &mPrintMode.MaxRow
+                (UINTN *)&mPrintMode.MaxColumn,
+                (UINTN *)&mPrintMode.MaxRow
                 );
 
   mPrintMode.Row = StartRow;

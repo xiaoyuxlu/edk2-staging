@@ -52,7 +52,7 @@ EFI_STATUS
 // EFI Black-Box Test Entry
 //
 
-typedef struct _EFI_BB_TEST_ENTRY {
+struct _EFI_BB_TEST_ENTRY {
   EFI_BB_TEST_ENTRY                     *Next;
   EFI_GUID                              EntryId;
   CHAR16                                *Name;
@@ -61,19 +61,19 @@ typedef struct _EFI_BB_TEST_ENTRY {
   EFI_GUID                              *SupportProtocols;
   EFI_TEST_ATTRIBUTE                    CaseAttribute;
   EFI_BB_ENTRY_POINT                    EntryPoint;
-} EFI_BB_TEST_ENTRY;
+};
 
 //
 // EFI Black-Box Test Protocol
 //
 
-typedef struct _EFI_BB_TEST_PROTOCOL {
+struct _EFI_BB_TEST_PROTOCOL {
   UINT64                                TestRevision;
   EFI_GUID                              CategoryGuid;
   CHAR16                                *Name;
   CHAR16                                *Description;
   EFI_BB_TEST_ENTRY                     *EntryList;
-} EFI_BB_TEST_PROTOCOL;
+};
 
 //
 // Global ID for EFI Black-Box Test Protocol

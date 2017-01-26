@@ -101,10 +101,6 @@ CHAR16 *DashLine = L"-----------------------------------------------------------
 
 #define IS_LEAP(y) (((y) % 4) == 0 && ((y) % 100) != 0 || ((y) % 400) == 0)
 
-static const UINTN  MonthLengths[2][12] = {
-  { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
-  { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
-};
 
 #define MINS_PER_HOUR       60
 #define HOURS_PER_DAY       24
@@ -162,7 +158,7 @@ StslGuidsDuplicate (
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (NoGuids + 1) * sizeof(EFI_GUID),
-                  &Buffer
+                  (VOID **)&Buffer
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -188,7 +184,7 @@ StslStrDuplicate (
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (StrLen (String) + 1) * sizeof(CHAR16),
-                  &Buffer
+                  (VOID **)&Buffer
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -199,49 +195,6 @@ StslStrDuplicate (
   return Buffer;
 }
 
-UINT32
-SecondsElapsedFromBaseYear (
-  IN UINT16             BaseYear,
-  IN UINT16             Year,
-  IN UINT8              Month,
-  IN UINT8              Day,
-  IN UINT8              Hour,
-  IN UINT8              Minute,
-  IN UINT8              Second
-  )
-{
-  UINTN       Seconds;
-  UINT32      LeapYear;
-  INTN        Index;
-
-  Seconds  = 0;
-  for (Index = BaseYear; Index < Year; Index ++) {
-    if (IS_LEAP(Index)) {
-      Seconds += DAYS_PER_LYEAR * SECS_PER_DAY;
-    } else {
-      Seconds += DAYS_PER_NYEAR * SECS_PER_DAY;
-    }
-  }
-
-  LeapYear = IS_LEAP(Year);
-  for (Index = 0; Index < Month - 1; Index ++) {
-    Seconds += MonthLengths[LeapYear][Index] * SECS_PER_DAY;
-  }
-
-  for (Index = 0; Index < Day - 1; Index ++) {
-    Seconds += SECS_PER_DAY;
-  }
-
-  for (Index = 0; Index < Hour; Index ++) {
-    Seconds += SECS_PER_HOUR;
-  }
-
-  for (Index = 0; Index < Minute; Index ++) {
-    Seconds += SECS_PER_MIN;
-  }
-
-  return (UINT32) (Seconds + Second);
-}
 
 EFI_STATUS
 StslFreePointer (
@@ -696,7 +649,7 @@ Returns:
   // Send assertion to remotion computer if the network
   // record assertion utility installed.
   //
-  NetRecordAssertion(Type, EventId, Buffer);
+  NetRecordAssertion((NET_EFI_TEST_ASSERTION)Type, EventId, Buffer);
 
   //
   // write key file detail line
@@ -1575,7 +1528,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   LibHandle,
                   &gEfiStandardTestLibraryGuid,
-                  &StandardTest,
+                  (VOID **)&StandardTest,
                   TslPrivate->ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -1632,7 +1585,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   ImageHandle,
                   &gEfiTslInitInterfaceGuid,
-                  &TslInit,
+                  (VOID **)&TslInit,
                   ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL

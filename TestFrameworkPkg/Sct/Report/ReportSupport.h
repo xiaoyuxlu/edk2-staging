@@ -77,7 +77,7 @@ typedef struct {
 //
 typedef struct _EFI_SCT_ASSERTION_INFOR  EFI_SCT_ASSERTION_INFOR;
 
-typedef struct _EFI_SCT_ASSERTION_INFOR {
+struct _EFI_SCT_ASSERTION_INFOR {
   EFI_SCT_ASSERTION_INFOR         *Next;
   EFI_SCT_ASSERTION_INFOR         *Prev;
   CHAR16                          Index[EFI_SCT_INDEX_LEN];
@@ -90,14 +90,14 @@ typedef struct _EFI_SCT_ASSERTION_INFOR {
   CHAR16                          RuntimeInfor[EFI_SCT_RUNTIME_INFOR_LEN];
   CHAR16                          DevicePath[EFI_SCT_DEVICE_PATH_LEN];
   CHAR16                          FileName[EFI_SCT_NAME_LEN];
-} EFI_SCT_ASSERTION_INFOR;
+} ;
 
 //
 // EFI_SCT_REPORT_ITEM
 //
 typedef struct _EFI_SCT_REPORT_ITEM  EFI_SCT_REPORT_ITEM;
 
-typedef struct _EFI_SCT_REPORT_ITEM {
+struct _EFI_SCT_REPORT_ITEM {
   EFI_SCT_REPORT_ITEM             *Next;
   EFI_SCT_REPORT_ITEM             *Prev;
   UINT32                          PassNumber;
@@ -107,7 +107,7 @@ typedef struct _EFI_SCT_REPORT_ITEM {
   CHAR16                          TestCategory[EFI_SCT_NAME_LEN];
   EFI_SCT_ASSERTION_INFOR         *FailAssertion;
   EFI_SCT_ASSERTION_INFOR         *PassAssertion;
-} EFI_SCT_REPORT_ITEM;
+};
 
 //
 // EFI_SCT_REPORT_INFOR

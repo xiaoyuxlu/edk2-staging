@@ -14,13 +14,13 @@
 
 #include "EftpMain.h"
 
-UINT8 *mSupportedOptions[EFTP_SUPPORTED_OPTIONS_COUNT] = {
+CHAR8 *mSupportedOptions[EFTP_SUPPORTED_OPTIONS_COUNT] = {
   "timeout",
   "blksize",
   "tsize",
 };
 
-UINT8 *mUnsupportedOptions[EFTP_UNSUPPORTED_OPTIONS_COUNT] = {
+CHAR8 *mUnsupportedOptions[EFTP_UNSUPPORTED_OPTIONS_COUNT] = {
   "restart",
   "session",
   "pktdelay",

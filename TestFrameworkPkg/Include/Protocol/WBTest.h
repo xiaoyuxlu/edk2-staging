@@ -51,7 +51,7 @@ EFI_STATUS
 // EFI White-Box Test Entry
 //
 
-typedef struct _EFI_WB_TEST_ENTRY {
+struct _EFI_WB_TEST_ENTRY {
   EFI_WB_TEST_ENTRY                     *Next;
   EFI_GUID                              EntryId;
   CHAR16                                *Name;
@@ -60,20 +60,20 @@ typedef struct _EFI_WB_TEST_ENTRY {
   EFI_GUID                              *SupportProtocols;
   EFI_TEST_ATTRIBUTE                    CaseAttribute;
   EFI_WB_ENTRY_POINT                    EntryPoint;
-} EFI_WB_TEST_ENTRY;
+} ;
 
 //
 // EFI White-Box Test Protocol
 //
 
-typedef struct _EFI_WB_TEST_PROTOCOL {
+struct _EFI_WB_TEST_PROTOCOL {
   UINT64                                TestRevision;
   EFI_GUID                              CategoryGuid;
   EFI_HANDLE                            ClientHandle;
   CHAR16                                *Name;
   CHAR16                                *Description;
   EFI_WB_TEST_ENTRY                     *EntryList;
-} EFI_WB_TEST_PROTOCOL;
+};
 
 //
 // Global ID for EFI White-Box Test Protocol

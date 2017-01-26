@@ -59,11 +59,11 @@ EFI_STATUS
   IN EFI_STATUS                             TestStatus
   );
 
-typedef struct _EFI_STANDARD_TSL_PRIVATE_INTERFACE {
+struct _EFI_STANDARD_TSL_PRIVATE_INTERFACE {
   EFI_STSL_SET_CONFIG                       SetConfig;
   EFI_STSL_BEGIN_LOGGING                    BeginLogging;
   EFI_STSL_END_LOGGING                      EndLogging;
-} EFI_STANDARD_TSL_PRIVATE_INTERFACE;
+};
 
 //
 // Test logging library's private interface
@@ -90,11 +90,11 @@ EFI_STATUS
   IN EFI_STATUS                             TestStatus
   );
 
-typedef struct _EFI_TLL_PRIVATE_INTERFACE {
+struct _EFI_TLL_PRIVATE_INTERFACE {
   EFI_TLL_SET_CONFIG                        SetConfig;
   EFI_TLL_BEGIN_LOGGING                     BeginLogging;
   EFI_TLL_END_LOGGING                       EndLogging;
-} EFI_TLL_PRIVATE_INTERFACE;
+};
 
 //
 // Test recovery library's private interface
@@ -109,8 +109,8 @@ EFI_STATUS
   IN CHAR16                                 *FileName
   );
 
-typedef struct _EFI_TRL_PRIVATE_INTERFACE {
+struct _EFI_TRL_PRIVATE_INTERFACE {
   EFI_TRL_SET_CONFIG                        SetConfig;
-} EFI_TRL_PRIVATE_INTERFACE;
+};
 
 #endif

@@ -18,21 +18,21 @@ STATIC
 EFI_STATUS
 ExtractTsize (
   OUT EFTP_OPTION  *Opt,
-  IN UINT8         *Str
+  IN CHAR8         *Str
   );
 
 STATIC
 EFI_STATUS
 ExtractTimeout (
   OUT EFTP_OPTION  *Opt,
-  IN UINT8         *Str
+  IN CHAR8         *Str
   );
 
 STATIC
 EFI_STATUS
 ExtractBlksize (
   IN EFTP_OPTION  *Opt,
-  UINT8           *Str
+  CHAR8           *Str
   );
 
 STATIC EFTP_OPTIONOBJ mOptionObjs[] = {
@@ -58,7 +58,7 @@ STATIC EFTP_OPTIONOBJ mOptionObjs[] = {
   }
 };
 
-STATIC UINT8          mSepeator[] = { '.', '.', '.', ',', ',', '\0' };
+UINT8          mSepeator[] = { '.', '.', '.', ',', ',', '\0' };
 
 VOID
 EftpInitOption (
@@ -122,12 +122,12 @@ Returns:
 
 --*/
 {
-  UINT8       *P;
-  UINT8       *Start;
+  CHAR8       *P;
+  CHAR8       *Start;
   UINT8       NOption;
-  UINT8       *Last;
-  UINT8       *Name;
-  UINT8       *Value;
+  CHAR8       *Last;
+  CHAR8       *Name;
+  CHAR8       *Value;
   UINT16      OpCode;
   EFI_STATUS  Status;
 
@@ -137,8 +137,8 @@ Returns:
     *OptionList = NULL;
   }
 
-  P       = (UINT8 *) Packet + EFTP_HEADER_LEN;
-  Last    = (UINT8 *) Packet + PacketLen;
+  P       = (CHAR8 *) Packet + EFTP_HEADER_LEN;
+  Last    = (CHAR8 *) Packet + PacketLen;
 
   OpCode  = NTOHS (Packet->Hdr.OpCode);
   switch (OpCode) {
@@ -277,8 +277,8 @@ Returns:
 
 INTN
 NetAsciiStrCaseCmp (
-  IN  UINT8   *Left,
-  IN  UINT8   *Right
+  IN  CHAR8   *Left,
+  IN  CHAR8   *Right
   )
 /*++
 
@@ -343,7 +343,7 @@ NetAsciiStrCaseCmp (
 STATIC
 EFI_STATUS
 StrToUint64 (
-  IN UINT8  *Str,
+  IN CHAR8  *Str,
   OUT UINT64*Value
   )
 /*++
@@ -365,7 +365,7 @@ Returns:
 --*/
 {
   EFI_STATUS  Status;
-  UINT8 *P;
+  CHAR8 *P;
 
   ASSERT (Str && Value);
 
@@ -389,7 +389,7 @@ STATIC
 EFI_STATUS
 ExtractTsize (
   OUT EFTP_OPTION  *Opt,
-  IN UINT8         *Str
+  IN CHAR8         *Str
   )
 /*++
 
@@ -418,7 +418,7 @@ STATIC
 EFI_STATUS
 ExtractTimeout (
   OUT EFTP_OPTION  *Opt,
-  IN UINT8         *Str
+  IN CHAR8         *Str
   )
 /*++
 
@@ -459,7 +459,7 @@ STATIC
 EFI_STATUS
 ExtractBlksize (
   IN EFTP_OPTION  *Opt,
-  UINT8           *Str
+  CHAR8           *Str
   )
 /*++
 

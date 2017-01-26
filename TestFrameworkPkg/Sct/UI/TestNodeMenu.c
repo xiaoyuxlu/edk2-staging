@@ -172,7 +172,7 @@ Returns:
     Status = gBS->AllocatePool(
                    EfiBootServicesData,
                    (EFI_MAX_EDIT_LENGTH + 1) * sizeof(CHAR16),
-                   &EditBuffer
+                   (VOID **)&EditBuffer
                    );
     if (EFI_ERROR (Status)) {
       DestroyMenuPage (Page);
@@ -513,7 +513,7 @@ Returns:
     Status = gBS->AllocatePool(
                    EfiBootServicesData,
                    (EFI_MAX_ITER_EDIT_LENGTH + 2) * 2,
-                   &TempString
+                   (VOID **)&TempString
                    );
     if (EFI_ERROR (Status)) {
       return EFI_OUT_OF_RESOURCES;
@@ -1422,7 +1422,7 @@ GetIterString(
   Status = gBS->AllocatePool(
                  EfiBootServicesData,
                  (EFI_MAX_ITER_EDIT_LENGTH + 2) * 2,
-                 &TempString
+                 (VOID **)&TempString
                  );
   if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;

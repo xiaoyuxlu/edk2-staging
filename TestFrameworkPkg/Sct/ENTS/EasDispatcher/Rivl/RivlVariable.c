@@ -563,7 +563,7 @@ Returns:
   }
 
   if ((Feature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-    VarBaseAddress = &(UINT8 *) RivlVariable->Address;
+    VarBaseAddress = (UINT8 **)&RivlVariable->Address;
   } else {
     VarBaseAddress = RivlVariable->Address;
   }
@@ -608,7 +608,7 @@ Returns:
     }
 
     if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-      BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+      BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
     } else {
       BufferVarBaseAddress = RivlBufferVariable->Address;
     }
@@ -686,7 +686,7 @@ Returns:
         }
 
         if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-          BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+          BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
         } else {
           BufferVarBaseAddress = RivlBufferVariable->Address;
         }
@@ -749,7 +749,7 @@ Returns:
       }
 
       if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-        BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+        BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
       } else {
         BufferVarBaseAddress = RivlBufferVariable->Address;
       }
@@ -815,7 +815,7 @@ Returns:
         }
 
         if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-          BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+          BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
         } else {
           BufferVarBaseAddress = RivlBufferVariable->Address;
         }
@@ -887,7 +887,7 @@ Returns:
           }
 
           if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-            BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+            BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
           } else {
             BufferVarBaseAddress = RivlBufferVariable->Address;
           }
@@ -946,7 +946,7 @@ Returns:
         }
 
         if ((BufferFeature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-          BufferVarBaseAddress = &(UINT8 *) RivlBufferVariable->Address;
+          BufferVarBaseAddress = (UINT8 **)&RivlBufferVariable->Address;
         } else {
           BufferVarBaseAddress = RivlBufferVariable->Address;
         }
@@ -1045,7 +1045,7 @@ Returns:
   }
 
   if ((Feature & RIVL_VAR_FEATURE_POINTER) != RIVL_VAR_FEATURE_POINTER) {
-    VarBaseAddress = &(UINT8 *) RivlVariable->Address;
+    VarBaseAddress = (UINT8 **)&RivlVariable->Address;
   } else {
     VarBaseAddress = RivlVariable->Address;
   }

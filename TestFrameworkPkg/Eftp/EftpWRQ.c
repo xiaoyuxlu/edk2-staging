@@ -464,6 +464,9 @@ Returns:
     }
 
     break;
+
+  default:
+    break;
   }
 
 }
@@ -595,6 +598,9 @@ Returns:
   case EFTP_TIME_WAIT:
 
     EftpWrqCleanUp (Private);
+    break;
+
+  default:
     break;
   }
 
@@ -791,6 +797,9 @@ Returns:
     //
     return EFI_ABORTED;
     break;
+
+  default:
+    break;
   }
 
   return EFI_ABORTED;
@@ -851,6 +860,9 @@ Returns:
     // Return an error to make EftpWrqRxCallback NOT to start receive again
     //
     return EFI_ABORTED;
+    break;
+
+  default:
     break;
   }
 
@@ -951,6 +963,9 @@ Returns:
     //
     return EFI_ABORTED;
     break;
+
+  default:
+    break;
   }
 
   return EFI_ABORTED;
@@ -1025,7 +1040,7 @@ Returns:
 
     EFTP_DEBUG_VERBOSE ((L"EftpWrqReadBlk: call PacketNeeded to fill in data\n"));
 
-    Status = Private->Token->PacketNeeded (&Private->Eftp, Private->Token, &DataLen, &DataBuf);
+    Status = Private->Token->PacketNeeded (&Private->Eftp, Private->Token, &DataLen, (VOID **)&DataBuf);
 
     if (EFI_ERROR (Status)) {
       EFTP_DEBUG_ERROR ((L"EftpWrqReadBlk: PacketNeeded returns %r .\n", Status));

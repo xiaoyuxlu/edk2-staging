@@ -227,8 +227,8 @@ EFTP_PACKET_BUFFER  *
 EftpBuildRequest (
   IN EFTP_IO_PRIVATE              *Private,
   IN UINT16                       OpCode,
-  IN UINT8                        *Filename,
-  IN UINT8                        *Mode,
+  IN CHAR8                        *Filename,
+  IN CHAR8                        *Mode,
   IN UINT32                       NOption,
   IN EFI_EFTP_OPTION              *OptionList,
   IN EFI_EVENT_NOTIFY             Func

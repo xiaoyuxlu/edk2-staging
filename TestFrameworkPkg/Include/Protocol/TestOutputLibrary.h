@@ -142,14 +142,14 @@ Returns:
 // EFI Test Output Library Protocol
 //
 
-typedef struct _EFI_TEST_OUTPUT_LIBRARY_PROTOCOL {
+struct _EFI_TEST_OUTPUT_LIBRARY_PROTOCOL {
   UINT64                                LibraryRevision;
   CHAR16                                *Name;
   CHAR16                                *Description;
   EFI_TOL_OPEN                          Open;
   EFI_TOL_CLOSE                         Close;
   EFI_TOL_WRITE                         Write;
-} EFI_TEST_OUTPUT_LIBRARY_PROTOCOL;
+};
 
 //
 // Global ID for EFI Test Output Library Protocol

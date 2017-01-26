@@ -227,7 +227,7 @@ Returns:
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   sizeof (EFI_ENTS_MONITOR_PROTOCOL),
-                  &gIP4NetworkMonitorInterface
+                  (VOID **)&gIP4NetworkMonitorInterface
                   );
   if (EFI_ERROR (Status)) {
     goto Error;
@@ -334,7 +334,7 @@ Returns:
   Status = gBS->LocateProtocol (
                   &gEfiIp4ServiceBindingProtocolGuid,
                   NULL,
-                  &Ip4Sb
+                  (VOID **)&Ip4Sb
                   );
   if (EFI_ERROR (Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"Locate Ip4Sb Error"));
@@ -360,7 +360,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   mIp4InstanceHandle,
                   &gEfiIp4ProtocolGuid,
-                  &Ip4,
+                  (VOID **)&Ip4,
                   mImageHandle,
                   mIp4InstanceHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -455,7 +455,7 @@ Returns:
   Status = gBS->LocateProtocol (
                   &gEfiIp4ServiceBindingProtocolGuid,
                   NULL,
-                  &Ip4Sb
+                  (VOID **)&Ip4Sb
                   );
   if (EFI_ERROR (Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"Locate Ip4Sb Error"));

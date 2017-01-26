@@ -348,7 +348,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR(Status)) {
     return Status;
@@ -390,7 +390,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR(Status)) {
     Handle->Close (Handle);
@@ -527,7 +527,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR(Status)) {
     return Status;

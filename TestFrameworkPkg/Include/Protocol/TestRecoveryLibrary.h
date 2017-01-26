@@ -103,13 +103,13 @@ Returns:
 //
 // EFI Test Recovery Library Protocol
 //
-typedef struct _EFI_TEST_RECOVERY_LIBRARY_PROTOCOL {
+struct _EFI_TEST_RECOVERY_LIBRARY_PROTOCOL {
   UINT64                                LibraryRevision;
   CHAR16                                *Name;
   CHAR16                                *Description;
   EFI_TRL_READ_RESET_RECORD             ReadResetRecord;
   EFI_TRL_WRITE_RESET_RECORD            WriteResetRecord;
-} EFI_TEST_RECOVERY_LIBRARY_PROTOCOL;
+};
 
 //
 // Global ID for EFI Test Recovery Library Protocol

@@ -115,7 +115,7 @@ _IPrint (
   IN VA_LIST                          args
   );
 
-STATIC
+
 INTN
 _DbgOut (
   IN VOID     *Context,
@@ -251,7 +251,7 @@ _PoolCatPrint (
   ps.Output   = Output;
   ps.Context  = spc;
   ps.fmt.u.pw = fmt;
-  ps.args     = args;
+  VA_COPY(ps.args, args);
   _Print (&ps);
 }
 
@@ -429,7 +429,7 @@ _IPrint (
     ps.fmt.u.pc   = fmta;
   }
 
-  ps.args = args;
+  VA_COPY(ps.args, args);
 
   if (Column != (UINTN) -1) {
     Out->SetCursorPosition (Out, Column, Row);

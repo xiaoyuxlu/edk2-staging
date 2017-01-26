@@ -33,6 +33,7 @@
 // Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_INI_FILE  EFI_INI_FILE;
+typedef EFI_INI_FILE *        EFI_INI_FILE_HANDLE;
 typedef struct _EFI_TEST_PROFILE_LIBRARY_PROTOCOL  EFI_TEST_PROFILE_LIBRARY_PROTOCOL;
 
 //
@@ -312,7 +313,7 @@ Returns:
 // EFI INI File
 //
 
-typedef struct _EFI_INI_FILE {
+struct _EFI_INI_FILE {
   UINT64                                Revision;
   EFI_INI_GETSTRING                     GetString;
   EFI_INI_SETSTRING                     SetString;
@@ -322,7 +323,7 @@ typedef struct _EFI_INI_FILE {
   EFI_INI_RMSECTION_BYORDER             RmSectionByOrder;
   EFI_INI_GETORDERNUM                   GetOrderNum;
   EFI_INI_FLUSH                         Flush;
-} EFI_INI_FILE, *EFI_INI_FILE_HANDLE;
+};
 
 //
 // EFI Test Profile Library Protocol API - IniOpen
@@ -491,7 +492,7 @@ Returns:
 // EFI Test Profile Library Protocol
 //
 
-typedef struct _EFI_TEST_PROFILE_LIBRARY_PROTOCOL {
+struct _EFI_TEST_PROFILE_LIBRARY_PROTOCOL {
   UINT64                                LibraryRevision;
   CHAR16                                *Name;
   CHAR16                                *Description;
@@ -500,7 +501,7 @@ typedef struct _EFI_TEST_PROFILE_LIBRARY_PROTOCOL {
   EFI_TPL_INI_CLOSE                     EfiIniClose;
   EFI_TPL_GET_SYSTEM_DEVICE_PATH        EfiGetSystemDevicePath;
   EFI_TPL_SET_SYSTEM_DEVICE_PATH        EfiSetSystemDevicePath;
-} EFI_TEST_PROFILE_LIBRARY_PROTOCOL;
+};
 
 //
 // Global ID for EFI Test Profile Library Protocol

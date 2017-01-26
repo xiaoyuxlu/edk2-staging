@@ -22,7 +22,7 @@
 EFI_STATUS
 SctReportConfig (
   OUT UINTN               *BufferSize,
-  OUT UINT8               **Buffer
+  OUT VOID                **Buffer
   )
 /*++
 

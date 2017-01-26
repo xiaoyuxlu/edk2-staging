@@ -1331,7 +1331,7 @@ Returns:
   EFI_STATUS            Status;
   INTN                  Ypos;
   INTN                  XLeft;
-  INTN                  Num;
+  UINTN                 Num;
   EFI_INPUT_KEY         Key;
   volatile INTN                  Index;
   BOOLEAN               WAITING;

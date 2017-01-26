@@ -129,18 +129,18 @@ EFI_STATUS
   IN UINTN                    Column
   );
 
-typedef struct _EFI_ITEM_VALUE_QUEUE {
+struct _EFI_ITEM_VALUE_QUEUE {
   EFI_ITEM_VALUE_QUEUE        *Next;
   EFI_ITEM_VALUE_QUEUE        *Prev;
   UINT16                      *StringValue;
   UINTN                       IntValue;
-} EFI_ITEM_VALUE_QUEUE;
+};
 
 typedef struct _EFI_MENU_ITEM_CONTEXT {
   EFI_GUID                    *ItemGuid;
 } EFI_MENU_ITEM_CONTEXT;
 
-typedef struct _EFI_MENU_ITEM {
+struct _EFI_MENU_ITEM {
   EFI_MENU_ITEM               *Next;
   EFI_MENU_ITEM               *Prev;
   EFI_ITEM_TYPE               ItemType;
@@ -158,7 +158,7 @@ typedef struct _EFI_MENU_ITEM {
   EFI_MENU_STRING             ItemDesc;
   DESC_PRINT                  DescPrint;
   VOID                        *Context; // can point to function or data struct
-} EFI_MENU_ITEM;
+};
 
 typedef struct {
   EFI_RECT                    ScrollBarRect;
@@ -189,21 +189,21 @@ EFI_STATUS
   IN EFI_MENU_PAGE            *MenuPage
 );
 
-typedef struct _EFI_HOT_KEY {
+struct _EFI_HOT_KEY {
   EFI_MENU_STRING             HotKeyName;
   EFI_MENU_STRING             HotKeyDesc;
   EFI_INPUT_KEY               KeyCode;
   BOOLEAN                     Visible;
   KEY_FUNCTION                Context;
   EFI_HOT_KEY                 *Next;
-} EFI_HOT_KEY;
+};
 
 typedef struct {
   EFI_HOT_KEY                 *HotKeyList;
   EFI_RECT                    FooterRect;
 } EFI_MENU_FOOTER;
 
-typedef struct _EFI_MENU_PAGE {
+struct _EFI_MENU_PAGE {
   UINTN                       BackColor;
   BOOLEAN                     HasHeader;
   EFI_MENU_HEADER             Header;
@@ -212,7 +212,7 @@ typedef struct _EFI_MENU_PAGE {
   BOOLEAN                     HasFooter;
   EFI_MENU_FOOTER             Footer;
   EFI_MENU_PAGE               *Parent;
-} EFI_MENU_PAGE;
+};
 
 EFI_STATUS
 TestPrintAt (

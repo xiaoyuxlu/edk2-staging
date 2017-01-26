@@ -119,7 +119,7 @@ Returns:
   Status = gBS->HandleProtocol (
                 DeviceHandle,
                 &gEfiSimpleFileSystemProtocolGuid,
-                &Vol
+                (VOID **)&Vol
                 );
   if (EFI_ERROR (Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"in LoadTestFile: Locate file volume - %r", Status));
@@ -158,7 +158,7 @@ Returns:
   Status = gBS->AllocatePool (
                 EfiBootServicesData,
                 FileInfoSize,
-                &FileInfo
+                (VOID **)&FileInfo
                 );
   if (EFI_ERROR (Status)) {
     TestDir->Close (TestDir);
@@ -440,7 +440,7 @@ Returns:
   Status = gBS->HandleProtocol (
                 ImageHandle,
                 &gEfiLoadedImageProtocolGuid,
-                &LoadedImage
+                (VOID **)&LoadedImage
                 );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -462,7 +462,7 @@ Returns:
     Status = gBS->HandleProtocol (
                   ImageHandle,
                   &gEfiEntsProtocolGuid,
-                  &EntsProtocol
+                  (VOID **)&EntsProtocol
                   );
     if (!EFI_ERROR (Status)) {
       Status = EntsCreateSingleTestFile (
@@ -598,7 +598,7 @@ Returns:
   Status = gBS->AllocatePool (
                 EfiBootServicesData,
                 sizeof (EFI_NETWORK_TEST_FILE),
-                TestFile
+                (VOID **)TestFile
                 );
   if (EFI_ERROR (Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"Allocate pool - %r", Status));

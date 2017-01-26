@@ -141,7 +141,7 @@ Returns:
              DevicePath,
              FileName,
              &BufferSize,
-             &Buffer
+             (VOID **)&Buffer
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Read file to buffer - %r", Status));
@@ -257,7 +257,7 @@ Returns:
                  DevicePath,
                  FileName,
                  &BufferSize,
-                 &Buffer
+                 (VOID **)&Buffer
                  );
       if (EFI_ERROR (Status)) {
         EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Read file to buffer - %r", Status));
@@ -374,7 +374,7 @@ Returns:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Handle protocol - %r", Status));
@@ -416,7 +416,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -467,7 +467,7 @@ Returns:
                  DevicePath,
                  FileName,
                  &BufferSize,
-                 &Buffer
+                 (VOID **)&Buffer
                  );
       if (EFI_ERROR (Status)) {
         EFI_SCT_DEBUG ((EFI_SCT_D_DEBUG, L"Read file to buffer - %r", Status));
@@ -640,7 +640,7 @@ Arguments:
   //
   Status = SctReportConfig (
              &ConfigBufferSize,
-             &ConfigBuffer
+             (VOID **)&ConfigBuffer
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"SctReportConfig: %r", Status));
@@ -708,7 +708,7 @@ Arguments:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  AsciiBufferSize,
-                 &AsciiBuffer
+                 (VOID **)&AsciiBuffer
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

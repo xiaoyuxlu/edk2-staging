@@ -132,7 +132,7 @@ Input (
   CHAR16  *Response;
 
   Response = NULL;
-  ShellPromptForResponse (ShellPromptResponseTypeFreeform, Prompt, &Response);
+  ShellPromptForResponse (ShellPromptResponseTypeFreeform, Prompt, (VOID **)&Response);
   if (Response == NULL) {
     StrnCpy (String, L"", Length);
   } else {
@@ -443,7 +443,7 @@ DeviceConfigInsert (
   Status = gBS->HandleProtocol (
                  Handle,
                  &gEfiDevicePathProtocolGuid,
-                 &DevicePath
+                 (VOID **)&DevicePath
                  );
   if (EFI_ERROR (Status)) {
     Print (L"  Invalid handle number!\n");
@@ -936,7 +936,7 @@ DeviceConfigScan (
     Status = gBS->HandleProtocol (
                    HandleBuffer[Index],
                    &gEfiDevicePathProtocolGuid,
-                   &DevicePath
+                   (VOID **)&DevicePath
                    );
     if (EFI_ERROR (Status)) {
       continue;
@@ -949,7 +949,7 @@ DeviceConfigScan (
       Status = gBS->HandleProtocol (
                      HandleBuffer[Index],
                      &gEfiPciIoProtocolGuid,
-                     &PciIo
+                     (VOID **)&PciIo
                      );
       if (EFI_ERROR (Status)) {
         continue;
@@ -1244,7 +1244,7 @@ DeviceConfigScanDrivers (
           Status = gBS->HandleProtocol (
                          EntryBuffer[Index2].AgentHandle,
                          &gEfiComponentNameProtocolGuid,
-                         &ComponentName
+                         (VOID **)&ComponentName
                          );
           if (!EFI_ERROR (Status)) {
             Status = ComponentName->GetDriverName (
@@ -1275,7 +1275,7 @@ DeviceConfigScanDrivers (
           Status = gBS->HandleProtocol (
                          EntryBuffer[Index2].AgentHandle,
                          &gEfiLoadedImageProtocolGuid,
-                         &LoadedImage
+                         (VOID **)&LoadedImage
                          );
           if (!EFI_ERROR (Status)) {
             FilePathStr = ConvertDevicePathToText (LoadedImage->FilePath, FALSE, FALSE);

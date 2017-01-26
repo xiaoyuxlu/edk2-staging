@@ -47,7 +47,7 @@ STATIC EFI_MANAGED_NETWORK_COMPLETION_TOKEN TxLLToken;
 STATIC EFI_MANAGED_NETWORK_COMPLETION_TOKEN RxToken;
 STATIC EFI_MANAGED_NETWORK_TRANSMIT_DATA    TxData;
 STATIC EFI_MANAGED_NETWORK_TRANSMIT_DATA    TxLLData;
-STATIC EFI_MANAGED_NETWORK_TRANSMIT_DATA    TxProbeResp;
+       EFI_MANAGED_NETWORK_TRANSMIT_DATA    TxProbeResp;
 STATIC EFI_MANAGED_NETWORK_RECEIVE_DATA     *RxData;
 STATIC BOOLEAN                              HasReceivePacket        = FALSE;
 
@@ -233,7 +233,7 @@ Returns:
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   sizeof (EFI_ENTS_MONITOR_PROTOCOL),
-                  &gManagedNetworkMonitorInterface
+                  (VOID **)&gManagedNetworkMonitorInterface
                   );
   if (EFI_ERROR (Status)) {
     goto Error;
@@ -351,7 +351,7 @@ Returns:
   Status = gBS->HandleProtocol (
                   ControllerHandle,
                   &gEfiManagedNetworkServiceBindingProtocolGuid,
-                  &MnpSb
+                  (VOID **)&MnpSb
                   );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -376,7 +376,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   mMnpInstanceHandle,
                   &gEfiManagedNetworkProtocolGuid,
-                  &mMnp,
+                  (VOID **)&mMnp,
                   mImageHandle,
                   mMnpInstanceHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER

@@ -267,7 +267,7 @@ Returns:
   Status = gBS->AllocatePool (
                 EfiBootServicesData,
                 sizeof (EFI_NETWORK_TEST_FRAMEWORK_TABLE),
-                &gEasFT
+                (VOID **)&gEasFT
                 );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -281,7 +281,7 @@ Returns:
   Status = gBS->AllocatePool (
                 EfiBootServicesData,
                 sizeof (EFI_MONITOR_COMMAND),
-                &gEasFT->Cmd
+                (VOID **)&gEasFT->Cmd
                 );
   if (EFI_ERROR (Status)) {
     FreePool (gEasFT->Cmd);
@@ -579,7 +579,7 @@ Returns:
     Status = gBS->HandleProtocol (
                   HandleBuffer[Index],
                   &gEfiEntsMonitorProtocolGuid,
-                  &EntsMonitorInterface
+                  (VOID **)&EntsMonitorInterface
                   );
     if (EFI_ERROR (Status)) {
       EFI_ENTS_DEBUG((EFI_ENTS_D_ERROR, L"Can not get ENTS Monitor interface - %r", Status));

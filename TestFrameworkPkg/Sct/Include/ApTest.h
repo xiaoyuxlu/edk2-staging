@@ -42,7 +42,7 @@ typedef struct _EFI_AP_TEST_ENTRY  EFI_AP_TEST_ENTRY;
 // EFI Application Test Entry Point
 //
 
-typedef struct _EFI_AP_TEST_ENTRY {
+struct _EFI_AP_TEST_ENTRY {
   EFI_AP_TEST_ENTRY     *Next;
   EFI_GUID              EntryId;
   CHAR16                *Name;
@@ -51,7 +51,7 @@ typedef struct _EFI_AP_TEST_ENTRY {
   EFI_GUID              *SupportProtocols;
   UINT32                CaseAttribute;
   CHAR16                *Parameters;
-} EFI_AP_TEST_ENTRY;
+};
 
 //
 // EFI Application Test Interface

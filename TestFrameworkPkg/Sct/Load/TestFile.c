@@ -124,7 +124,7 @@ Returns:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate file system - %r", Status));
@@ -166,7 +166,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -579,7 +579,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  ImageHandle,
                  &gEfiLoadedImageProtocolGuid,
-                 &LoadedImage
+                 (VOID **)&LoadedImage
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate loaded image - %r", Status));
@@ -607,7 +607,7 @@ Routine Description:
     Status = gBS->HandleProtocol (
                    ImageHandle,
                    &gEfiBbTestGuid,
-                   &BbTest
+                   (VOID **)&BbTest
                    );
     if (!EFI_ERROR (Status)) {
       Status = CreateSingleTestFile (
@@ -633,7 +633,7 @@ Routine Description:
     Status = gBS->HandleProtocol (
                    ImageHandle,
                    &gEfiWbTestGuid,
-                   &WbTest
+                   (VOID **)&WbTest
                    );
     if (!EFI_ERROR (Status)) {
       Status = CreateSingleTestFile (
@@ -659,7 +659,7 @@ Routine Description:
     Status = gBS->HandleProtocol (
                    ImageHandle,
                    &gEfiIHVBbTestGuid,
-                   &BbTest
+                   (VOID **)&BbTest
                    );
     if (!EFI_ERROR (Status)) {
       Status = CreateSingleTestFile (
@@ -838,7 +838,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_TEST_FILE),
-                 TestFile
+                 (VOID **)TestFile
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

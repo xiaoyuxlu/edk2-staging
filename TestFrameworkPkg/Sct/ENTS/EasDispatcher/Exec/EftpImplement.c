@@ -68,7 +68,6 @@ Returns:
   return Index;
 }
 
-STATIC
 EFI_STATUS
 EftpTimeoutCallback (
   IN EFI_EFTP_PROTOCOL          *This,
@@ -95,7 +94,7 @@ Returns:
   return EFI_SUCCESS;
 }
 
-STATIC
+
 EFI_STATUS
 OpenMnpProtocol (
   VOID
@@ -131,7 +130,7 @@ Returns:
   Status = gBS->HandleProtocol (
                  ControllerHandle,
                  &gEfiManagedNetworkServiceBindingProtocolGuid,
-                 &TmpMnpSb
+                 (VOID **)&TmpMnpSb
                  );
   if (EFI_ERROR (Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"OpenMnpProtocol: LocateProtocol error ! - %r", Status));
@@ -173,7 +172,7 @@ Returns:
   return EFI_SUCCESS;
 }
 
-STATIC
+
 EFI_STATUS
 CloseMnpProtocol (
   VOID
@@ -241,7 +240,7 @@ OpenEftpProtocol (
   Status = gBS->HandleProtocol (
                  ControllerHandle,
                  &gEfiEftpServiceBindingProtocolGuid,
-                 &TmpEftpSb
+                 (VOID **)&TmpEftpSb
                  );
   if (EFI_ERROR(Status)) {
     EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"No Eftp driver has found!\n"));
@@ -355,7 +354,7 @@ Returns:
   Status = gBS->HandleProtocol (
                 mImageHandle,
                 &gEfiLoadedImageProtocolGuid,
-                &Image
+                (VOID **)&Image
                 );
   if (EFI_ERROR (Status)) {
     Print (L"Error: HandleProtocol LoadedImage ! - %r\n", Status);
@@ -365,7 +364,7 @@ Returns:
   Status = gBS->HandleProtocol (
                 Image->DeviceHandle,
                 &gEfiDevicePathProtocolGuid,
-                &DevicePath
+                (VOID **)&DevicePath
                 );
   if (EFI_ERROR (Status)) {
     Print (L"Error: HandleProtocol DevicePath ! - %r\n", Status);
@@ -609,8 +608,8 @@ Returns:
   EFI_STATUS                        Status;
   EFI_EFTP_TOKEN                    Token;
   EFI_EFTP_CONFIG_DATA              EftpCfgData;
-  UINT8                             FileName[MAX_FILENAME_LEN];
-  UINT8                             ModeStr[MAX_MODE_STR_LEN];
+  CHAR8                             FileName[MAX_FILENAME_LEN];
+  CHAR8                             ModeStr[MAX_MODE_STR_LEN];
   UINTN                             MacAddrLen;
 
   //

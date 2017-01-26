@@ -28,7 +28,6 @@ EftpRrqSaveBlk (
   IN UINTN            PacketLen
   );
 
-STATIC
 EFI_STATUS
 EftpRrqRecordLostBlock (
   IN EFTP_IO_PRIVATE    *Private,
@@ -42,7 +41,6 @@ EftpRrqFlushLostBlock (
   IN EFTP_IO_PRIVATE  *Private
   );
 
-STATIC
 EFI_STATUS
 EftpRrqSaveLostBlock (
   IN EFTP_IO_PRIVATE    *Private,
@@ -62,7 +60,6 @@ EftpRrqTxCallback (
   IN VOID       *Context
   );
 
-STATIC
 VOID
 NumToAsciiStr (
   IN UINTN  Number,
@@ -731,6 +728,9 @@ Returns:
     }
 
     break;
+
+  default:
+    break;
   }
 
 }
@@ -848,6 +848,9 @@ Returns:
     //
     return EFI_ABORTED;
     break;
+
+  default:
+    break;
   }
 
   return EFI_SUCCESS;
@@ -908,6 +911,9 @@ Returns:
     // ignore the error packet in time wait states
     //
     return EFI_ABORTED;
+    break;
+
+  default:
     break;
   }
 
@@ -1157,6 +1163,8 @@ Returns:
     EftpRrqCleanUp (Private);
     break;
 
+  default:
+    break;
   }
 
   return ;
@@ -1297,6 +1305,9 @@ Returns:
     //
     return EFI_ABORTED;
     break;
+
+  default:
+    break;
   }
 
   return EFI_SUCCESS;
@@ -1374,6 +1385,9 @@ Returns:
 
   case EFTP_TIME_WAIT:
     return EFI_ABORTED;
+    break;
+
+  default:
     break;
   }
 
@@ -1478,6 +1492,9 @@ Returns:
   case EFTP_TIME_WAIT:
     return EFI_SUCCESS;
     break;
+
+  default:
+    break;
   }
 
   return EFI_SUCCESS;
@@ -1563,6 +1580,8 @@ Returns:
     EftpRrqCleanUp (Private);
     return ;
 
+  default:
+    break;
   }
 
   return ;
@@ -1880,7 +1899,7 @@ Returns:
   return EFI_SUCCESS;
 }
 
-STATIC
+
 EFI_STATUS
 EftpRrqRecordLostBlock (
   IN EFTP_IO_PRIVATE    *Private,
@@ -1940,7 +1959,6 @@ Returns:
   (PrevEntry)->ForwardLink           = (NewEntry);\
   }
 
-STATIC
 EFI_STATUS
 EftpRrqSaveLostBlock (
   IN EFTP_IO_PRIVATE    *Private,

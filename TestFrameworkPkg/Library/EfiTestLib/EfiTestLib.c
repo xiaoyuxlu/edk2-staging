@@ -158,7 +158,7 @@ EfiInitAndInstallBBTestInterface (
   Status = gtBS->HandleProtocol (
                    *Handle,
                    &gEfiLoadedImageProtocolGuid,
-                   &LoadedImage
+                   (VOID **)&LoadedImage
                    );
   if (EFI_ERROR (Status)) {
     return EFI_INVALID_PARAMETER;
@@ -253,7 +253,7 @@ EfiInitAndInstallIHVBBTestInterface (
   Status = gtBS->HandleProtocol (
                    *Handle,
                    &gEfiLoadedImageProtocolGuid,
-                   &LoadedImage
+                   (VOID **)&LoadedImage
                    );
   if (EFI_ERROR (Status)) {
     return EFI_INVALID_PARAMETER;
@@ -452,7 +452,7 @@ EfiInitAndInstallWBTestInterface (
   Status = gtBS->HandleProtocol (
                    *Handle,
                    &gEfiLoadedImageProtocolGuid,
-                   &LoadedImage
+                   (VOID **)&LoadedImage
                    );
   if (EFI_ERROR (Status)) {
     return EFI_INVALID_PARAMETER;
@@ -590,7 +590,7 @@ BuildBBTestInterface (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_BB_TEST_PROTOCOL),
-                   &BBTest
+                   (VOID **)&BBTest
                    );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -638,7 +638,7 @@ AddBBTestEntry (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_BB_TEST_ENTRY),
-                   &BBTestEntry
+                   (VOID **)&BBTestEntry
                    );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -661,7 +661,7 @@ AddBBTestEntry (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_GUID) * (GuidCount + 1),
-                   &BBTestEntry->SupportProtocols
+                   (VOID **)&BBTestEntry->SupportProtocols
                    );
   if (EFI_ERROR (Status)) {
     gtBS->FreePool (BBTestEntry);
@@ -725,7 +725,7 @@ BuildWBTestInterface (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_WB_TEST_PROTOCOL),
-                   &WBTest
+                   (VOID **)&WBTest
                    );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -774,7 +774,7 @@ AddWBTestEntry (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_WB_TEST_ENTRY),
-                   &WBTestEntry
+                   (VOID **)&WBTestEntry
                    );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -797,7 +797,7 @@ AddWBTestEntry (
   Status = gtBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_GUID) * (GuidCount + 1),
-                   &WBTestEntry->SupportProtocols
+                   (VOID **)&WBTestEntry->SupportProtocols
                    );
   if (EFI_ERROR (Status)) {
     gtBS->FreePool (WBTestEntry);

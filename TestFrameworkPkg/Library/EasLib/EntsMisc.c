@@ -58,7 +58,7 @@ Returns:
   Status = gntBS->HandleProtocol (
                     ImageHandle,
                     &gEfiLoadedImageProtocolGuid,
-                    &Image
+                    (VOID **)&Image
                     );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -69,7 +69,7 @@ Returns:
   Status = gntBS->HandleProtocol (
                     Image->DeviceHandle,
                     &gEfiDevicePathProtocolGuid,
-                    &TempDevicePath
+                    (VOID **)&TempDevicePath
                     );
   if (EFI_ERROR (Status)) {
     return Status;

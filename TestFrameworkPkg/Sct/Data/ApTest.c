@@ -405,7 +405,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_AP_TEST_INTERFACE),
-                 &TempApTest
+                 (VOID **)&TempApTest
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -781,7 +781,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_AP_TEST_ENTRY),
-                 &TempApEntry
+                 (VOID **)&TempApEntry
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

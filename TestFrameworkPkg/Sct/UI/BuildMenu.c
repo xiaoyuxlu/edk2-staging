@@ -190,7 +190,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof (EFI_MENU_PAGE),
-                 &MyPage
+                 (VOID **)&MyPage
                  );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -1079,7 +1079,7 @@ Returns:
   Status = gBS->AllocatePool (
           EfiBootServicesData,
           sizeof (EFI_ITEM_VALUE_QUEUE),
-          &TempValueQueue
+          (VOID **)&TempValueQueue
           );
   if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
@@ -1210,7 +1210,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof (EFI_SCROLL_BAR),
-                 &ScrollBar
+                 (VOID **)&ScrollBar
                  );
   if(!EFI_ERROR (Status)) {
     ScrollBar->ScrollBarRect.TopLeft.Row = Page->Body.SplitPoint.Row + 1 ;

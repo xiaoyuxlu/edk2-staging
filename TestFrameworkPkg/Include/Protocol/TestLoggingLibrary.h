@@ -217,7 +217,7 @@ Returns:
 // EFI Test Logging Library Protocol
 //
 
-typedef struct _EFI_TEST_LOGGING_LIBRARY_PROTOCOL {
+struct _EFI_TEST_LOGGING_LIBRARY_PROTOCOL {
   UINT64                                LibraryRevision;
   CHAR16                                *Name;
   CHAR16                                *Description;
@@ -226,7 +226,7 @@ typedef struct _EFI_TEST_LOGGING_LIBRARY_PROTOCOL {
   EFI_TLL_EXIT_FUNCTION                 ExitFunction;
   EFI_TLL_DUMP_MASK                     DumpMask;
   EFI_TLL_DUMP_BUF                      DumpBuf;
-} EFI_TEST_LOGGING_LIBRARY_PROTOCOL;
+};
 
 //
 // Global ID for EFI Test Logging Library Protocol

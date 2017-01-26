@@ -94,7 +94,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     return FALSE;
@@ -182,7 +182,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Handle protocol - %r", Status));
@@ -224,7 +224,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -451,7 +451,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mReportBufferMaxSize * sizeof(CHAR16),
-                   &mReportBuffer
+                   (VOID **)&mReportBuffer
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -474,7 +474,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mReportBufferMaxSize * sizeof(CHAR16),
-                   &TempBuffer
+                   (VOID **)&TempBuffer
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

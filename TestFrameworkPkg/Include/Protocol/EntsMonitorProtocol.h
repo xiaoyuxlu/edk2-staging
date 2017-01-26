@@ -67,7 +67,7 @@ EFI_STATUS
   IN EFI_ENTS_MONITOR_PROTOCOL           *This
   );
 
-typedef struct _EFI_ENTS_MONITOR_PROTOCOL {
+struct _EFI_ENTS_MONITOR_PROTOCOL {
   VOID                        *MonitorName;
   VOID                        *MonitorIo;
   EFI_INIT_MONITOR            InitMonitor;
@@ -77,6 +77,6 @@ typedef struct _EFI_ENTS_MONITOR_PROTOCOL {
   EFI_MONITOR_SENDER          MonitorSender;
   EFI_MONITOR_SAVECONTEXT     MonitorSaveContext;
   EFI_MONITOR_RESTORECONTEXT  MonitorRestoreContext;
-} EFI_ENTS_MONITOR_PROTOCOL;
+};
 
 #endif // _ENTS_MONITOR_PROTOCOL_H_

@@ -67,7 +67,7 @@ _RecordPrint(
   _BuffPrint((CHAR8 *)Record->Value, Record->Size);
 }
 
-STATIC
+
 VOID
 _RecordListPrint(
   IN EFI_PASSIVE_TEST_CONTEXT_RECORD      *RecordList

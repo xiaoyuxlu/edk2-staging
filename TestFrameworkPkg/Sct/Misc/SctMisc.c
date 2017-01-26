@@ -298,7 +298,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(CHAR16) * (Length + 1),
-                 &ShortFileName
+                 (VOID **)&ShortFileName
                  );
   if (EFI_ERROR(Status)) {
     return NULL;
@@ -1236,7 +1236,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  (NumberOfTokens + 1) * sizeof(EFI_GUID),
-                 GuidArray
+                 (VOID **)GuidArray
                  );
   if (EFI_ERROR (Status)) {
     FreePool (TempBuffer);

@@ -632,8 +632,8 @@ Returns:
   INTN                    Ypos;
   INTN                    XLeft;
   EFI_INPUT_KEY           Key;
-  volatile INTN                    Index;
-  INTN                    WaitIndex;
+  volatile UINTN          Index;
+  UINTN                   WaitIndex;
   BOOLEAN                 WAITING;
   CHAR16                  Buffer[EFI_MAX_EDIT_LENGTH + 1];
   CHAR16                  TempStr[EFI_MAX_ITEM_VALUE_LENGTH + 1];
@@ -855,8 +855,8 @@ Returns:
 
         WAITING = FALSE;
         MenuItem = MenuPage->Body.CurrentSelected;
-        if (Key.ScanCode == SCAN_UP && MenuItem->Prev == NULL ||
-            Key.ScanCode == SCAN_DOWN && MenuItem->Next == NULL) {
+        if ((Key.ScanCode == SCAN_UP && MenuItem->Prev == NULL) ||
+            (Key.ScanCode == SCAN_DOWN && MenuItem->Next == NULL)) {
           //
           //no need to call the UpFunc or DownFunc so don't return the scancode
           //
@@ -1748,7 +1748,7 @@ Returns:
 {
   EFI_STATUS       Status;
   EFI_INPUT_KEY    Key;
-  INTN             Index;
+  UINTN            Index;
   EFI_HOT_KEY      *HotKey;
 
   //
@@ -2182,7 +2182,7 @@ Returns:
   INTN            XLeft;
   UINTN           X0;
   EFI_INPUT_KEY   Key;
-  INTN            Index;
+  UINTN           Index;
   BOOLEAN         WAITING;
   BOOLEAN         BufferChanged;
   CHAR16          Buffer[EFI_MAX_ITER_EDIT_LENGTH + 1];
@@ -2307,8 +2307,8 @@ Returns:
 
         WAITING = FALSE;
         MenuItem = MenuPage->Body.CurrentSelected;
-        if (Key.ScanCode == SCAN_UP && MenuItem->Prev == NULL ||
-            Key.ScanCode == SCAN_DOWN && MenuItem->Next == NULL) {
+        if ((Key.ScanCode == SCAN_UP && MenuItem->Prev == NULL) ||
+            (Key.ScanCode == SCAN_DOWN && MenuItem->Next == NULL)) {
           //
           //no need to call the UpFunc or DownFunc so don't return the scancode
           //

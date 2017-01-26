@@ -54,20 +54,20 @@ typedef struct {
 typedef struct _INI  INI;
 typedef struct _COMMENTLINE  COMMENTLINE;
 
-typedef struct _INI {
+struct _INI {
   UINT32                          commentNo;
   CHAR8                           *ptrSection;
   CHAR8                           *ptrEntry;
   CHAR8                           *ptrValue;
   INI                             *ptrNext;
-} INI;
+};
 
 
-typedef struct _COMMENTLINE {
+struct _COMMENTLINE {
   UINT32                          commentNo;
   CHAR8                           *ptrComment;
   COMMENTLINE                     *ptrNext;
-} COMMENTLINE;
+};
 
 typedef struct {
   UINT32                          Signature;
@@ -855,7 +855,7 @@ TplStrDuplicate (
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (StrLen (String) + 1) * sizeof(CHAR16),
-                  &Buffer
+                  (VOID **)&Buffer
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -2711,7 +2711,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   LibHandle,
                   &gEfiTestProfileLibraryGuid,
-                  &TestProfile,
+                  (VOID **)&TestProfile,
                   TslPrivate->ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -2764,7 +2764,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   ImageHandle,
                   &gEfiTslInitInterfaceGuid,
-                  &TslInit,
+                  (VOID **)&TslInit,
                   ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL

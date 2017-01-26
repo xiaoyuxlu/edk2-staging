@@ -646,7 +646,7 @@ DeviceConfigGetString (
                     );
 }
 
-STATIC
+
 EFI_STATUS
 DeviceConfigSetString (
   IN EFI_INI_FILE_HANDLE    IniFile,
@@ -788,7 +788,7 @@ GatherConfigHandles (
   Status = gBS->HandleProtocol (
                    SupportHandle,
                    &gEfiTestProfileLibraryGuid,
-                   &ProfileLib
+                   (VOID **)&ProfileLib
                    );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -900,7 +900,7 @@ GatherConfigHandles (
       Status = gBS->HandleProtocol (
                        HandleBuffer[Index],
                        &gEfiDevicePathProtocolGuid,
-                       &DevicePath
+                       (VOID **)&DevicePath
                        );
       if (EFI_ERROR (Status)) {
         continue;

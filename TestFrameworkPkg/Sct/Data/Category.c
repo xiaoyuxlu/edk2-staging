@@ -509,7 +509,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_CATEGORY_DATA),
-                 &TempCategory
+                 (VOID **)&TempCategory
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

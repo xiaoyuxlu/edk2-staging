@@ -1001,7 +1001,7 @@ Returns:
     Status = gBS->HandleProtocol (
                   ImageHandle,
                   &gEfiLoadedImageProtocolGuid,
-                  &LoadedImage
+                  (VOID **)&LoadedImage
                   );
     if (EFI_ERROR (Status)) {
       EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"in ExecElet: HandleProtocol - %r", Status));
@@ -1183,7 +1183,7 @@ Returns:
     Status = gBS->HandleProtocol (
                   HandleBuffer[HandleIndex],
                   &gEfiEntsProtocolGuid,
-                  &Interface
+                  (VOID **)&Interface
                   );
     if (EFI_ERROR (Status)) {
       EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"Handle protocol - %r, Index - %d", Status, HandleIndex));
@@ -1367,7 +1367,7 @@ Returns:
     //
     // Locate CpuArch protocol
     //
-    Status = gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, &Cpu);
+    Status = gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&Cpu);
     if (EFI_ERROR (Status)) {
       Print (L"Locate CpuArch protocol error\n");
     }

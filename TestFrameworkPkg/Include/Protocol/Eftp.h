@@ -71,7 +71,7 @@ typedef struct {
   UINT16  CheckSum;
   UINT16  OpCode;
   UINT16  Rsvd;
-  UINT8   Filename[1];
+  CHAR8   Filename[1];
 } EFI_EFTP_REQ_HEADER;
 
 typedef struct {
@@ -102,7 +102,7 @@ typedef struct {
   UINT16  CheckSum;
   UINT16  OpCode;
   UINT16  ErrorCode;
-  UINT8   ErrorMessage[1];
+  CHAR8   ErrorMessage[1];
 } EFI_EFTP_ERROR_HEADER;
 
 typedef union {
@@ -120,8 +120,8 @@ typedef union {
 // EFTP option definition
 //
 typedef struct {
-  UINT8 *OptionStr;
-  UINT8 *ValueStr;
+  CHAR8 *OptionStr;
+  CHAR8 *ValueStr;
 } EFI_EFTP_OPTION;
 
 //
@@ -140,9 +140,9 @@ typedef struct {
 typedef struct {
   EFI_EFTP_CONFIG_DATA  ConfigData;
   UINT8                 SupportedOptionCount;
-  UINT8                 **SupportedOptoins;
+  CHAR8                 **SupportedOptoins;
   UINT8                 UnsupportedOptionCount;
-  UINT8                 **UnsupportedOptoins;
+  CHAR8                 **UnsupportedOptoins;
 } EFI_EFTP_MODE_DATA;
 
 //
@@ -251,7 +251,7 @@ EFI_STATUS
   IN EFI_EFTP_PROTOCOL      * This
   );
 
-typedef struct _EFI_EFTP_PROTOCOL {
+struct _EFI_EFTP_PROTOCOL {
   EFI_EFTP_GET_MODE_DATA  GetModeData;
   EFI_EFTP_CONFIGURE      Configure;
   EFI_EFTP_GET_INFO       GetInfo;
@@ -260,17 +260,17 @@ typedef struct _EFI_EFTP_PROTOCOL {
   EFI_EFTP_WRITE_FILE     WriteFile;
   EFI_EFTP_READ_DIRECTORY ReadDirectory;
   EFI_EFTP_POLL           Poll;
-} EFI_EFTP_PROTOCOL;
+};
 
 //
 // EFTP token data
 //
-typedef struct _EFI_EFTP_TOKEN {
+struct _EFI_EFTP_TOKEN {
   IN OUT EFI_STATUS   Status;
   IN EFI_EVENT Event  OPTIONAL;
   IN EFI_EFTP_OVERRIDE_DATA * OverrideData OPTIONAL;
-  IN UINT8  *Filename;
-  IN UINT8 *ModeStr OPTIONAL;
+  IN CHAR8  *Filename;
+  IN CHAR8 *ModeStr OPTIONAL;
   IN UINT32 OptionCount;
   IN EFI_EFTP_OPTION * OptionList OPTIONAL;
   IN OUT UINT64 BufferSize;
@@ -279,7 +279,7 @@ typedef struct _EFI_EFTP_TOKEN {
   IN EFI_EFTP_CHECK_PACKET CheckPacket          OPTIONAL;
   IN EFI_EFTP_TIMEOUT_CALLBACK TimeoutCallback  OPTIONAL;
   IN EFI_EFTP_PACKET_NEEDED PacketNeeded        OPTIONAL;
-} EFI_EFTP_TOKEN;
+};
 
 extern EFI_GUID gEfiEftpServiceBindingProtocolGuid;
 extern EFI_GUID gEfiEftpProtocolGuid;

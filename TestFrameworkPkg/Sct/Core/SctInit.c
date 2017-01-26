@@ -77,7 +77,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_FRAMEWORK_TABLE),
-                 &gFT
+                 (VOID **)&gFT
                  );
   if (EFI_ERROR (Status)) {
     return Status;

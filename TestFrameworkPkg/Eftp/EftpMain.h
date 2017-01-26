@@ -44,10 +44,10 @@ typedef struct _EFTP_IO_PRIVATE  EFTP_IO_PRIVATE;
 
 extern UINT32                       mEftpDebugLevel;
 extern EFI_DRIVER_BINDING_PROTOCOL  gEftpDriverBinding;
-extern UINT8                        *mSupportedOptions[EFTP_SUPPORTED_OPTIONS_COUNT];
-extern UINT8                        *mUnsupportedOptions[EFTP_UNSUPPORTED_OPTIONS_COUNT];
+extern CHAR8                        *mSupportedOptions[EFTP_SUPPORTED_OPTIONS_COUNT];
+extern CHAR8                        *mUnsupportedOptions[EFTP_UNSUPPORTED_OPTIONS_COUNT];
 
-typedef struct _EFTP_IO_PRIVATE {
+struct _EFTP_IO_PRIVATE {
   UINTN                         Signature;
   LIST_ENTRY                List;
   EFI_EFTP_PROTOCOL             Eftp;
@@ -115,7 +115,7 @@ typedef struct _EFTP_IO_PRIVATE {
 
 #endif
 
-} EFTP_IO_PRIVATE;
+};
 
 //
 // API Prototype declare

@@ -106,7 +106,7 @@ Routine Description:
              DevicePath,
              FileName,
              &BufferSize,
-             &Buffer
+             (VOID **)&Buffer
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Read file to buffer - %r", Status));
@@ -983,7 +983,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mGuidDatabaseMaxSize * sizeof(EFI_SCT_GUID_DATABASE),
-                   &mGuidDatabase
+                   (VOID **)&mGuidDatabase
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1003,7 +1003,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mGuidDatabaseMaxSize * sizeof(EFI_SCT_GUID_DATABASE),
-                   &TempGuidDatabase
+                   (VOID **)&TempGuidDatabase
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1117,7 +1117,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mGuidAssertionMaxSize * sizeof(EFI_SCT_GUID_ASSERTION),
-                   &mGuidAssertion
+                   (VOID **)&mGuidAssertion
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1137,7 +1137,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    mGuidAssertionMaxSize * sizeof(EFI_SCT_GUID_ASSERTION),
-                   &TempGuidAssertion
+                   (VOID **)&TempGuidAssertion
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1291,7 +1291,7 @@ Routine Description:
     Status = gBS->AllocatePool (
                    EfiBootServicesData,
                    sizeof(EFI_SCT_REPORT_ITEM),
-                   &NewReportItem
+                   (VOID **)&NewReportItem
                    );
     if (EFI_ERROR (Status)) {
       EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1334,7 +1334,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_ASSERTION_INFOR),
-                 &NewAssertionInfor
+                 (VOID **)&NewAssertionInfor
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

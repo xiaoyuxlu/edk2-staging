@@ -149,7 +149,7 @@ Returns:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate file system - %r", Status));
@@ -191,7 +191,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -383,8 +383,8 @@ Returns:
   //
   Status = OpenSingleSupportFile (
              &gEfiStandardTestLibraryGuid,
-             &gFT->StslProtocol,
-             &gFT->StslInterface
+             (VOID **)&gFT->StslProtocol,
+             (VOID **)&gFT->StslInterface
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Open standard test - %r", Status));
@@ -397,7 +397,7 @@ Returns:
   //
   Status = OpenSingleSupportFile (
              &gEfiTestProfileLibraryGuid,
-             &gFT->TplProtocol,
+             (VOID **)&gFT->TplProtocol,
              NULL
              );
   if (EFI_ERROR (Status)) {
@@ -411,8 +411,8 @@ Returns:
   //
   Status = OpenSingleSupportFile (
              &gEfiTestRecoveryLibraryGuid,
-             &gFT->TrlProtocol,
-             &gFT->TrlInterface
+             (VOID **)&gFT->TrlProtocol,
+             (VOID **)&gFT->TrlInterface
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Open test recovery - %r", Status));
@@ -425,8 +425,8 @@ Returns:
   //
   Status = OpenSingleSupportFile (
              &gEfiTestLoggingLibraryGuid,
-             &gFT->TllProtocol,
-             &gFT->TllInterface
+             (VOID **)&gFT->TllProtocol,
+             (VOID **)&gFT->TllInterface
              );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Open test logging - %r", Status));
@@ -730,7 +730,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  ImageHandle,
                  &gEfiLoadedImageProtocolGuid,
-                 &LoadedImage
+                 (VOID **)&LoadedImage
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate loaded image - %r", Status));
@@ -758,7 +758,7 @@ Routine Description:
     Status = gBS->HandleProtocol (
                    ImageHandle,
                    &gEfiTslInitInterfaceGuid,
-                   &TslInit
+                   (VOID **)&TslInit
                    );
     if (!EFI_ERROR (Status)) {
       Status = CreateSingleSupportFile (
@@ -819,7 +819,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_TEST_FILE),
-                 SupportFile
+                 (VOID **)SupportFile
                  );
   if (EFI_ERROR(Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1107,7 +1107,7 @@ Returns:
   Status = gBS->HandleProtocol (
                  DeviceHandle,
                  &gEfiSimpleFileSystemProtocolGuid,
-                 &Vol
+                 (VOID **)&Vol
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate file system - %r", Status));
@@ -1149,7 +1149,7 @@ Returns:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  FileInfoSize,
-                 &FileInfo
+                 (VOID **)&FileInfo
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));
@@ -1387,7 +1387,7 @@ Routine Description:
   Status = gBS->HandleProtocol (
                  ImageHandle,
                  &gEfiLoadedImageProtocolGuid,
-                 &LoadedImage
+                 (VOID **)&LoadedImage
                  );
   if (EFI_ERROR (Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Locate loaded image - %r", Status));
@@ -1469,7 +1469,7 @@ Routine Description:
   Status = gBS->AllocatePool (
                  EfiBootServicesData,
                  sizeof(EFI_SCT_TEST_FILE),
-                 ProxyFile
+                 (VOID **)ProxyFile
                  );
   if (EFI_ERROR(Status)) {
     EFI_SCT_DEBUG ((EFI_SCT_D_ERROR, L"Allocate pool - %r", Status));

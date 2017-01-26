@@ -55,7 +55,7 @@ typedef
 EFI_STATUS
 (*ExtractOption) (
   OUT EFTP_OPTION * Opt,
-  IN UINT8        *Str
+  IN CHAR8        *Str
   );
 
 typedef
@@ -66,7 +66,7 @@ EFI_STATUS
 
 typedef struct _EFTP_OPTIONOBJ {
   UINTN         Index;
-  UINT8         *Name;
+  CHAR8         *Name;
   ExtractOption Extract;
   VerifyOption  Verify;
 } EFTP_OPTIONOBJ;

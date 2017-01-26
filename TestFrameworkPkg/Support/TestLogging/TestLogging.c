@@ -275,7 +275,7 @@ TllStrDuplicate (
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (StrLen (String) + 1) * sizeof(CHAR16),
-                  &Buffer
+                  (VOID **)&Buffer
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -311,7 +311,7 @@ TllGuidsDuplicate (
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (NoGuids + 1) * sizeof(EFI_GUID),
-                  &Buffer
+                  (VOID **)&Buffer
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -1058,7 +1058,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   LibHandle,
                   &gEfiTestLoggingLibraryGuid,
-                  &TestLogging,
+                  (VOID **)&TestLogging,
                   TslPrivate->ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -1113,7 +1113,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   ImageHandle,
                   &gEfiTslInitInterfaceGuid,
-                  &TslInit,
+                  (VOID **)&TslInit,
                   ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL

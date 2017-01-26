@@ -467,7 +467,7 @@ GetDestination (
     ShellPromptForResponse (
       ShellPromptResponseTypeFreeform,
       L"Input index of destination FS. 'q' to exit:",
-      &Response
+      (VOID **)&Response
       );
     Print (L"\n");
 
@@ -561,7 +561,7 @@ BackupTests (
     ShellPromptForResponse (
       ShellPromptResponseTypeFreeform,
       Prompt,
-      &Response
+      (VOID **)&Response
       );
     Print (L"\n");
 
@@ -642,7 +642,7 @@ BackupStartups (
     ShellPromptForResponse (
       ShellPromptResponseTypeFreeform,
       Prompt,
-      &Response
+      (VOID **)&Response
       );
     Print (L"\n");
 
@@ -701,6 +701,8 @@ InstallTest (
   if (SrcFsName == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+
+  SrcPath = NULL;
   for (Index = 0; SrcFsName[Index] != 0;  Index++) {
     if (SrcFsName[Index] == L':') {
       SrcPath = CatSPrint (NULL, L"%s", &SrcFsName[Index + 1]);
@@ -771,6 +773,8 @@ InstallStartup (
   if (SrcFsName == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+
+  SrcPath = NULL;
   for (Index = 0; SrcFsName[Index] != 0;  Index++) {
     if (SrcFsName[Index] == L':') {
       SrcPath = CatSPrint (NULL, L"%s\\..\\%s", &SrcFsName[Index + 1], INSTALL_SCT_STARTUP_FILE);

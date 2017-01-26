@@ -362,7 +362,7 @@ Returns:
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
                   (StrLen (FileName) + 1) * 2,
-                  &(Private->FileName)
+                  (VOID **)&(Private->FileName)
                   );
   if (EFI_ERROR (Status)) {
     TrlFreePointer (Private);
@@ -505,7 +505,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   LibHandle,
                   &gEfiTestRecoveryLibraryGuid,
-                  &TestRecovery,
+                  (VOID **)&TestRecovery,
                   TslPrivate->ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -560,7 +560,7 @@ Returns:
   Status = gBS->OpenProtocol (
                   ImageHandle,
                   &gEfiTslInitInterfaceGuid,
-                  &TslInit,
+                  (VOID **)&TslInit,
                   ImageHandle,
                   NULL,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL

@@ -79,4 +79,4 @@
   TestFrameworkPkg/PeiSctManageModule/PeiSctManageModule.inf
 
 [BuildOptions]
-  *_*_*_CC_FLAGS = /FAsc
+  MSFT:*_*_*_CC_FLAGS = /FAsc

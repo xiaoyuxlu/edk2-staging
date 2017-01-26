@@ -109,7 +109,7 @@ typedef struct _EFTP_COMPLETION_TOKEN {
 
 typedef struct _EFTP_ERRINFO {
   UINT16  Code;
-  UINT8   *Desc;
+  CHAR8   *Desc;
 } EFTP_ERRINFO;
 
 #endif

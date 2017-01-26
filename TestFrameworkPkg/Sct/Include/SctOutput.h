@@ -36,13 +36,13 @@
 //
 typedef struct _TEST_OUTPUT_FILE  TEST_OUTPUT_FILE;
 
-typedef struct _TEST_OUTPUT_FILE {
+struct _TEST_OUTPUT_FILE {
   TEST_OUTPUT_FILE            *Next;
   EFI_DEVICE_PATH_PROTOCOL    *DevicePath;
   CHAR16                      *FileName;
   EFI_FILE_HANDLE             FileHandle;
   UINTN                       OpenCount;
-} TEST_OUTPUT_FILE;
+};
 
 typedef struct {
   UINT32                                    Signature;

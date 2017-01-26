@@ -684,7 +684,7 @@ _DevPathMediaProtocol (
   EntsCatPrint (Str, L"%g", &MediaProt->Protocol);
 }
 
-STATIC
+
 VOID
 _DevPathFvFilePath (
   IN OUT ENTS_POOL_PRINT       *Str,

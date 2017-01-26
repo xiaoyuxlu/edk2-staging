@@ -41,22 +41,22 @@
   EntsContext.c
 
 [Sources.Ia32]
-  Ia32\EfiLibPlat.h
-  Ia32\InitPlat.c
+  Ia32/EfiLibPlat.h
+  Ia32/InitPlat.c
 
 [Sources.Ipf]
-  Ipf\EfiLibPlat.h
-  Ipf\InitPlat.c
-  Ipf\SalPal.c
-  Ipf\LibSalPal.h
+  Ipf/EfiLibPlat.h
+  Ipf/InitPlat.c
+  Ipf/SalPal.c
+  Ipf/LibSalPal.h
 
 [Sources.Ebc]
-  Ebc\EfiLibPlat.h
-  Ebc\EfiLibPlat.c
+  Ebc/EfiLibPlat.h
+  Ebc/EfiLibPlat.c
 
 [Sources.X64]
-  X64\EfiLibPlat.h
-  X64\EfiLibPlat.c
+  X64/EfiLibPlat.h
+  X64/EfiLibPlat.c
 
 [Packages]
   MdePkg/MdePkg.dec

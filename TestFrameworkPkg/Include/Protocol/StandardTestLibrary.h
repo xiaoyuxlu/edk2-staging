@@ -176,14 +176,14 @@ Returns:
 // EFI Standard Test Library Protocol
 //
 
-typedef struct _EFI_STANDARD_TEST_LIBRARY_PROTOCOL {
+struct _EFI_STANDARD_TEST_LIBRARY_PROTOCOL {
   UINT64                                LibraryRevision;
   CHAR16                                *Name;
   CHAR16                                *Description;
   EFI_RECORD_ASSERTION                  RecordAssertion;
   EFI_RECORD_MESSAGE                    RecordMessage;
   EFI_GET_RESULT_COUNT                  GetResultCount;
-} EFI_STANDARD_TEST_LIBRARY_PROTOCOL;
+};
 
 //
 // Global ID for EFI Standard Test Library Protocol

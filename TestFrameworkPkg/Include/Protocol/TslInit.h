@@ -98,12 +98,12 @@ Returns:
 // EFI TSL Initiation Interface
 //
 
-typedef struct _EFI_TSL_INIT_INTERFACE {
+struct _EFI_TSL_INIT_INTERFACE {
   UINT64                                Revision;
   EFI_GUID                              LibraryGuid;
   EFI_TSL_OPEN                          Open;
   EFI_TSL_CLOSE                         Close;
-} EFI_TSL_INIT_INTERFACE;
+};
 
 //
 // Global ID for EFI TSL Initiation Interface

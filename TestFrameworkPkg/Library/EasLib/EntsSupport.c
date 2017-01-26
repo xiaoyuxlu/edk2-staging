@@ -45,11 +45,11 @@ STATIC BOOLEAN                         Finished;
 STATIC EFI_NET_ASSERTION_CONFIG        NetAssertionConfigData  = {0, };
 
 #define MAX_DEVICE_PATH_STR_LEN      128
-STATIC  UINTN                          NICDevicePathLen                            = 0;
-STATIC  CHAR16                         NICDevicePathStr[MAX_DEVICE_PATH_STR_LEN]   = {0, };
+UINTN                          NICDevicePathLen                            = 0;
+CHAR16                         NICDevicePathStr[MAX_DEVICE_PATH_STR_LEN]   = {0, };
 
 #define SCT_AGENT_NIC_DEVICE_PATH    L"Sct Agent NIC Device Path"
-STATIC EFI_GUID gSctVendorGuid = {0x72092b90, 0x17da, 0x47d1, 0x95, 0xce, 0x88, 0xf0, 0x12, 0xe8, 0x50, 0x8d};
+EFI_GUID gSctVendorGuid = {0x72092b90, 0x17da, 0x47d1, 0x95, 0xce, 0x88, 0xf0, 0x12, 0xe8, 0x50, 0x8d};
 
 #define MAX_PACKET_LENGTH 1492
 
@@ -323,9 +323,9 @@ UdpCkSum (
 STATIC
 UINT32
 AssertionPayloadGen (
-  IN UINT8                          *MessageHead,
-  IN UINT8                          *MessageBody,
-  OUT UINT8                         *PacketBuffer
+  IN CHAR8                          *MessageHead,
+  IN CHAR8                          *MessageBody,
+  OUT CHAR8                         *PacketBuffer
   )
 /*++
 
@@ -411,7 +411,7 @@ Returns:
   CopyMem (&ippkt->data[0], data, datalen);
 
   ippkt->cksum  = 0;
-  ippkt->cksum  = HTONS (IpCkSum ((short *) (buffer), headlen / 2));
+  ippkt->cksum  = HTONS (IpCkSum ((UINT16 *) (buffer), headlen / 2));
 
   CopyMem (&ippkt->data[0], data, datalen);
 
@@ -481,13 +481,13 @@ Returns:
 
 UINTN
 AssertionPacketGen (
-  IN  UINT8                     *MessageHead,
-  IN  UINT8                     *MessageBody,
+  IN  CHAR8                     *MessageHead,
+  IN  CHAR8                     *MessageBody,
   IN  EFI_NET_ASSERTION_CONFIG  *ConfigData,
-  OUT UINT8                     *PacketBuffer
+  OUT CHAR8                     *PacketBuffer
   )
 {
-  UINT8                       *AssertionPkt;
+  CHAR8                       *AssertionPkt;
   UDP_PACKET                  *UdpPkt;
   IPV4_PACKET                 *IpPkt;
   UINT32                      SrcIpv4Add, DstIpv4Add;
@@ -498,14 +498,14 @@ AssertionPacketGen (
   SrcIpv4Add = HTONL (*((UINT32 *) ConfigData->StationIp.Addr));
   DstIpv4Add = HTONL (*((UINT32 *) ConfigData->ServerIp.Addr));
 
-  AssertionPkt  = (UINT8 *) (PacketBuffer + IPV4_HEAD_LEN + UDP_HEAD_LEN);
+  AssertionPkt  = PacketBuffer + IPV4_HEAD_LEN + UDP_HEAD_LEN;
   UdpPkt        = (UDP_PACKET *) (PacketBuffer + IPV4_HEAD_LEN);
   IpPkt         = (IPV4_PACKET *) (PacketBuffer);
 
   AssertionPktLen = AssertionPayloadGen (
                       MessageHead,
                       MessageBody,
-                      (UINT8 *) AssertionPkt
+                      AssertionPkt
                       );
 
   UpdLen = UdpPacketGen (
@@ -724,12 +724,13 @@ Returns:
 
 STATIC
 VOID
+EFIAPI
 NotifyFunc (
   EFI_EVENT               Event,
-  BOOLEAN                 *FinishedParameter
+  VOID                    *FinishedParameter
   )
 {
-  *FinishedParameter = TRUE;
+  *(BOOLEAN *)FinishedParameter = TRUE;
   return ;
 }
 
@@ -837,7 +838,7 @@ NetAssertionUtilityInstall (
   Status = gntBS->HandleProtocol (
                     ControllerHandle,
                     &gEfiManagedNetworkServiceBindingProtocolGuid,
-                    &MnpSb
+                    (VOID **)&MnpSb
                     );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -862,7 +863,7 @@ NetAssertionUtilityInstall (
   Status = gntBS->OpenProtocol (
                     MnpChildHandle,
                     &gEfiManagedNetworkProtocolGuid,
-                    &Mnp,
+                    (VOID **)&Mnp,
                     mImageHandle,
                     MnpChildHandle,
                     EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -994,7 +995,7 @@ EntsNetworkServiceBindingGetControllerHandle (
     Status = gntBS->HandleProtocol (
                       NICHandleBuffer[Index],
                       &gEfiDevicePathProtocolGuid,
-                      &DevicePath
+                      (VOID **)&DevicePath
                       );
     if (EFI_ERROR(Status)) {
       EFI_ENTS_DEBUG ((EFI_ENTS_D_ERROR, L"Can not get device path - %r\n", Status));
@@ -1073,7 +1074,7 @@ EntsChooseNICAndSave (
     Status = gntBS->HandleProtocol (
                       NicHandleBuffer[Index],
                       &gEfiDevicePathProtocolGuid,
-                      &NicDevicePath
+                      (VOID **)&NicDevicePath
                       );
     if (EFI_ERROR(Status)) {
       EFI_ENTS_DEBUG((EFI_ENTS_D_ERROR, L"EntsChooseNICAndSave: HandleProtocol fail - %r", NicHandleBuffer[Index], Status));
@@ -1144,7 +1145,7 @@ GetMacAddress (
   Status = gntBS->HandleProtocol (
                     ControllerHandle,
                     &gEfiManagedNetworkServiceBindingProtocolGuid,
-                    &MnpSb
+                    (VOID **)&MnpSb
                     );
   if (EFI_ERROR(Status)) {
     EFI_ENTS_DEBUG((EFI_ENTS_D_ERROR, L"GetMacAddress: Handle MNP Service Binding Protocol fail - %r", Status));
