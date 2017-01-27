@@ -565,7 +565,6 @@ Returns:
   EFI_EFTP_PACKET     *Packet;
   EFI_STATUS          Status;
   UINT32              Len;
-  CHAR8               *P;
 
   ASSERT (Private && Err);
 
@@ -581,7 +580,6 @@ Returns:
   }
 
   Packet  = Buf->Packet;
-  P       = AsciiStrCpy (Packet->Error.ErrorMessage, Err->Desc);
 
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,

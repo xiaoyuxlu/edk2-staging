@@ -137,7 +137,6 @@ Returns:
 {
   EFI_STATUS                Status;
   CHAR16                    *Buffer;
-  CHAR16                    *Arg;
   UINTN                     BufferSize;
   EFI_ENTS_MONITOR_PROTOCOL *EntsMonitor;
 
@@ -146,7 +145,6 @@ Returns:
   BufferSize  = 0;
   Buffer      = NULL;
   Status      = EFI_SUCCESS;
-  Arg         = NULL;
   EntsMonitor = gEasFT->Monitor;
 
   Status = PostSctAgentDelayedCmd();
@@ -413,4 +411,3 @@ EmptyDelayedPostCmd (
     Cmd->ComdInterface = NULL;
   }
 }
-

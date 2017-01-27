@@ -242,6 +242,7 @@ Returns:
 
 
 EFI_STATUS
+EFIAPI
 MenuHeaderRefresh (
   IN EFI_MENU_PAGE            *MenuPage
   )
@@ -264,6 +265,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 MenuBodyRefresh (
   IN EFI_MENU_PAGE            *MenuPage
   )
@@ -290,6 +292,7 @@ Returns:
 //
 
 EFI_STATUS
+EFIAPI
 MenuBodyItemsRefresh (
   IN EFI_MENU_PAGE            *MenuPage
   )
@@ -312,6 +315,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 MenuItemRefresh (
   IN EFI_MENU_PAGE            *MenuPage,
   IN EFI_MENU_ITEM            *Item,
@@ -338,6 +342,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 MenuItemStatusRefresh(
   IN EFI_MENU_PAGE          *MenuPage,
   IN EFI_MENU_ITEM          *Item,
@@ -363,6 +368,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 MenuFooterRefresh (
   IN EFI_MENU_PAGE            *MenuPage
   )
@@ -385,6 +391,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 MenuPageRefresh (
   IN EFI_MENU_PAGE            *MenuPage
   )
@@ -463,12 +470,14 @@ DisplayMessage (
   );
 
 EFI_STATUS
+EFIAPI
 DoEdit (
   IN EFI_MENU_PAGE            *MenuPage,
   IN EFI_INPUT_KEY            *InKey
   );
 
 EFI_STATUS
+EFIAPI
 DoIterEdit (
   IN EFI_MENU_PAGE            *MenuPage,
   IN EFI_INPUT_KEY            *InKey
@@ -479,36 +488,43 @@ DoIterEdit (
 //
 
 EFI_STATUS
+EFIAPI
 UpFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 DownFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 PageUpFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 PageDownFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 SpaceFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 LeftArrowFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 RightArrowFunc (
   IN EFI_MENU_PAGE            *MenuPage
   );

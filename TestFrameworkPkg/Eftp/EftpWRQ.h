@@ -67,6 +67,7 @@ Returns:
 ;
 
 VOID
+EFIAPI
 EftpWrqRxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -113,6 +114,7 @@ Returns:
 ;
 
 VOID
+EFIAPI
 EftpWrqTimer (
   IN EFI_EVENT  Event,
   IN VOID       *Context

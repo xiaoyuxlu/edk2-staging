@@ -1400,7 +1400,7 @@ Routine Description:
     StrCpy (Buffer, L"Exhaustive");
     break;
   default:
-    EFI_UNSUPPORTED;
+    return EFI_UNSUPPORTED;
   }
 
   return EFI_SUCCESS;

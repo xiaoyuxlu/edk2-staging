@@ -49,21 +49,20 @@ UINTN                          NICDevicePathLen                            = 0;
 CHAR16                         NICDevicePathStr[MAX_DEVICE_PATH_STR_LEN]   = {0, };
 
 #define SCT_AGENT_NIC_DEVICE_PATH    L"Sct Agent NIC Device Path"
-EFI_GUID gSctVendorGuid = {0x72092b90, 0x17da, 0x47d1, 0x95, 0xce, 0x88, 0xf0, 0x12, 0xe8, 0x50, 0x8d};
+EFI_GUID gSctVendorGuid = {0x72092b90, 0x17da, 0x47d1, {0x95, 0xce, 0x88, 0xf0, 0x12, 0xe8, 0x50, 0x8d}};
 
 #define MAX_PACKET_LENGTH 1492
 
 STATIC EFI_MANAGED_NETWORK_TRANSMIT_DATA EntsMnpTxDataTemplate = {
   &NetAssertionConfigData.ServerMac,     // DestinationAddress
   &NetAssertionConfigData.MacAddr,       // SourceAddress
-  0x0800,                               // ProtocolType
+  0x0800,                                // ProtocolType
   0,                                     // DataLength
   0,                                     // HeaderLength
   1,                                     // FragmentCount
-  {
-    0,
-    NULL
-  }                                      // FragmentTable
+  {                                      // FragmentTable
+    {0, NULL}
+  }
 };
 
 #define ENTS_SERVER_MAC_ADDRESS_NAME    L"ServerMac"

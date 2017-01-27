@@ -87,6 +87,7 @@ CompareGuid (
   );
 
 BOOLEAN
+EFIAPI
 CheckBBTestCanRunAndRecordAssertion (
   IN EFI_STANDARD_TEST_LIBRARY_PROTOCOL  *StandardLib,
   IN CHAR16                              *AssertionString,
@@ -870,6 +871,7 @@ CompareGuid (
 #if (EFI_SPECIFICATION_VERSION >= 0x00020000)
 
 BOOLEAN
+EFIAPI
 CheckBBTestCanRunAndRecordAssertion (
   IN EFI_STANDARD_TEST_LIBRARY_PROTOCOL  *StandardLib,
   IN CHAR16                              *AssertionString,
@@ -895,6 +897,7 @@ CheckBBTestCanRunAndRecordAssertion (
 #else
 
 BOOLEAN
+EFIAPI
 CheckBBTestCanRunAndRecordAssertion (
   IN EFI_STANDARD_TEST_LIBRARY_PROTOCOL  *StandardLib,
   IN CHAR16                              *AssertionString,
@@ -908,6 +911,7 @@ CheckBBTestCanRunAndRecordAssertion (
 #endif
 
 EFI_STATUS
+EFIAPI
 EfiTestLibGetSystemConfigurationTable (
   IN EFI_GUID *TableGuid,
   IN OUT VOID **Table

@@ -29,26 +29,13 @@ EFI_RUNTIME_SERVICES            *gntRT  = NULL;
 //
 EFI_MEMORY_TYPE                 EntsPoolAllocationType = EfiBootServicesData;
 
-//
-// Unicode collation functions that are in use
-//
-EFI_UNICODE_COLLATION_PROTOCOL  EntsLibStubUnicodeInterface = {
-  EntsLibStubStriCmp,
-  EntsLibStubMetaiMatch,
-  EntsLibStubStrLwrUpr,
-  EntsLibStubStrLwrUpr,
-  NULL, // FatToStr
-  NULL, // StrToFat
-  NULL  // SupportedLanguages
-};
-
-EFI_UNICODE_COLLATION_PROTOCOL  *EntsUnicodeInterface = &EntsLibStubUnicodeInterface;
+EFI_UNICODE_COLLATION_PROTOCOL  *EntsUnicodeInterface = NULL;
 
 //
 // EFI IDs
 //
 EFI_GUID                        tEfiGlobalVariable  = EFI_GLOBAL_VARIABLE;
-EFI_GUID                        tNullGuid           = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+EFI_GUID                        tNullGuid           = { 0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0 }};
 
 //
 // Protocol IDs
@@ -150,6 +137,10 @@ Returns:
                &gntDevicePath,
                &gntFilePath
                );
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+    Status = gntBS->LocateProtocol(&gEfiUnicodeCollation2ProtocolGuid, NULL, (VOID**)&EntsUnicodeInterface);
     if (EFI_ERROR(Status)) {
       return Status;
     }

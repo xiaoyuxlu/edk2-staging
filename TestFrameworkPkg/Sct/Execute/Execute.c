@@ -1161,7 +1161,6 @@ Routine Description:
 --*/
 {
   EFI_STATUS              Status;
-  EFI_AP_TEST_INTERFACE   *ApTest;
 
   //
   // Check parameters
@@ -1173,8 +1172,6 @@ Routine Description:
   //
   // Application test interface
   //
-  ApTest = (EFI_AP_TEST_INTERFACE *) ExecuteInfo->TestProtocol;
-
   while (ExecuteInfo->Iteration < ExecuteInfo->TestCase->Iterations) {
     //
     // Application test
@@ -1453,7 +1450,6 @@ Routine Description:
   EFI_STATUS              TestStatus;
   BOOLEAN                 IsSkip;
   CHAR16                  *CmdLine;
-  EFI_AP_TEST_INTERFACE   *ApTest;
   EFI_AP_TEST_ENTRY       *ApEntry;
 
   //
@@ -1466,7 +1462,6 @@ Routine Description:
   //
   // Application test instance
   //
-  ApTest  = (EFI_AP_TEST_INTERFACE *) ExecuteInfo->TestProtocol;
   ApEntry = (EFI_AP_TEST_ENTRY *) ExecuteInfo->TestEntry;
 
   TestStatus = EFI_UNSUPPORTED;

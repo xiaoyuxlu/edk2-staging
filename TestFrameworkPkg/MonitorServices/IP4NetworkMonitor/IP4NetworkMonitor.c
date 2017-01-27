@@ -65,15 +65,15 @@ STATIC LINK_LAYER_STATUS        LinkStatus          = WaitForPacket;
 
 #define DESTINATION_ADDRESS \
   { \
-    255, 255, 255, 255 \
+    {255, 255, 255, 255} \
   }
 #define STATION_ADDRESS \
   { \
-    0, 0, 0, 0 \
+   {0, 0, 0, 0} \
   }
 #define SUBNET_MASK \
   { \
-    0, 0, 0, 0 \
+    {0, 0, 0, 0} \
   }
 
 EFI_IP4_CONFIG_DATA             mIp4ConfigDataTemplate = {
@@ -104,8 +104,7 @@ EFI_IP4_TRANSMIT_DATA           mIp4TxDataTemplate = {
   0,                    // TotalDataLength
   1,                    // FragmentCount
   {
-    0,
-    NULL
+    {0, NULL}
   }                     // FragmentTable
 };
 
@@ -121,8 +120,7 @@ EFI_IP4_RECEIVE_DATA            mIp4RxDataTemplate = {
   0,                    // DataLength
   1,                    // FragmentCount
   {
-    0,
-    NULL
+    {0, NULL}
   }                     // FragmentTable
 };
 
@@ -141,12 +139,14 @@ StartInitIp4 (
   );
 
 VOID
+EFIAPI
 NotifyFunctionSend (
   EFI_EVENT Event,
   VOID      *Context
   );
 
 VOID
+EFIAPI
 NotifyFunctionListen (
   EFI_EVENT Event,
   VOID      *Context
@@ -173,6 +173,7 @@ SetResendTimer (
   );
 
 VOID
+EFIAPI
 ReSendTimer (
   IN EFI_EVENT    Event,
   IN VOID         *Context
@@ -263,6 +264,7 @@ Error:
 }
 
 EFI_STATUS
+EFIAPI
 IP4NetworkMonitorUnload (
   IN EFI_HANDLE                ImageHandle
   )
@@ -303,6 +305,7 @@ Returns:
 // External functions implementations
 //
 EFI_STATUS
+EFIAPI
 InitIP4Network (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This
   )
@@ -411,6 +414,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 ResetIP4Network (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This
   )
@@ -565,6 +569,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 IP4NetworkSaveContext(
   EFI_ENTS_MONITOR_PROTOCOL     *This
   )
@@ -588,6 +593,7 @@ IP4NetworkSaveContext(
 }
 
 EFI_STATUS
+EFIAPI
 IP4NetworkRestoreContext(
   IN EFI_ENTS_MONITOR_PROTOCOL *This
   )
@@ -614,6 +620,7 @@ IP4NetworkRestoreContext(
 }
 
 EFI_STATUS
+EFIAPI
 IP4NetworkListener (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This,
   IN OUT UINTN                     *Size,
@@ -673,6 +680,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 IP4NetworkSender (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This,
   IN CHAR16                        *Buffer
@@ -890,6 +898,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 NotifyFunctionSend (
   EFI_EVENT Event,
   VOID      *Context
@@ -915,6 +924,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 NotifyFunctionListen (
   EFI_EVENT Event,
   VOID      *Context
@@ -936,7 +946,6 @@ Returns:
 --*/
 {
   EAS_IP4_FRAG_FLAG FragFlag;
-  EFI_STATUS        Status;
   UINT32            SequenceID;
   UINTN             Index;
 
@@ -944,7 +953,7 @@ Returns:
   // Timeout occur, continue
   //
   if (RxToken.Status == EFI_TIMEOUT) {
-    Status = Ip4->Receive (Ip4, &RxToken);
+    Ip4->Receive (Ip4, &RxToken);
     return ;
   }
 
@@ -1093,12 +1102,13 @@ Returns:
     break;
   }
 
-  Status = Ip4->Receive (Ip4, &RxToken);
+  Ip4->Receive (Ip4, &RxToken);
 
   return ;
 }
 
 VOID
+EFIAPI
 ReSendTimer (
   IN EFI_EVENT    Event,
   IN VOID         *Context

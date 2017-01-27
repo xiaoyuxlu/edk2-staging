@@ -119,7 +119,6 @@ Returns:
 --*/
 {
   EFI_STATUS              Status;
-  LIST_ENTRY          *CategoryList;
   LIST_ENTRY          *TestFileList;
   LIST_ENTRY          *Link;
   EFI_SCT_CATEGORY_DATA   *Category;
@@ -145,7 +144,6 @@ Returns:
   //
   // Walk through all test files
   //
-  CategoryList = &gFT->CategoryList;
   TestFileList = &gFT->TestFileList;
 
   for (Link = TestFileList->ForwardLink; Link != TestFileList; Link = Link->ForwardLink) {

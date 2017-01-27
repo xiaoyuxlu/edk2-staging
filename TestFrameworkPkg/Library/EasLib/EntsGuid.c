@@ -17,27 +17,27 @@
 
 #define SHELL_INTERFACE_PROTOCOL \
   { \
-    0x47c7b223, 0xc42a, 0x11d2, 0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b \
+    0x47c7b223, 0xc42a, 0x11d2, {0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b} \
   }
 
 #define ENVIRONMENT_VARIABLE_ID \
   { \
-    0x47c7b224, 0xc42a, 0x11d2, 0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b \
+    0x47c7b224, 0xc42a, 0x11d2, {0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b} \
   }
 
 #define DEVICE_PATH_MAPPING_ID \
   { \
-    0x47c7b225, 0xc42a, 0x11d2, 0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b \
+    0x47c7b225, 0xc42a, 0x11d2, {0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b} \
   }
 
 #define PROTOCOL_ID_ID \
   { \
-    0x47c7b226, 0xc42a, 0x11d2, 0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b \
+    0x47c7b226, 0xc42a, 0x11d2, {0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b} \
   }
 
 #define ALIAS_ID \
   { \
-    0x47c7b227, 0xc42a, 0x11d2, 0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b \
+    0x47c7b227, 0xc42a, 0x11d2, {0x8e, 0x57, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b} \
   }
 
 static EFI_GUID ShellInterfaceProtocol  = SHELL_INTERFACE_PROTOCOL;
@@ -51,72 +51,43 @@ struct {
   CHAR16    *GuidName;
 }
 EntsKnownGuids[] = {
-  &tNullGuid,
-  L"G0",
-  &tEfiGlobalVariable,
-  L"Efi",
+  { &tNullGuid,  L"G0"},
+  { &tEfiGlobalVariable,  L"Efi"},
 
-  &gtEfiDevicePathProtocolGuid,
-  L"dpath",
-  &gtEfiLoadedImageProtocolGuid,
-  L"image",
-  &gtEfiSimpleTextInProtocolGuid,
-  L"txtin",
-  &gtEfiSimpleTextOutProtocolGuid,
-  L"txtout",
-  &gtEfiBlockIoProtocolGuid,
-  L"blkio",
-  &gtEfiDiskIoProtocolGuid,
-  L"diskio",
-  &gtEfiSimpleFileSystemProtocolGuid,
-  L"fs",
-  &gtEfiLoadFileProtocolGuid,
-  L"load",
-  &gtEfiDeviceIoProtocolGuid,
-  L"DevIo",
+  { &gtEfiDevicePathProtocolGuid,  L"dpath"},
+  { &gtEfiLoadedImageProtocolGuid,  L"image"},
+  { &gtEfiSimpleTextInProtocolGuid,  L"txtin"},
+  { &gtEfiSimpleTextOutProtocolGuid,  L"txtout"},
+  { &gtEfiBlockIoProtocolGuid,  L"blkio"},
+  { &gtEfiDiskIoProtocolGuid,  L"diskio"},
+  { &gtEfiSimpleFileSystemProtocolGuid,  L"fs"},
+  { &gtEfiLoadFileProtocolGuid,  L"load"},
+  { &gtEfiDeviceIoProtocolGuid,  L"DevIo"},
 
-  &tGenericFileInfo,
-  L"GenFileInfo",
-  &gtEfiFileSystemInfoGuid,
-  L"FileSysInfo",
+  { &tGenericFileInfo,  L"GenFileInfo"},
+  { &gtEfiFileSystemInfoGuid,  L"FileSysInfo"},
 
-  &gtEfiUnicodeCollationProtocolGuid,
-  L"UnicodeCollation",
-  &gtEfiSerialIoProtocolGuid,
-  L"serialio",
-  &gtEfiSimpleNetworkProtocolGuid,
-  L"net",
-  &gtEfiNetworkInterfaceIdentifierProtocolGuid,
-  L"nii",
-  &gtEfiPxeBaseCodeProtocolGuid,
-  L"pxebc",
-  &gtEfiPxeCallbackProtocolGuid,
-  L"pxecb",
+  { &gtEfiUnicodeCollationProtocolGuid,  L"UnicodeCollation"},
+  { &gtEfiSerialIoProtocolGuid,  L"serialio"},
+  { &gtEfiSimpleNetworkProtocolGuid,  L"net"},
+  { &gtEfiNetworkInterfaceIdentifierProtocolGuid,  L"nii"},
+  { &gtEfiPxeBaseCodeProtocolGuid,  L"pxebc"},
+  { &gtEfiPxeCallbackProtocolGuid,  L"pxecb"},
 
-  &tPcAnsiProtocol,
-  L"PcAnsi",
-  &tVt100Protocol,
-  L"Vt100",
-  &gtEfiUnknownDeviceGuid,
-  L"Unknown Device",
+  { &tPcAnsiProtocol,  L"PcAnsi"},
+  { &tVt100Protocol,  L"Vt100"},
+  { &gtEfiUnknownDeviceGuid,  L"Unknown Device"},
 
-  &gtEfiPartTypeSystemPartitionGuid,
-  L"ESP",
-  &gtEfiPartTypeLegacyMbrGuid,
-  L"GPT MBR",
+  { &gtEfiPartTypeSystemPartitionGuid,  L"ESP"},
+  { &gtEfiPartTypeLegacyMbrGuid,  L"GPT MBR"},
 
-  &ShellInterfaceProtocol,
-  L"ShellInt",
-  &SEnvId,
-  L"SEnv",
-  &SProtId,
-  L"ShellProtId",
-  &SMapId,
-  L"ShellDevPathMap",
-  &SAliasId,
-  L"ShellAlias",
+  { &ShellInterfaceProtocol,  L"ShellInt"},
+  { &SEnvId,  L"SEnv"},
+  { &SProtId,  L"ShellProtId"},
+  { &SMapId,  L"ShellDevPathMap"},
+  { &SAliasId,  L"ShellAlias"},
 
-  NULL
+  { NULL, NULL}
 };
 
 VOID

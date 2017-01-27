@@ -149,7 +149,6 @@ Returns:
 
 --*/
 {
-  UINT32              Order;
   LIST_ENTRY      *Link;
   EFI_SCT_TEST_CASE   *TestCase;
   EFI_SCT_TEST_CASE   *Target;
@@ -164,7 +163,6 @@ Returns:
   //
   // Initialize
   //
-  Order  = EFI_SCT_TEST_CASE_INVALID;
   Target = NULL;
 
   //

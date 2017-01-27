@@ -162,14 +162,13 @@ Returns:
 
 --*/
 {
-  EFI_STATUS  Status;
   CHAR16      *Name;
 
   //
   // If buf is NULL, delete all variable
   //
   if (VarBuf == NULL) {
-    Status = DelRivlAllVariable ();
+    DelRivlAllVariable ();
     return EFI_SUCCESS;
   }
   //
@@ -1132,7 +1131,6 @@ Returns:
   RIVL_INTERNAL_TYPE  *RivlInternalType;
   RIVL_MEMBER         *RivlMember;
   CHAR16              *UnitName;
-  CHAR16              *ValueName;
   CHAR16              *IndexName;
   BOOLEAN             HasIndex;
   UINTN               IndexValue;
@@ -1153,7 +1151,6 @@ Returns:
   }
 
   UnitName      = NULL;
-  ValueName     = NULL;
   IndexName     = NULL;
   HasIndex      = FALSE;
   IndexValue    = 0;
@@ -1233,7 +1230,7 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  ValueName = my_strtok_field (UnitName, L"(");
+  my_strtok_field (UnitName, L"(");
   IndexName = my_strtok_field (NULL, L")");
 
   if (IndexName == NULL) {
@@ -1344,7 +1341,7 @@ Returns:
   // Recursive search the member name
   //
   while (UnitName != NULL) {
-    ValueName = my_strtok_field (UnitName, L"(");
+    my_strtok_field (UnitName, L"(");
     IndexName = my_strtok_field (NULL, L")");
 
     if (IndexName == NULL) {

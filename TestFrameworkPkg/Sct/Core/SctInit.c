@@ -43,7 +43,6 @@ Returns:
 {
   EFI_STATUS  Status;
   EFI_SHELL_PARAMETERS_PROTOCOL *ShellParameters;
-  UINTN       Argc;
   CHAR16      **Argv;
 
   //
@@ -61,7 +60,6 @@ Returns:
     return Status;
   }
 
-  Argc = ShellParameters->Argc;
   Argv = ShellParameters->Argv;
 
   gBS->CloseProtocol(

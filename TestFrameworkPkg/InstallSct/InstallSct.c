@@ -152,7 +152,6 @@ RemoveDirFile (
   IN CHAR16             *Path
   )
 {
-  EFI_STATUS  Status;
   EFI_STATUS  ExecuteStatus;
   CHAR16      *CmdLine;
 
@@ -175,13 +174,13 @@ RemoveDirFile (
   // Execute this shell command
   //
   Print (L"ShellExecute %s\n", CmdLine);
-  Status = ShellExecute (
-             &gImageHandle,
-             CmdLine,
-             FALSE,
-             NULL,
-             &ExecuteStatus
-             );
+  ShellExecute (
+    &gImageHandle,
+    CmdLine,
+    FALSE,
+    NULL,
+    &ExecuteStatus
+    );
   if (EFI_ERROR (ExecuteStatus)) {
     Print (L"Error: Could not execute \"%s\"\n", CmdLine);
   }

@@ -94,65 +94,6 @@ _RecordListPrint(
 #define RecordListPrint(RecordList)
 #endif
 
-/*--------------------------Internal string library function---------------------------*/
-STATIC
-UINTN
-strlen(
-  CHAR8       *str
-  )
-{
-  CHAR8 *s;
-
-  for (s = str; *s; ++s)
-    ;
-  return (UINTN)(s - str);
-}
-
-STATIC
-CHAR8 *
-strcpy(
-  CHAR8       *to,
-  CHAR8       *from
-  )
-{
-  CHAR8 *save;
-
-  save = to;
-  for (; (*to = *from) != 0 ; ++from, ++to)
-    ;
-  return(save);
-}
-
-STATIC
-INTN
-strcmp(
-  CHAR8       *s1,
-  CHAR8       *s2
-  )
-{
-  while (*s1 == *s2++) {
-    if (*s1++ == 0)
-      return 0;
-  }
-  return (*s1 - *s2 - 1);
-}
-
-STATIC
-CHAR8 *
-strchr (
-  CHAR8       *p,
-  INTN        ch
-  )
-{
-  for (; ; ++p) {
-    if (*p == ch)
-      return((CHAR8 *)p);
-    if (!*p)
-      return((CHAR8 *)NULL);
-  }
-  /* NOTREACHED */
-}
-
 /*-------------------------------------------------------------------------------------*/
 STATIC
 EFI_STATUS
@@ -188,7 +129,7 @@ ParseRecordLine (
   VOID                                     *ValueBuf;
   UINTN                                    ValueSize;
 
-  TmpStr  = strchr(LineBuf, '|');
+  TmpStr  = AsciiStrStr(LineBuf, "|");
   if (TmpStr == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -197,7 +138,7 @@ ParseRecordLine (
   if (KeyBuf == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  strcpy (KeyBuf, LineBuf);
+  AsciiStrCpy (KeyBuf, LineBuf);
   TmpStr++;
   CopyMem(&ValueSize, TmpStr, sizeof(UINTN));
   ValueBuf = (VOID *)AllocateZeroPool (ValueSize);
@@ -347,8 +288,8 @@ WriteRecordsToFile(
   FileHandle = Context->FileHandle;
 
   for (Record = RecordListHead; Record != NULL; Record = Record->Next) {
-    strcpy(Buffer, Record->Key);
-    Index = strlen(Record->Key);
+    AsciiStrCpy(Buffer, Record->Key);
+    Index = AsciiStrLen(Record->Key);
     Buffer[Index++] = '|';
     CopyMem(Buffer + Index, &Record->Size, sizeof(UINTN));
     Index += sizeof(UINTN);
@@ -385,7 +326,7 @@ SetRecord (
   }
 
   for (Record = RecordListHead; Record != NULL; Record = Record->Next) {
-    if (strcmp(Key, Record->Key) == 0) {
+    if (AsciiStrCmp(Key, Record->Key) == 0) {
       break;
     }
   }
@@ -400,7 +341,7 @@ SetRecord (
       Status = EFI_OUT_OF_RESOURCES;
       goto FreeAndReturn;
     }
-    KeyBuf = (CHAR8 *)AllocateZeroPool (strlen(Key) + 1);
+    KeyBuf = (CHAR8 *)AllocateZeroPool (AsciiStrLen(Key) + 1);
     if (KeyBuf == NULL) {
       FreePool(Record);
       Status = EFI_OUT_OF_RESOURCES;
@@ -413,7 +354,7 @@ SetRecord (
       Status = EFI_OUT_OF_RESOURCES;
       goto FreeAndReturn;
     }
-    strcpy(KeyBuf, Key);
+    AsciiStrCpy(KeyBuf, Key);
   CopyMem(ValueBuf, RecordValue, RecordSize);
     Record->Key    = KeyBuf;
     Record->Size   = RecordSize;
@@ -476,7 +417,7 @@ GetRecord (
   // the records in the list are same as the ones in file
   //
   for (Record = RecordListHead; Record != NULL; Record = Record->Next) {
-    if (strcmp(Record->Key, Key) == 0) {
+    if (AsciiStrCmp(Record->Key, Key) == 0) {
       break;
     }
   }
@@ -526,12 +467,12 @@ DelRecord (
   if (RecordListHead == NULL) {
     return EFI_NOT_FOUND;
   } else {
-    if (strcmp(Key, RecordListHead->Key) == 0) {
+    if (AsciiStrCmp(Key, RecordListHead->Key) == 0) {
       Record = RecordListHead;
     RecordListHead = RecordListHead->Next;
     } else {
       for (Record = RecordListHead; Record->Next != NULL; Record = Record->Next) {
-        if (strcmp(Key, Record->Next->Key) == 0) {
+        if (AsciiStrCmp(Key, Record->Next->Key) == 0) {
           break;
         }
       }
@@ -872,11 +813,11 @@ SetContextRecord (
   }
 
   Unicode2Ascii(AsciiKey, Key);
-  if (strlen(AsciiKey) + Size + 1 > MAX_RECORD_LEN) {
+  if (AsciiStrLen(AsciiKey) + Size + 1 > MAX_RECORD_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (strchr(AsciiKey, '=') != NULL) {
+  if (AsciiStrStr(AsciiKey, "=") != NULL) {
     EFI_ENTS_DEBUG((EFI_ENTS_D_ERROR, L"The KEY of record can not contain ="));
     return EFI_INVALID_PARAMETER;
   }

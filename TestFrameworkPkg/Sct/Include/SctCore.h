@@ -20,6 +20,7 @@
 //
 
 EFI_STATUS
+EFIAPI
 InitializeSct (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable

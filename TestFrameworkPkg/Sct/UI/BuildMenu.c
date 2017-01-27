@@ -40,6 +40,7 @@ CreateStandardMenuPage (
   );
 
 EFI_STATUS
+EFIAPI
 DestroyMenuPage (
   IN EFI_MENU_PAGE                *Page
   );
@@ -266,6 +267,7 @@ Returns:
 
 
 EFI_STATUS
+EFIAPI
 DestroyMenuPage (
   IN EFI_MENU_PAGE      *Page
   )

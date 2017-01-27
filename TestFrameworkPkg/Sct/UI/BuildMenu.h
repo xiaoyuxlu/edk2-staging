@@ -20,7 +20,7 @@
 //
 
 #include "Sct.h"
-#include "Ui.h"
+#include "UI.h"
 
 //
 // Definitions
@@ -50,6 +50,7 @@ CreateStandardMenuPage (
   );
 
 EFI_STATUS
+EFIAPI
 DestroyMenuPage (
   IN EFI_MENU_PAGE                *Page
   );
@@ -169,6 +170,7 @@ DisplayMainMenu (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayConfigMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -178,6 +180,7 @@ DisplayConfigMenu (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayCaseMgmtMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -187,6 +190,7 @@ DisplayCaseMgmtMenu (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayProtocolMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -196,6 +200,7 @@ DisplayProtocolMenu (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayDriverMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -205,11 +210,13 @@ DisplayDriverMenu (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayFileNameMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
 
 EFI_STATUS
+EFIAPI
 DisplaySequenceMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -228,6 +235,7 @@ DisplayCaseMenu (
 //prototypes (from ResultMgmtMenu.c)
 //
 EFI_STATUS
+EFIAPI
 DisplayResultMgmtMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );
@@ -235,6 +243,7 @@ DisplayResultMgmtMenu (
 //protypes (from UtilityMenu.c)
 //
 EFI_STATUS
+EFIAPI
 DisplayUtilityMenu (
   IN EFI_MENU_PAGE                *ParentPage
   );

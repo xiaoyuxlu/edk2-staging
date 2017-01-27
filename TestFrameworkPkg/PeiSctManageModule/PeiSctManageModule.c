@@ -621,7 +621,6 @@ BurnFd (
   CHAR16* FdPath
   )
 {
-  EFI_STATUS  Status;
   EFI_STATUS  ExecuteStatus;
   VOID* CmdLine = NULL;
   SHELL_FILE_HANDLE BurnHandle = NULL;
@@ -649,13 +648,13 @@ BurnFd (
   Print (L"\n\n");
   Print (L"Burning %s\n\n", FdPath);
 
-  Status = ShellExecute (
-             &ImageHandle,
-             CmdLine,
-             FALSE,
-             NULL,
-             &ExecuteStatus
-             );
+  ShellExecute (
+    &ImageHandle,
+    CmdLine,
+    FALSE,
+    NULL,
+    &ExecuteStatus
+    );
 
   FreePool (CmdLine);
 

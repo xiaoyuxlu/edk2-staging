@@ -20,7 +20,7 @@
 //
 
 #include "Sct.h"
-#include "Ui.h"
+#include "UI.h"
 #include "BuildMenu.h"
 #include "Dialog.h"
 

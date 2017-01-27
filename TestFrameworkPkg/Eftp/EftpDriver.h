@@ -80,6 +80,7 @@ typedef struct _EFTP_SERVICE_BINDING_PRIVATE {
 } EFTP_SERVICE_BINDING_PRIVATE;
 
 EFI_STATUS
+EFIAPI
 EftpDriverBindingSupported (
   IN EFI_DRIVER_BINDING_PROTOCOL    *This,
   IN EFI_HANDLE                     Controller,
@@ -106,6 +107,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 EftpDriverBindingStart (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
@@ -133,6 +135,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 EftpDriverBindingStop (
   IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
   IN  EFI_HANDLE                     Controller,
@@ -160,6 +163,7 @@ EftpDriverBindingStop (
 ;
 
 EFI_STATUS
+EFIAPI
 EftpServiceBindingCreateChild (
   IN EFI_SERVICE_BINDING_PROTOCOL  *This,
   IN OUT EFI_HANDLE                *ChildHandle
@@ -185,6 +189,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 EftpServiceBindingDestroyChild (
   IN EFI_SERVICE_BINDING_PROTOCOL      *This,
   IN EFI_HANDLE                        ChildHandle

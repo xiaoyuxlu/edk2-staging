@@ -83,3 +83,4 @@
   gEfiManagedNetworkProtocolGuid
   gEfiManagedNetworkServiceBindingProtocolGuid
   gEfiSimpleNetworkProtocolGuid
+  gEfiUnicodeCollation2ProtocolGuid

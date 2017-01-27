@@ -1070,7 +1070,6 @@ Returns:
   EFI_ENTS_PROTOCOL *EntsProtocol;
   ENTS_INTERFACE    *EntsInterface;
   EFI_STATUS        Status;
-  EFI_STATUS        TestStatus;
   RIVL_VARIABLE     *DelayTimeVariable;
   UINT64            StartTick;
   UINT64            StopTick;
@@ -1111,7 +1110,7 @@ Returns:
   // Call the entry point
   //
   StartTick   = AsmReadTsc ();
-  TestStatus  = EntsInterface->EntsInterfaceEntry (EntsProtocol->ClientInterface);
+  EntsInterface->EntsInterfaceEntry (EntsProtocol->ClientInterface);
   StopTick    = AsmReadTsc ();
   RecordExecTime (StartTick, StopTick);
 

@@ -80,7 +80,10 @@ RIVL_INTERNAL_TYPE  gRivlInternalTypeArray[] = {
     L"POINTER",
     sizeof (VOID *)
   },
-  0
+  {
+    L"",
+    0
+  }
 };
 
 //
@@ -257,14 +260,13 @@ Returns:
 
 --*/
 {
-  EFI_STATUS  Status;
   CHAR16      *Name;
 
   //
   // If buf is NULL, delete all type
   //
   if (TypeBuf == NULL) {
-    Status = DelRivlAllType ();
+    DelRivlAllType ();
     return EFI_SUCCESS;
   }
   //

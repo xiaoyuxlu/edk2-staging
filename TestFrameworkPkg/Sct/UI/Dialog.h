@@ -24,7 +24,7 @@
 #include <Library/UefiLib.h>
 #include <Library/MemoryAllocationLib.h>
 
-#include "Ui.h"
+#include "UI.h"
 
 #include <Protocol/DevicePath.h>
 

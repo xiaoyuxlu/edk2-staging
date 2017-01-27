@@ -16,6 +16,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DebugLib.h>
 #include <Protocol/LoadedImage.h>
@@ -93,326 +94,52 @@ CHAR16 *gAtslDescription = L"EFI Test Profile Library";
 //
 // Internal functions
 //
-#define  toupper(c)  (((c <= 'z') && (c >= 'a')) ? (c + 'A' - 'a') : c)
-#define  tolower(c)  (((c <= 'Z') && (c >= 'A')) ? (c - 'A' + 'a') : c)
-
-VOID *
-TestProfile_memset(
-  VOID        *b,
-  INTN        c,
-  UINTN       len
-  )
-{
-  volatile CHAR8 *p;
-  UINTN i;
-
-  p = b;
-  for (i = 0; i < len; i++) {
-    p[i] = (CHAR8)c;
-  }
-  return ((VOID *)p);
-}
-
-VOID*
-malloc (
-  UINTN       size
-  )
-{
-  VOID  *pMem;
-
-  if (gBS->AllocatePool (EfiBootServicesData, size, &pMem) != EFI_SUCCESS) {
-    return NULL;
-  }
-  return pMem;
-}
-
-VOID *
-calloc(
-  UINTN       NMemb,
-  UINTN       MembSize
-  )
-{
-  UINTN NewSize;
-  VOID *NewMem;
-
-  NewSize = NMemb * MembSize;
-  NewMem = malloc (NewSize);
-  if (NewMem) {
-    TestProfile_memset (NewMem, 0, NewSize);
-  }
-
-  return NewMem;
-}
-
-VOID
-free (
-  VOID        *addr
-  )
-{
-  gBS->FreePool (addr);
-}
-
-INTN
-memcmp(
-  VOID        *s1,
-  VOID        *s2,
-  UINTN       n
-  )
-{
-  CHAR8 *p1, *p2;
-
-  p1 = s1;
-  p2 = s2;
-  if (n != 0) {
-    do {
-      if (*p1++ != *p2++)
-        return (*--p1 - *--p2);
-    } while (--n != 0);
-  }
-  return (0);
-}
-
-VOID *
-memcpy(
-  VOID        *dst,
-  VOID        *src,
-  UINTN       len
-  )
-{
-  CHAR8 *d, *s;
-
-  d = dst;
-  s = src;
-  while (len--) {
-    *(d++) = *(s++);
-  }
-  return dst;
-}
-
 CHAR8 *
-strchr(
-  CHAR8       *p,
-  INTN        ch
-  )
-{
-  for (; ; ++p) {
-    if (*p == ch)
-      return((CHAR8 *)p);
-    if (!*p)
-      return((CHAR8 *)NULL);
-  }
-  /* NOTREACHED */
-}
-
-INTN
-strcmp(
-  CHAR8       *s1,
-  CHAR8       *s2
-  )
-{
-  while (*s1 == *s2++) {
-    if (*s1++ == 0)
-      return 0;
-  }
-  return (*s1 - *s2 - 1);
-}
-
-INTN
-stricmp(
-  CHAR8       *s1,
-  CHAR8       *s2
-  )
-{
-  while (toupper(*s1) == toupper(*s2)) {
-    s2++;
-    if (*s1++ == 0)
-      return (0);
-  }
-  return (*s1 - *s2);
-}
-
-CHAR8 *
-strcpy(
-  CHAR8       *to,
-  CHAR8       *from
-  )
-{
-  CHAR8 *save;
-
-  save = to;
-  for (; (*to = *from) != 0 ; ++from, ++to)
-    ;
-  return(save);
-}
-
-CHAR8 *
-strncpy(
-  CHAR8       *dst,
-  CHAR8       *src,
-  UINTN       n
-  )
-{
-  volatile CHAR8 *d;
-  CHAR8 *s;
-
-  d = dst;
-  s = src;
-  if (n != 0) {
-    do {
-      if ((*d++ = *s++) == 0) {
-        /* NUL pad the remaining n-1 bytes */
-        while (--n != 0)
-          *d++ = 0;
-        break;
-      }
-    } while (--n != 0);
-  }
-  return (dst);
-}
-
-UINTN
-strlen(
-  CHAR8       *str
-  )
-{
-  CHAR8 *s;
-
-  for (s = str; *s; ++s)
-    ;
-  return (UINTN)(s - str);
-}
-
-CHAR8 *
-strdup(
-  CHAR8       *str
+AsciiDuplicateString (
+  CHAR8  *str
 )
 {
-  CHAR8 *copy;
-
-  if (str != NULL) {
-    copy = malloc(strlen(str) + 1);
-    if (copy != NULL)
-      return strcpy(copy, str);
-  }
-  return NULL;
-}
-
-CHAR8 *
-strcat(
-  CHAR8       *s,
-  CHAR8       *append
-)
-{
-  CHAR8 *save;
-
-  save = s;
-  for (; *s; ++s)
-    ;
-  while ( (*s++ = *append++) != 0)
-    ;
-  return(save);
-}
-
-UINTN
-wcslen(
-  CHAR16      *str
-  )
-{
-  CHAR16 *s;
-
-  for (s = str; *s; ++s)
-    ;
-  return (UINTN)(s - str);
+  return (str == NULL) ? NULL : AllocateCopyPool (AsciiStrSize (str), str);
 }
 
 CHAR16 *
-wcscpy(
-  CHAR16      *to,
-  CHAR16      *from
-  )
-{
-  CHAR16 *save;
-
-  save = to;
-  for (; (*to = *from) != 0; ++from, ++to)
-    ;
-  return(save);
-}
-
-CHAR16 *
-wcsdup (
+UnicodeDuplicateString (
   CHAR16      *str
 )
 {
-  CHAR16 *copy;
-
-  if (str != NULL) {
-    copy = calloc(wcslen(str) + 1, sizeof(CHAR16));
-    if (copy != NULL)
-      return wcscpy(copy, str);
-  }
-  return NULL;
+  return (str == NULL) ? NULL : AllocateCopyPool (StrSize (str), str);
 }
 
-CHAR16 *
-wcschr(
-  CHAR16      *p,
-  INTN        ch
-  )
-{
-  for (;; ++p) {
-    if (*p == ch)
-      return((CHAR16 *)p);
-    if (!*p)
-      return((CHAR16 *)NULL);
-  }
-  /* NOTREACHED */
-}
-
-UINTN
-wcstombs(
+INTN
+TestProfile_wcstombs(
   CHAR8       *s,
   CHAR16      *pwcs,
   UINTN       n
   )
 {
-  UINTN cnt;
+  EFI_STATUS  Status;
 
-  cnt = 0;
-  if (!pwcs || !s)
-    return (UINTN)-1;
-
-  while (n-- > 0) {
-    *s = (CHAR8) (*pwcs++ & 0x00ff);
-    if (*s++ == 0) {
-      break;
-    }
-    ++cnt;
+  Status = UnicodeStrToAsciiStrS(pwcs, s, n);
+  if (EFI_ERROR (Status)) {
+    return -1;
   }
-  return (cnt);
+  return AsciiStrnLenS (s, n);
 }
 
-UINTN
-mbstowcs(
+INTN
+TestProfile_mbstowcs(
   CHAR16      *pwcs,
   CHAR8       *s,
   UINTN       n
   )
 {
-  UINTN cnt;
+  EFI_STATUS  Status;
 
-  cnt = 0;
-  if (!pwcs || !s)
-    return (UINTN)-1;
-
-  while (n-- > 0) {
-    *pwcs = (CHAR16)(*s++ & 0x00ff);
-    if (*pwcs++ == 0) {
-      break;
-    }
-    ++cnt;
+  Status = AsciiStrToUnicodeStrS(s, pwcs, n);
+  if (EFI_ERROR (Status)) {
+    return -1;
   }
-  return (cnt);
+  return StrnLenS (pwcs, n);
 }
 
 VOID
@@ -435,15 +162,15 @@ Routine Description:
   ptrCur = IniFile->Head;
 
   while (ptrCur != NULL) {
-    free (ptrCur->ptrSection);
-    free (ptrCur->ptrEntry);
-    free (ptrCur->ptrValue);
+    FreePool (ptrCur->ptrSection);
+    FreePool (ptrCur->ptrEntry);
+    FreePool (ptrCur->ptrValue);
     ptrCur = ptrCur->ptrNext;
   }
 
   while (IniFile->Head != NULL) {
     ptrTmp = IniFile->Head->ptrNext;
-    free (IniFile->Head);
+    FreePool (IniFile->Head);
     IniFile->Head = ptrTmp;
   }
   IniFile->Tail = NULL;
@@ -451,13 +178,13 @@ Routine Description:
   ptrCommentCur = IniFile->CommentLineHead;
 
   while (ptrCommentCur != NULL) {
-    free (ptrCommentCur->ptrComment);
+    FreePool (ptrCommentCur->ptrComment);
     ptrCommentCur = ptrCommentCur->ptrNext;
   }
 
   while (IniFile->CommentLineHead != NULL) {
     ptrCommentTmp = IniFile->CommentLineHead->ptrNext;
-    free (IniFile->CommentLineHead);
+    FreePool (IniFile->CommentLineHead);
     IniFile->CommentLineHead = ptrCommentTmp;
   }
 }
@@ -484,7 +211,7 @@ Routine Description:
   //
   // skip '\n' & '\r' at end of comment line
   //
-  Length = (UINT32) strlen (ptrStr);
+  Length = (UINT32) AsciiStrLen (ptrStr);
   for (Index = Length; Index > 0; Index --) {
     if (ptrStr[Index - 1] != '\n' && ptrStr[Index - 1] != '\r') {
       break;
@@ -492,11 +219,11 @@ Routine Description:
   }
   ptrStr[Index] = '\0';
 
-  ptrCommentLineNew = (COMMENTLINE *) malloc (sizeof(COMMENTLINE));
-  ptrCommentLineNew->ptrComment = (CHAR8 *) calloc (strlen(ptrStr) + 1, sizeof(CHAR8));
+  ptrCommentLineNew = (COMMENTLINE *) AllocatePool (sizeof(COMMENTLINE));
+  ptrCommentLineNew->ptrComment = (CHAR8 *) AllocateZeroPool (AsciiStrLen(ptrStr) + 1);
 
   ptrCommentLineNew->commentNo = *commentNo;
-  strcpy (ptrCommentLineNew->ptrComment, ptrStr);
+  AsciiStrCpy (ptrCommentLineNew->ptrComment, ptrStr);
 
   if (IniFile->CommentLineHead == NULL) {
     IniFile->CommentLineHead = ptrCommentLineNew;
@@ -534,7 +261,7 @@ Routine Description:
   //
   // skip '\n' & ' ' & '\r' at end of string
   //
-  Length = (UINT32) strlen (tmp);
+  Length = (UINT32) AsciiStrLen (tmp);
   for (Index = Length; Index > 0; Index --) {
     if (tmp[Index - 1] != '\n' && tmp[Index - 1] != ' ' && tmp[Index - 1] != '\r') {
       break;
@@ -542,7 +269,7 @@ Routine Description:
   }
 
   tmp[Index] = '\0';
-  strcpy (ptrStr, tmp);
+  AsciiStrCpy (ptrStr, tmp);
 
   return ptrStr;
 }
@@ -590,34 +317,34 @@ Routine Description:
   CHAR8 *p, *q;
   INI   *ptrItem;
 
-  p = strchr (ptrStr, '[');
-  q = strchr (ptrStr, ']');
+  p = AsciiStrStr (ptrStr, "[");
+  q = AsciiStrStr (ptrStr, "]");
 
   *q = '\0' ;
 
   _alltrim (++p);
 
-  if (strlen (p) <= MAX_STRING_LEN) {
+  if (AsciiStrLen (p) <= MAX_STRING_LEN) {
     if (*p == '\0') {
-      strcpy (ptrSection, "UNKNOWN");
+      AsciiStrCpy (ptrSection, "UNKNOWN");
     } else {
-      strcpy (ptrSection, p);
+      AsciiStrCpy (ptrSection, p);
     }
   } else {
-    strncpy (ptrSection, p, MAX_STRING_LEN);
+    AsciiStrnCpy (ptrSection, p, MAX_STRING_LEN);
     ptrSection[MAX_STRING_LEN] = '\0';
   }
 
-  ptrItem = (INI *)malloc (sizeof(INI));
+  ptrItem = (INI *)AllocatePool (sizeof(INI));
 
-  ptrItem->ptrSection = (CHAR8 *) calloc (strlen(ptrSection) + 1, sizeof(CHAR8));
-  ptrItem->ptrEntry   = (CHAR8 *) calloc (1, sizeof(CHAR8));
-  ptrItem->ptrValue   = (CHAR8 *) calloc (1, sizeof(CHAR8));
+  ptrItem->ptrSection = (CHAR8 *) AllocateZeroPool (AsciiStrLen(ptrSection) + 1);
+  ptrItem->ptrEntry   = (CHAR8 *) AllocateZeroPool (1);
+  ptrItem->ptrValue   = (CHAR8 *) AllocateZeroPool (1);
 
   ptrItem->commentNo  = *commentNo;
-  strcpy (ptrItem->ptrSection, ptrSection);
-  strcpy (ptrItem->ptrEntry, "");
-  strcpy (ptrItem->ptrValue, "");
+  AsciiStrCpy (ptrItem->ptrSection, ptrSection);
+  AsciiStrCpy (ptrItem->ptrEntry, "");
+  AsciiStrCpy (ptrItem->ptrValue, "");
 
   (*commentNo) ++;
 
@@ -639,38 +366,35 @@ Routine Description:
 --*/
 {
   CHAR8 *p, *p2;
-  UINTN Len;
 
-  p = strchr (ptrStr, '=');
+  p = AsciiStrStr (ptrStr, "=");
 
   *p = '\0';
 
   _alltrim (ptrStr);
 
-  if (strlen (ptrStr) <= MAX_STRING_LEN) {
+  if (AsciiStrLen (ptrStr) <= MAX_STRING_LEN) {
     if (*ptrStr == '\0') {
-      strcpy (ptrEntry, "UNKNOWN");
+      AsciiStrCpy (ptrEntry, "UNKNOWN");
     } else {
-      strcpy (ptrEntry, ptrStr);
+      AsciiStrCpy (ptrEntry, ptrStr);
     }
   } else {
-    strncpy (ptrEntry, ptrStr, MAX_STRING_LEN);
+    AsciiStrnCpy (ptrEntry, ptrStr, MAX_STRING_LEN);
     ptrEntry[MAX_STRING_LEN] = '\0';
   }
 
   _alltrim (++ p);
-  p2 = strchr (p, '#');
+  p2 = AsciiStrStr (p, "#");
   if (p2 != NULL) {
     *p2 = '\0';
     _alltrim (p);
   }
 
-  Len = strlen (p);
-
-  if (strlen (p) <= MAX_STRING_LEN) {
-    strcpy (ptrValue, p);
+  if (AsciiStrLen (p) <= MAX_STRING_LEN) {
+    AsciiStrCpy (ptrValue, p);
   } else {
-    strncpy (ptrValue, p, MAX_STRING_LEN);
+    AsciiStrnCpy (ptrValue, p, MAX_STRING_LEN);
     ptrValue[MAX_STRING_LEN] = '\0';
   }
 }
@@ -695,28 +419,28 @@ Routine Description:
   CHAR8 ptrValue[MAX_STRING_LEN + 1];
   INI   *ptrItem;
 
-  strcpy (ptrLine, _alltrim (ptrLine));
+  AsciiStrCpy (ptrLine, _alltrim (ptrLine));
 
   if (*ptrLine == '#') {
     // it's a comment line
     _getcomment (IniFile, ptrLine, commentNo);
-  } else if ((*ptrLine == '[') && (strchr (ptrLine, ']') != NULL)) {
+  } else if ((*ptrLine == '[') && (AsciiStrStr (ptrLine, "]") != NULL)) {
     // it's a section head
     _getsection (IniFile, ptrLine, ptrSection, commentNo);
     *isSectionGot = TRUE;
-  } else if (strchr (ptrLine, '=') != NULL) {
+  } else if (AsciiStrStr (ptrLine, "=") != NULL) {
     _getentry (ptrLine, ptrEntry, ptrValue);
 
     if (*isSectionGot == TRUE) {
-      ptrItem = (INI *)malloc (sizeof(INI));
-      ptrItem->ptrSection = (CHAR8 *) calloc (strlen(ptrSection) + 1, sizeof(CHAR8));
-      ptrItem->ptrEntry   = (CHAR8 *) calloc (strlen(ptrEntry) + 1, sizeof(CHAR8));
-      ptrItem->ptrValue   = (CHAR8 *) calloc (strlen(ptrValue) + 1, sizeof(CHAR8));
+      ptrItem = (INI *)AllocatePool (sizeof(INI));
+      ptrItem->ptrSection = (CHAR8 *) AllocateZeroPool (AsciiStrLen(ptrSection) + 1);
+      ptrItem->ptrEntry   = (CHAR8 *) AllocateZeroPool (AsciiStrLen(ptrEntry) + 1);
+      ptrItem->ptrValue   = (CHAR8 *) AllocateZeroPool (AsciiStrLen(ptrValue) + 1);
 
       ptrItem->commentNo = *commentNo;
-      strcpy (ptrItem->ptrSection, ptrSection);
-      strcpy (ptrItem->ptrEntry, ptrEntry);
-      strcpy (ptrItem->ptrValue, ptrValue);
+      AsciiStrCpy (ptrItem->ptrSection, ptrSection);
+      AsciiStrCpy (ptrItem->ptrEntry, ptrEntry);
+      AsciiStrCpy (ptrItem->ptrValue, ptrValue);
 
       (*commentNo) ++;
 
@@ -770,7 +494,7 @@ Routine Description:
   CurOrder = 0;
   ptrCur = Head;
   while (ptrCur != NULL) {
-    if (stricmp (Section, ptrCur->ptrSection) == 0) {
+    if (AsciiStriCmp (Section, ptrCur->ptrSection) == 0) {
       if (CurOrder == Order) {
         break;
       }
@@ -796,18 +520,18 @@ Routine Description:
 --*/
 {
   if (ptrItem->ptrSection != NULL) {
-    free (ptrItem->ptrSection);
+    FreePool (ptrItem->ptrSection);
     ptrItem->ptrSection = NULL;
   }
   if (ptrItem->ptrEntry != NULL) {
-    free (ptrItem->ptrEntry);
+    FreePool (ptrItem->ptrEntry);
     ptrItem->ptrEntry = NULL;
   }
   if (ptrItem->ptrValue != NULL) {
-    free (ptrItem->ptrValue);
+    FreePool (ptrItem->ptrValue);
     ptrItem->ptrValue = NULL;
   }
-  free (ptrItem);
+  FreePool (ptrItem);
 }
 
 VOID
@@ -825,8 +549,8 @@ _rmComment (
   while (ptrCmtCur != NULL) {
     if (ptrCmtCur->commentNo == ptrItem->commentNo) {
       ptrCmtNext = ptrCmtCur->ptrNext;
-      free (ptrCmtCur->ptrComment);
-      free (ptrCmtCur);
+      FreePool (ptrCmtCur->ptrComment);
+      FreePool (ptrCmtCur);
       if (ptrCmtPrev == NULL) {
         *CmtHead = ptrCmtNext;
       } else {
@@ -919,27 +643,27 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  wcscpy (String, L"");
+  StrCpy (String, L"");
 
-  if (wcslen (Section) > MAX_STRING_LEN || wcslen(Entry) > MAX_STRING_LEN) {
+  if (StrLen (Section) > MAX_STRING_LEN || StrLen(Entry) > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
-  strcpy (tmpEntry, ptrEntry);
+  AsciiStrCpy (tmpEntry, ptrEntry);
   _alltrim (tmpEntry);
 
-  if (strlen (tmpSection) == 0 || strlen (tmpEntry) == 0) {
+  if (AsciiStrLen (tmpSection) == 0 || AsciiStrLen (tmpEntry) == 0) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -956,17 +680,17 @@ Returns:
     //
     // the same, so find the field
     //
-    if ((stricmp (tmpSection, ptrCur->ptrSection) == 0) &&
-        (stricmp (tmpEntry, ptrCur->ptrEntry)     == 0)) {
-      if (strlen (ptrCur->ptrValue) < *maxLength) {
-        strcpy (ptrString, ptrCur->ptrValue);
-        mbstowcs (String, ptrString, strlen(ptrString) + 1);
+    if ((AsciiStriCmp (tmpSection, ptrCur->ptrSection) == 0) &&
+        (AsciiStriCmp (tmpEntry, ptrCur->ptrEntry)     == 0)) {
+      if (AsciiStrLen (ptrCur->ptrValue) < *maxLength) {
+        AsciiStrCpy (ptrString, ptrCur->ptrValue);
+        TestProfile_mbstowcs (String, ptrString, AsciiStrLen(ptrString) + 1);
         return EFI_SUCCESS;
       } else {
-        strncpy (ptrString, ptrCur->ptrValue, *maxLength - 1);
+        AsciiStrnCpy (ptrString, ptrCur->ptrValue, *maxLength - 1);
         ptrString[*maxLength-1] = '\0';
-        mbstowcs (String, ptrString, strlen(ptrString) + 1);
-        *maxLength = (UINT32) (strlen (ptrCur->ptrValue) + 1);
+        TestProfile_mbstowcs (String, ptrString, AsciiStrLen(ptrString) + 1);
+        *maxLength = (UINT32) (AsciiStrLen (ptrCur->ptrValue) + 1);
         return EFI_BUFFER_TOO_SMALL;
       }
     }
@@ -1030,35 +754,35 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcslen (Section) > MAX_STRING_LEN ||
-      wcslen (Entry)   > MAX_STRING_LEN ||
-      wcslen (String)  > MAX_STRING_LEN) {
+  if (StrLen (Section) > MAX_STRING_LEN ||
+      StrLen (Entry)   > MAX_STRING_LEN ||
+      StrLen (String)  > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
-  strcpy (tmpEntry, ptrEntry);
+  AsciiStrCpy (tmpEntry, ptrEntry);
   _alltrim (tmpEntry);
 
-  if (strlen (tmpSection) == 0 || strlen (tmpEntry) == 0) {
+  if (AsciiStrLen (tmpSection) == 0 || AsciiStrLen (tmpEntry) == 0) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrString, String, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrString, String, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpString, ptrString);
+  AsciiStrCpy (tmpString, ptrString);
   _alltrim (tmpString);
 
   //
@@ -1067,14 +791,14 @@ Returns:
   ptrCur = Private->Head;
   ptrPrev = NULL;
   while (ptrCur != NULL) {
-    if (stricmp (tmpSection, ptrCur->ptrSection) == 0) {
-      if (stricmp (tmpEntry, ptrCur->ptrEntry) == 0) {
-        if (stricmp (tmpString, ptrCur->ptrValue) != 0) {
-          tmpPtr = strdup (tmpString);
+    if (AsciiStriCmp (tmpSection, ptrCur->ptrSection) == 0) {
+      if (AsciiStriCmp (tmpEntry, ptrCur->ptrEntry) == 0) {
+        if (AsciiStriCmp (tmpString, ptrCur->ptrValue) != 0) {
+          tmpPtr = AsciiDuplicateString (tmpString);
           if (tmpPtr == NULL) {
             return EFI_OUT_OF_RESOURCES;
           }
-          free (ptrCur->ptrValue);
+          FreePool (ptrCur->ptrValue);
           ptrCur->ptrValue = tmpPtr;
           Private->Modified = TRUE;
         }
@@ -1088,22 +812,21 @@ Returns:
   //
   // if not, should add a new item
   //
-  ptrNew = (INI *) malloc (sizeof(INI));
-  TestProfile_memset (ptrNew, 0, sizeof(INI));
+  ptrNew = (INI *) AllocateZeroPool (sizeof(INI));
   if (ptrNew == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrSection = strdup (tmpSection);
+  ptrNew->ptrSection = AsciiDuplicateString (tmpSection);
   if (ptrNew->ptrSection == NULL) {
     _freeItem (ptrNew);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrEntry = strdup (tmpEntry);
+  ptrNew->ptrEntry = AsciiDuplicateString (tmpEntry);
   if (ptrNew->ptrEntry == NULL) {
     _freeItem (ptrNew);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrValue = strdup (tmpString);
+  ptrNew->ptrValue = AsciiDuplicateString (tmpString);
   if (ptrNew->ptrValue == NULL) {
     _freeItem (ptrNew) ;
     return EFI_OUT_OF_RESOURCES;
@@ -1128,24 +851,23 @@ Returns:
   //
   ptrCur = ptrNew;
 
-  ptrNew = (INI *) malloc (sizeof(INI));
-  TestProfile_memset (ptrNew, 0, sizeof(INI));
+  ptrNew = (INI *) AllocateZeroPool (sizeof(INI));
   if (ptrNew == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrSection = strdup (tmpSection);
+  ptrNew->ptrSection = AsciiDuplicateString (tmpSection);
   if (ptrNew->ptrSection == NULL) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrEntry = strdup ("");
+  ptrNew->ptrEntry = AsciiDuplicateString ("");
   if (ptrNew->ptrEntry == NULL) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrValue = strdup ("");
+  ptrNew->ptrValue = AsciiDuplicateString ("");
   if (ptrNew->ptrValue == NULL) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
@@ -1205,16 +927,16 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
   ptrCur = Private->Head;
   ptrPrev = NULL;
   while (ptrCur != NULL) {
-    if (stricmp (tmpSection, ptrCur->ptrSection) == 0) {
+    if (AsciiStriCmp (tmpSection, ptrCur->ptrSection) == 0) {
       Private->Modified = TRUE;
       _rmComment (&(Private->CommentLineHead), ptrCur);
       ptrNext = ptrCur->ptrNext;
@@ -1296,27 +1018,27 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  wcscpy (String, L"");
+  StrCpy (String, L"");
 
-  if (wcslen (Section) > MAX_STRING_LEN || wcslen (Entry) > MAX_STRING_LEN) {
+  if (StrLen (Section) > MAX_STRING_LEN || StrLen (Entry) > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
-  strcpy (tmpEntry, ptrEntry);
+  AsciiStrCpy (tmpEntry, ptrEntry);
   _alltrim (tmpEntry);
 
-  if (strlen (tmpSection) == 0 || strlen (tmpEntry) == 0) {
+  if (AsciiStrLen (tmpSection) == 0 || AsciiStrLen (tmpEntry) == 0) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1341,17 +1063,17 @@ Returns:
       //
       break;
     }
-    if ((stricmp (tmpSection, ptrCur->ptrSection) == 0) &&
-        (stricmp (tmpEntry, ptrCur->ptrEntry)     == 0)) {
-      if (strlen (ptrCur->ptrValue) < *maxLength) {
-        strcpy (ptrString, ptrCur->ptrValue);
-        mbstowcs (String, ptrString, strlen(ptrString) + 1);
+    if ((AsciiStriCmp (tmpSection, ptrCur->ptrSection) == 0) &&
+        (AsciiStriCmp (tmpEntry, ptrCur->ptrEntry)     == 0)) {
+      if (AsciiStrLen (ptrCur->ptrValue) < *maxLength) {
+        AsciiStrCpy (ptrString, ptrCur->ptrValue);
+        TestProfile_mbstowcs (String, ptrString, AsciiStrLen(ptrString) + 1);
         return EFI_SUCCESS;
       } else {
-        strncpy (ptrString, ptrCur->ptrValue, *maxLength - 1);
+        AsciiStrnCpy (ptrString, ptrCur->ptrValue, *maxLength - 1);
         ptrString[*maxLength-1] = '\0';
-        mbstowcs (String, ptrString, strlen(ptrString) + 1 );
-        *maxLength = (UINT32) (strlen (ptrCur->ptrValue) + 1);
+        TestProfile_mbstowcs (String, ptrString, AsciiStrLen(ptrString) + 1 );
+        *maxLength = (UINT32) (AsciiStrLen (ptrCur->ptrValue) + 1);
         return EFI_BUFFER_TOO_SMALL;
       }
     }
@@ -1417,35 +1139,35 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcslen (Section) > MAX_STRING_LEN ||
-      wcslen (Entry)   > MAX_STRING_LEN ||
-      wcslen (String)  > MAX_STRING_LEN) {
+  if (StrLen (Section) > MAX_STRING_LEN ||
+      StrLen (Entry)   > MAX_STRING_LEN ||
+      StrLen (String)  > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrEntry, Entry, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
-  strcpy (tmpEntry, ptrEntry);
+  AsciiStrCpy (tmpEntry, ptrEntry);
   _alltrim (tmpEntry);
 
-  if (strlen (tmpSection) == 0 || strlen (tmpEntry) == 0) {
+  if (AsciiStrLen (tmpSection) == 0 || AsciiStrLen (tmpEntry) == 0) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrString, String, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrString, String, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpString, ptrString);
+  AsciiStrCpy (tmpString, ptrString);
   _alltrim (tmpString);
 
   //
@@ -1463,14 +1185,14 @@ Returns:
       //
       break;
     }
-    if ((stricmp (tmpSection, ptrCur->ptrSection ) == 0) &&
-        (stricmp (tmpEntry, ptrCur->ptrEntry )     == 0)) {
-      if (stricmp( tmpString, ptrCur->ptrValue) != 0) {
-        tmpPtr = strdup (tmpString);
+    if ((AsciiStriCmp (tmpSection, ptrCur->ptrSection ) == 0) &&
+        (AsciiStriCmp (tmpEntry, ptrCur->ptrEntry )     == 0)) {
+      if (AsciiStriCmp( tmpString, ptrCur->ptrValue) != 0) {
+        tmpPtr = AsciiDuplicateString (tmpString);
         if (tmpPtr == NULL) {
           return EFI_OUT_OF_RESOURCES;
         }
-        free (ptrCur->ptrValue);
+        FreePool (ptrCur->ptrValue);
         ptrCur->ptrValue = tmpPtr;
         Private->Modified = TRUE;
       }
@@ -1483,22 +1205,21 @@ Returns:
   //
   // if not, should add a new item
   //
-  ptrNew = (INI *) malloc(sizeof(INI));
-  TestProfile_memset (ptrNew, 0, sizeof(INI));
+  ptrNew = (INI *) AllocateZeroPool (sizeof(INI));
   if (ptrNew == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrSection = strdup (tmpSection);
+  ptrNew->ptrSection = AsciiDuplicateString (tmpSection);
   if (ptrNew->ptrSection == NULL) {
     _freeItem (ptrNew);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrEntry = strdup (tmpEntry);
+  ptrNew->ptrEntry = AsciiDuplicateString (tmpEntry);
   if (ptrNew->ptrEntry == NULL) {
     _freeItem (ptrNew);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrValue = strdup (tmpString);
+  ptrNew->ptrValue = AsciiDuplicateString (tmpString);
   if (ptrNew->ptrValue == NULL) {
     _freeItem (ptrNew);
     return EFI_OUT_OF_RESOURCES;
@@ -1523,24 +1244,23 @@ Returns:
   //
   ptrCur = ptrNew;
 
-  ptrNew = (INI *)malloc (sizeof(INI));
-  TestProfile_memset (ptrNew, 0, sizeof(INI));
+  ptrNew = (INI *) AllocateZeroPool (sizeof(INI));
   if (ptrNew == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrSection = strdup (tmpSection);
+  ptrNew->ptrSection = AsciiDuplicateString (tmpSection);
   if ( ptrNew->ptrSection == NULL ) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrEntry = strdup ("");
+  ptrNew->ptrEntry = AsciiDuplicateString ("");
   if ( ptrNew->ptrEntry == NULL ) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
     return EFI_OUT_OF_RESOURCES;
   }
-  ptrNew->ptrValue = strdup ("");
+  ptrNew->ptrValue = AsciiDuplicateString ("");
   if ( ptrNew->ptrValue == NULL ) {
     _freeItem (ptrNew);
     _freeItem (ptrCur);
@@ -1603,10 +1323,10 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
   ptrSect = _searchSection (Private->Head, Order, tmpSection);
@@ -1692,17 +1412,17 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
+  if (TestProfile_wcstombs (ptrSection, Section, MAX_STRING_LEN + 1) == -1) {
     return EFI_INVALID_PARAMETER;
   }
 
-  strcpy (tmpSection, ptrSection);
+  AsciiStrCpy (tmpSection, ptrSection);
   _alltrim (tmpSection);
 
   *OrderNum = 0;
   ptrCur = Private->Head;
   while (ptrCur != NULL) {
-    if (stricmp (tmpSection, ptrCur->ptrSection) == 0) {
+    if (AsciiStriCmp (tmpSection, ptrCur->ptrSection) == 0) {
       ++ (*OrderNum);
     }
 
@@ -1835,7 +1555,7 @@ Returns:
   }
 
   ptrCur = Private->Head ;
-  strcpy (ptrCurSection, "");
+  AsciiStrCpy (ptrCurSection, "");
   first = TRUE;
 
   //
@@ -1865,10 +1585,10 @@ Returns:
       if (first) {
         first = FALSE;
       } else {
-        strcpy (Buffer, "\r\n");
-        BufSize = strlen (Buffer);
+        AsciiStrCpy (Buffer, "\r\n");
+        BufSize = AsciiStrLen (Buffer);
         if (Private->isUnicode) {
-          mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
+          TestProfile_mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
           BufSize *= 2;
           Status = Handle->Write (Handle, &BufSize, Line);
         } else {
@@ -1889,11 +1609,11 @@ Returns:
     while (ptrCmtCur != NULL) {
       if (ptrCmtCur->commentNo == ptrCur->commentNo) {
         commentNo = ptrCmtCur->commentNo;
-        strcpy (Buffer, ptrCmtCur->ptrComment);
-        strcat (Buffer, "\r\n");
-        BufSize = strlen (Buffer);
+        AsciiStrCpy (Buffer, ptrCmtCur->ptrComment);
+        AsciiStrCat (Buffer, "\r\n");
+        BufSize = AsciiStrLen (Buffer);
         if (Private->isUnicode) {
-          mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
+          TestProfile_mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
           BufSize *= 2;
           Status = Handle->Write (Handle, &BufSize, Line);
         } else {
@@ -1912,13 +1632,13 @@ Returns:
       //
       // new section, write the section head
       //
-      strcpy (ptrCurSection, ptrCur->ptrSection);
-      strcpy (Buffer, "[");
-      strcat (Buffer, ptrCurSection);
-      strcat (Buffer, "]\r\n");
-      BufSize = strlen (Buffer);
+      AsciiStrCpy (ptrCurSection, ptrCur->ptrSection);
+      AsciiStrCpy (Buffer, "[");
+      AsciiStrCat (Buffer, ptrCurSection);
+      AsciiStrCat (Buffer, "]\r\n");
+      BufSize = AsciiStrLen (Buffer);
       if (Private->isUnicode) {
-        mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
+        TestProfile_mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
         BufSize *= 2;
         Status = Handle->Write (Handle, &BufSize, Line);
       } else {
@@ -1933,13 +1653,13 @@ Returns:
       //
       // write the entry and value line
       //
-      strcpy (Buffer, ptrCur->ptrEntry);
-      strcat (Buffer, "=");
-      strcat (Buffer, ptrCur->ptrValue);
-      strcat (Buffer, "\r\n");
-      BufSize = strlen (Buffer);
+      AsciiStrCpy (Buffer, ptrCur->ptrEntry);
+      AsciiStrCat (Buffer, "=");
+      AsciiStrCat (Buffer, ptrCur->ptrValue);
+      AsciiStrCat (Buffer, "\r\n");
+      BufSize = AsciiStrLen (Buffer);
       if (Private->isUnicode) {
-        mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
+        TestProfile_mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
         BufSize *= 2;
         Status = Handle->Write (Handle, &BufSize, Line);
       } else {
@@ -1962,11 +1682,11 @@ Returns:
   commentNo ++;
   while (ptrCmtCur != NULL) {
     if (ptrCmtCur->commentNo >= commentNo) {
-      strcpy (Buffer, ptrCmtCur->ptrComment);
-      strcat (Buffer, "\r\n");
-      BufSize = strlen (Buffer);
+      AsciiStrCpy (Buffer, ptrCmtCur->ptrComment);
+      AsciiStrCat (Buffer, "\r\n");
+      BufSize = AsciiStrLen (Buffer);
       if (Private->isUnicode) {
-        mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
+        TestProfile_mbstowcs ((CHAR16 *)Line, Buffer, BufSize + 1);
         BufSize *= 2;
         Status = Handle->Write (Handle, &BufSize, Line);
       } else {
@@ -2041,15 +1761,15 @@ Routine Description:
   IniFile->Handle.GetOrderNum        = NULL;
   IniFile->Handle.Flush              = NULL;
   if (IniFile->FileName != NULL) {
-    free (IniFile->FileName);
+    FreePool (IniFile->FileName);
     IniFile->FileName = NULL;
   }
   if (IniFile->DevPath != NULL) {
-    free (IniFile->DevPath);
+    FreePool (IniFile->DevPath);
     IniFile->DevPath = NULL;
   }
   _freePointer(IniFile);
-  free (IniFile);
+  FreePool (IniFile);
 }
 
 EFI_STATUS
@@ -2104,20 +1824,20 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcslen (FileName) > MAX_STRING_LEN) {
+  if (StrLen (FileName) > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // New and initialize a ini file
   //
-  NewIniFile = malloc (sizeof(EFI_INI_FILE_PRIVATE_DATA));
+  NewIniFile = AllocatePool (sizeof(EFI_INI_FILE_PRIVATE_DATA));
   if (NewIniFile == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
   _initFile (NewIniFile);
 
-  NewIniFile->FileName = wcsdup (FileName);
+  NewIniFile->FileName = UnicodeDuplicateString (FileName);
   if ( NewIniFile->FileName == NULL ) {
     _freeIniFile (NewIniFile);
     return EFI_OUT_OF_RESOURCES;
@@ -2324,20 +2044,20 @@ Returns:
     return EFI_INVALID_PARAMETER;
   }
 
-  if (wcslen (FileName) > MAX_STRING_LEN) {
+  if (StrLen (FileName) > MAX_STRING_LEN) {
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // New and initialize a ini file
   //
-  NewIniFile = malloc (sizeof(EFI_INI_FILE_PRIVATE_DATA));
+  NewIniFile = AllocatePool (sizeof(EFI_INI_FILE_PRIVATE_DATA));
   if (NewIniFile == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
   _initFile (NewIniFile);
 
-  NewIniFile->FileName = wcsdup (FileName);
+  NewIniFile->FileName = UnicodeDuplicateString (FileName);
   if ( NewIniFile->FileName == NULL ) {
     _freeIniFile (NewIniFile);
     return EFI_OUT_OF_RESOURCES;
@@ -2735,6 +2455,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 TslInitUnload (
   IN EFI_HANDLE         ImageHandle
   )
@@ -2881,4 +2602,3 @@ Returns:
 
   return Status;
 }
-

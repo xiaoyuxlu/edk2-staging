@@ -55,6 +55,7 @@ EftpListIntegrityCheck (
 
 STATIC
 VOID
+EFIAPI
 EftpRrqTxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -156,6 +157,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 EftpRrqRxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -527,6 +529,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 EftpRrqTimer (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -664,6 +667,7 @@ Returns:
 
 STATIC
 VOID
+EFIAPI
 EftpRrqTxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -763,7 +767,6 @@ Returns:
 
 --*/
 {
-  EFTP_OPTION         *Opt;
   EFTP_RRQ_STATE      *Rrq;
   EFTP_PACKET_BUFFER  *Buf;
   BOOLEAN             Copy;
@@ -773,7 +776,6 @@ Returns:
   ASSERT (Private && Private->RrqState && Packet);
 
   Rrq = Private->RrqState;
-  Opt = &Private->Option;
 
   //
   // Ignore the data packet with wrong opcode
@@ -1081,6 +1083,7 @@ Returns:
 
 STATIC
 VOID
+EFIAPI
 EftpRrqInitTimer (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -1203,8 +1206,6 @@ Returns:
 
 --*/
 {
-  EFTP_OPTION         *Opt;
-  EFTP_RRQ_STATE      *Rrq;
   EFTP_PACKET_BUFFER  *Buf;
   EFTP_ERRINFO        Err;
   EFI_STATUS          Status;
@@ -1212,9 +1213,6 @@ Returns:
   UINT64              BlkNo;
 
   ASSERT (Private && Private->RrqState && Packet);
-
-  Rrq = Private->RrqState;
-  Opt = &Private->Option;
 
   //
   // Ignore the data packet with wrong opcode
@@ -1503,6 +1501,7 @@ Returns:
 
 STATIC
 VOID
+EFIAPI
 EftpRrqActiveTimer (
   IN EFI_EVENT  Event,
   IN VOID       *Context

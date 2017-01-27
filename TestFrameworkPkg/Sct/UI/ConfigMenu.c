@@ -12,7 +12,7 @@
 
 **/
 
-#include "SCT.h"
+#include "Sct.h"
 #include "BuildMenu.h"
 
 //
@@ -37,21 +37,25 @@ BOOLEAN           ItemValueChanged = FALSE;
 //
 
 EFI_STATUS
+EFIAPI
 DisplayConfigMenu (
   IN EFI_MENU_PAGE          *ParentPage
   );
 
 EFI_STATUS
+EFIAPI
 ConfigMenuEscFunc (
   IN EFI_MENU_PAGE          *Page
   );
 
 EFI_STATUS
+EFIAPI
 ConfigMenuSetDefaultFunc (
   IN EFI_MENU_PAGE          *Page
   );
 
 EFI_STATUS
+EFIAPI
 ConfigMenuDescPrintFunc (
   IN EFI_MENU_ITEM          *MenuItem,
   IN VOID                   *Context,
@@ -64,6 +68,7 @@ ConfigMenuDescPrintFunc (
 //
 
 EFI_STATUS
+EFIAPI
 DisplayConfigMenu (
   IN EFI_MENU_PAGE          *ParentPage
   )
@@ -511,6 +516,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 ConfigMenuSetDefaultFunc (
   IN EFI_MENU_PAGE          *MenuPage
   )
@@ -758,6 +764,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 ConfigMenuEscFunc (
   IN EFI_MENU_PAGE          *Page
   )
@@ -778,7 +785,6 @@ Returns:
 
 --*/
 {
-  EFI_STATUS              Status;
   EFI_MENU_ITEM           *MenuItem;
   CHAR16                  *FileName;
   UINTN                   TempValue;
@@ -877,11 +883,11 @@ Returns:
     //
     //save config data into profile
     //
-    Status = SaveConfigData (
-               gFT->DevicePath,
-               FileName,
-               gFT->ConfigData
-               );
+    SaveConfigData (
+      gFT->DevicePath,
+      FileName,
+      gFT->ConfigData
+      );
     FreePool (FileName);
   }
   //
@@ -898,6 +904,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 ConfigMenuDescPrintFunc (
   IN EFI_MENU_ITEM          *MenuItem,
   IN VOID                   *Context,

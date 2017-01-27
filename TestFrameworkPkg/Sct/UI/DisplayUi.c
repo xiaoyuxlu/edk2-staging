@@ -45,21 +45,25 @@ SetScrollBarPos (
 );
 
 EFI_STATUS
+EFIAPI
 MenuBodyRefresh (
   IN EFI_MENU_PAGE      *MenuPage
 );
 
 EFI_STATUS
+EFIAPI
 MenuFooterRefresh (
   IN EFI_MENU_PAGE      *MenuPage
 );
 
 EFI_STATUS
+EFIAPI
 MenuBodyItemsRefresh (
   IN EFI_MENU_PAGE      *MenuPage
 );
 
 EFI_STATUS
+EFIAPI
 MenuItemRefresh (
   IN EFI_MENU_PAGE      *MenuPage,
   IN EFI_MENU_ITEM      *Item,
@@ -67,6 +71,7 @@ MenuItemRefresh (
 );
 
 EFI_STATUS
+EFIAPI
 MenuPageRefresh (
   IN EFI_MENU_PAGE      *MenuPage
 );
@@ -278,6 +283,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuHeaderRefresh (
   IN EFI_MENU_PAGE      *MenuPage
   )
@@ -379,6 +385,7 @@ Returns:
  }
 
 EFI_STATUS
+EFIAPI
 MenuBodyRefresh (
   IN EFI_MENU_PAGE      *MenuPage
   )
@@ -728,6 +735,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuFooterRefresh (
   IN EFI_MENU_PAGE      *MenuPage
   )
@@ -753,7 +761,6 @@ Returns:
   UINTN                X1;
   UINTN                Y1;
   UINTN                Lines;
-  UINTN                Columns;
   UINTN                Xpos;
   UINTN                Ypos;
   EFI_HOT_KEY          *HotKey;
@@ -775,7 +782,6 @@ Returns:
   X1 = MenuPage->Footer.FooterRect.BottomRight.Col;
   Y1 = MenuPage->Footer.FooterRect.BottomRight.Row;
   Lines   = Y1-Y0+1;
-  Columns = X1-X0+1;
   Xpos = X0;
   Ypos = Y0;
 
@@ -868,6 +874,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuBodyItemsRefresh (
   IN EFI_MENU_PAGE      *MenuPage
   )
@@ -1061,6 +1068,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuItemRefresh (
   IN EFI_MENU_PAGE      *MenuPage,
   IN EFI_MENU_ITEM      *Item,
@@ -1562,6 +1570,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuItemStatusRefresh (
   IN EFI_MENU_PAGE      *MenuPage,
   IN EFI_MENU_ITEM      *Item,
@@ -1752,6 +1761,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 MenuPageRefresh (
   IN EFI_MENU_PAGE      *MenuPage
   )

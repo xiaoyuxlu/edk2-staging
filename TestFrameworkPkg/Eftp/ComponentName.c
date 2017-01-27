@@ -17,6 +17,7 @@
 // EFI Component Name Functions
 //
 EFI_STATUS
+EFIAPI
 EftpComponentNameGetDriverName (
   IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
   IN  CHAR8                        *Language,
@@ -24,6 +25,7 @@ EftpComponentNameGetDriverName (
   );
 
 EFI_STATUS
+EFIAPI
 EftpComponentNameGetControllerName (
   IN  EFI_COMPONENT_NAME2_PROTOCOL                                       *This,
   IN  EFI_HANDLE                                                         ControllerHandle,
@@ -53,6 +55,7 @@ static EFI_UNICODE_STRING_TABLE mEftpDriverNameTable[] = {
 };
 
 EFI_STATUS
+EFIAPI
 EftpComponentNameGetDriverName (
   IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
   IN  CHAR8                        *Language,
@@ -94,6 +97,7 @@ EftpComponentNameGetDriverName (
 }
 
 EFI_STATUS
+EFIAPI
 EftpComponentNameGetControllerName (
   IN  EFI_COMPONENT_NAME2_PROTOCOL                                       *This,
   IN  EFI_HANDLE                                                         ControllerHandle,

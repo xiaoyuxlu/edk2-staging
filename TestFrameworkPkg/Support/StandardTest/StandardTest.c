@@ -335,7 +335,6 @@ StslCloseAllFiles (
   IN STANDARD_TEST_PRIVATE_DATA   *Private
   )
 {
-  EFI_STATUS                        Status;
   EFI_TEST_OUTPUT_LIBRARY_PROTOCOL  *Output;
   EFI_LIB_CONFIG_FILE_HANDLE        *FileConf;
 
@@ -346,10 +345,10 @@ StslCloseAllFiles (
   //
   FileConf = &Private->SystemLogFile;
   if (FileConf->FileHandle != NULL) {
-    Status = Output->Close (
-                       Output,
-                       FileConf->FileHandle
-                       );
+    Output->Close (
+              Output,
+              FileConf->FileHandle
+              );
     FileConf->FileHandle = NULL;
   }
 
@@ -358,10 +357,10 @@ StslCloseAllFiles (
   //
   FileConf = &Private->SystemKeyFile;
   if (FileConf->FileHandle != NULL) {
-    Status = Output->Close (
-                       Output,
-                       FileConf->FileHandle
-                       );
+    Output->Close (
+              Output,
+              FileConf->FileHandle
+              );
     FileConf->FileHandle = NULL;
   }
 
@@ -370,10 +369,10 @@ StslCloseAllFiles (
   //
   FileConf = &Private->CaseLogFile;
   if (FileConf->FileHandle != NULL) {
-    Status = Output->Close (
-                       Output,
-                       FileConf->FileHandle
-                       );
+    Output->Close (
+              Output,
+              FileConf->FileHandle
+              );
     FileConf->FileHandle = NULL;
   }
 
@@ -382,10 +381,10 @@ StslCloseAllFiles (
   //
   FileConf = &Private->CaseKeyFile;
   if (FileConf->FileHandle != NULL) {
-    Status = Output->Close (
-                       Output,
-                       FileConf->FileHandle
-                       );
+    Output->Close (
+              Output,
+              FileConf->FileHandle
+              );
     FileConf->FileHandle = NULL;
   }
 
@@ -1712,4 +1711,3 @@ Returns:
 
   return Status;
 }
-

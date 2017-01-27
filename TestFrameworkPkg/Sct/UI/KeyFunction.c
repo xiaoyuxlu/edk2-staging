@@ -30,44 +30,52 @@ extern BOOLEAN          gMenuExit;
 //protypes (external)
 //
 EFI_STATUS
+EFIAPI
 DoDefault (
   IN EFI_MENU_PAGE        *MenuPage,
   IN EFI_INPUT_KEY        *InKey
   );
 
 EFI_STATUS
+EFIAPI
 UpFunc (
   IN EFI_MENU_PAGE        *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 DownFunc (
   IN EFI_MENU_PAGE        *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 DoEdit (
   IN EFI_MENU_PAGE        *MenuPage,
   IN OUT EFI_INPUT_KEY    *InKey
   );
 
 EFI_STATUS
+EFIAPI
 DoIterEdit (
   IN EFI_MENU_PAGE        *MenuPage,
   IN OUT EFI_INPUT_KEY    *InKey
   );
 
 EFI_STATUS
+EFIAPI
 SpaceFunc (
   IN EFI_MENU_PAGE        *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 LeftArrowFunc (
   IN EFI_MENU_PAGE        *MenuPage
   );
 
 EFI_STATUS
+EFIAPI
 RightArrowFunc (
   IN EFI_MENU_PAGE        *MenuPage
   );
@@ -110,6 +118,7 @@ CompareNumberString (
 //
 
 EFI_STATUS
+EFIAPI
 DoDefault (
   IN EFI_MENU_PAGE        *MenuPage,
   IN EFI_INPUT_KEY        *InKey
@@ -141,6 +150,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 UpFunc (
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -237,6 +247,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 DownFunc (
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -359,6 +370,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 PageUpFunc (
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -469,6 +481,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 PageDownFunc (
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -603,6 +616,7 @@ Returns:
 
 
 EFI_STATUS
+EFIAPI
 DoEdit (
   IN EFI_MENU_PAGE        *MenuPage,
   IN OUT EFI_INPUT_KEY    *InKey
@@ -1425,6 +1439,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 SpaceFunc(
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -1542,6 +1557,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 LeftArrowFunc(
   IN EFI_MENU_PAGE        *MenuPage
   )
@@ -1635,6 +1651,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 RightArrowFunc(
   IN EFI_MENU_PAGE *MenuPage
   )
@@ -2152,6 +2169,7 @@ Returns:
 }
 
 EFI_STATUS
+EFIAPI
 DoIterEdit (
   IN EFI_MENU_PAGE        *MenuPage,
   IN OUT EFI_INPUT_KEY    *InKey

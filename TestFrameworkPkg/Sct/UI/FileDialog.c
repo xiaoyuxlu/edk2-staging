@@ -2601,7 +2601,6 @@ Returns:
   EFI_INPUT_KEY                   Key;
   EFI_STATUS                      Status;
   EFI_FILE_HANDLE                 FHandle;
-  EFI_FILE_HANDLE                 TempHandle;
   BOOLEAN                         RET;
   CHAR16                          *TempName;
   INTN                            Length;
@@ -2631,7 +2630,6 @@ Returns:
     } else {
       ResultContextWasNull = FALSE;
     }
-    TempHandle = ResultContext->FHandle;
 
     //
     //set the new file

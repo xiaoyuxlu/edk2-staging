@@ -20,7 +20,7 @@
 
 #define ENTS_VENDOR_GUID \
   { \
-    0x868b4f16, 0xc83a, 0x4205, 0xa9, 0x3c, 0x3f, 0x51, 0xcf, 0x7f, 0x61, 0xc0 \
+    0x868b4f16, 0xc83a, 0x4205, {0xa9, 0x3c, 0x3f, 0x51, 0xcf, 0x7f, 0x61, 0xc0} \
   }
 
 #define ENTS_SERVER_IPV4_ADDRESS_NAME L"ServerIp"
@@ -56,6 +56,7 @@ typedef enum {
 } LINK_LAYER_STATUS;
 
 EFI_STATUS
+EFIAPI
 IP4NetworkSaveContext(
   EFI_ENTS_MONITOR_PROTOCOL     *This
   )
@@ -79,6 +80,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 IP4NetworkRestoreContext(
   IN EFI_ENTS_MONITOR_PROTOCOL *This
   )
@@ -105,6 +107,7 @@ Returns:
 // External functions declarations
 //
 EFI_STATUS
+EFIAPI
 IP4NetworkListener (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This,
   IN OUT UINTN                     *Size,
@@ -131,6 +134,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 IP4NetworkSender (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This,
   IN CHAR16                        *Buffer
@@ -157,6 +161,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 InitIP4Network (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This
   )
@@ -179,6 +184,7 @@ Returns:
 ;
 
 EFI_STATUS
+EFIAPI
 ResetIP4Network (
   IN EFI_ENTS_MONITOR_PROTOCOL     *This
   )

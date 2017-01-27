@@ -247,29 +247,6 @@ EntsStrDuplicate (
   )
 ;
 
-INTN
-EntsLibStubStriCmp (
-  IN EFI_UNICODE_COLLATION_PROTOCOL   *This,
-  IN CHAR16                           *s1,
-  IN CHAR16                           *s2
-  )
-;
-
-VOID
-EntsLibStubStrLwrUpr (
-  IN EFI_UNICODE_COLLATION_PROTOCOL   *This,
-  IN CHAR16                           *Str
-  )
-;
-
-BOOLEAN
-EntsLibStubMetaiMatch (
-  IN EFI_UNICODE_COLLATION_PROTOCOL   *This,
-  IN CHAR16                           *String,
-  IN CHAR16                           *Pattern
-  )
-;
-
 EFI_STATUS
 Char16ToChar8 (
   IN  CHAR16 *Src,
@@ -361,23 +338,6 @@ strtok_line (
 ;
 
 CHAR16 *
-strtok_arg (
-  CHAR16       *s,
-  const CHAR16 *ct
-  )
-/*++
-
-Routine Description:
-
-  Find the next token in a string
-  Tokens are separated by separators defined in "ct"
-  If enclosed in double quotations, other separators are invalid. Then token is
-  the content in the quotations.
-
---*/
-;
-
-CHAR16 *
 strtok_field (
   CHAR16       *s,
   const CHAR16 *ct
@@ -406,30 +366,6 @@ EntsHexStrToUINTN (
 ;
 
 EFI_STATUS
-EntsStrToValue (
-  IN CHAR16             *Buffer,
-  OUT UINTN             *Value
-  )
-/*++
-
-Routine Description:
-
-  Convert a string to a value.
-
-Arguments:
-
-  Buffer  - String buffer.
-  Value   - Pointer to receive the converted value.
-
-Returns:
-
-  EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_SUCCESS - Operation succeeded.
-
---*/
-;
-
-EFI_STATUS
 EntsValueToStr (
   IN UINTN              Value,
   OUT CHAR16            *Buffer
@@ -448,103 +384,6 @@ Arguments:
 Returns:
 
   EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_SUCCESS - Operation succeeded.
-
---*/
-;
-
-EFI_STATUS
-EntsHexValueToStr (
-  IN UINTN              Value,
-  OUT CHAR16            *Buffer
-  )
-/*++
-
-Routine Description:
-
-  Convert a hexadecimal value to a string.
-
-Arguments:
-
-  Value   - Value to be converted.
-  Buffer  - Pointer to string receive buffer.
-
-Returns:
-
-  EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_SUCCESS - Operation succeeded.
-
---*/
-;
-
-EFI_STATUS
-EntsStrToHexValue (
-  IN CHAR16             *Buffer,
-  OUT UINTN             *Value
-  )
-/*++
-
-Routine Description:
-
-  Convert a string to a hexadecimal value.
-
-Arguments:
-
-  Buffer  - String buffer to be converted.
-  Value   - Receive value pointer.
-
-Returns:
-
-  EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_SUCCESS - Operation succeeded.
-
---*/
-;
-
-EFI_STATUS
-EntsBooleanToStr (
-  IN BOOLEAN            Value,
-  OUT CHAR16            *Buffer
-  )
-/*++
-
-Routine Description:
-
-  Convert a boolean to a string.
-
-Arguments:
-
-  Value   - Boolean value.
-  Buffer  - Receive string buffer.
-
-Returns:
-
-  EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_SUCCESS - Operation succeeded.
-
---*/
-;
-
-EFI_STATUS
-EntsStrToBoolean (
-  IN CHAR16             *Buffer,
-  OUT BOOLEAN           *Value
-  )
-/*++
-
-Routine Description:
-
-  Convert a string to a boolean.
-
-Arguments:
-
-  Buffer  - String buffer to be converted.
-  Value   - Receive value pointer.
-
-Returns:
-
-  EFI_INVALID_PARAMETER - Parameter invalid.
-  EFI_UNSUPPORTED - String not supported.
   EFI_SUCCESS - Operation succeeded.
 
 --*/
@@ -581,12 +420,6 @@ Returns:
 --*/
 ;
 
-CHAR16 *
-EntsStrChr (
-  IN  CHAR16  *Str,
-  IN  CHAR16  c
-  );
-
 UINTN
 EntsStrStr (
   IN  CHAR16  *Str,
@@ -611,67 +444,9 @@ Returns:
 --*/
 ;
 
-UINTN
-HexStringToValue (
-  IN CHAR16             *String,
-  IN UINTN              Length
-  )
-/*++
-
-Routine Description:
-
-  Convert a hex string to a value.
-
-Arguments:
-
-  String  - Hex string buffer.
-  Length  - Hex string length.
-
-Returns:
-
-  Converted value.
-
---*/
-;
-
 INTN
 a2i (
   IN CHAR16       Ch
-  )
-;
-
-CHAR16
-i2A (
-  UINTN    x
-  )
-;
-
-CHAR16
-i2a (
-  UINTN    x
-  )
-;
-
-EFI_STATUS
-EntsIpToStr (
-  IN EFI_IP_ADDRESS       *IpAddr,
-  IN UINTN                StrSize,
-  IN OUT CHAR16           *Str
-  )
-;
-
-EFI_STATUS
-EntsStrToMac (
-  IN CHAR16              *Str,
-  IN OUT EFI_MAC_ADDRESS *MacAddr
-  )
-;
-
-EFI_STATUS
-EntsMacToStr (
-  IN EFI_MAC_ADDRESS     *MacAddr,
-  IN UINTN               StrSize,
-  IN OUT CHAR16          *Str
   )
 ;
 

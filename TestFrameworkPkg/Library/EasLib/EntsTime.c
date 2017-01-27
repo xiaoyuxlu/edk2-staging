@@ -18,7 +18,7 @@
 //
 // Global variables and definitions
 //
-#define IS_LEAP(y)  (((y) % 4) == 0 && ((y) % 100) != 0 || ((y) % 400) == 0)
+#define IS_LEAP(y)  ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 
 static const UINTN  MonthLengths[2][12] = {
   {

@@ -16,6 +16,7 @@
 
 STATIC
 VOID
+EFIAPI
 EftpWrqTxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -143,6 +144,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 EftpWrqRxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -400,6 +402,7 @@ CleanUp:
 
 STATIC
 VOID
+EFIAPI
 EftpWrqTxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -472,6 +475,7 @@ Returns:
 }
 
 VOID
+EFIAPI
 EftpWrqTimer (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -654,15 +658,12 @@ Returns:
 --*/
 {
   EFI_STATUS          Status;
-  EFTP_OPTION         *Opt;
   UINT64              AckNo;
   EFTP_ERRINFO        Err;
   EFTP_PACKET_BUFFER  *Buf;
   BOOLEAN             Copy;
 
   ASSERT (Private && Private->WrqState && Packet);
-
-  Opt = &Private->Option;
 
   //
   // Ignore the ACK packet with wrong opcode

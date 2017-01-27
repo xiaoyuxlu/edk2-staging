@@ -68,8 +68,8 @@ STATIC UINT32                               mCurrentOpCode;
 STATIC UINT32                               mCurrentSeqId;
 STATIC UINT32                               mCurrentPacketLength;
 
-EFI_MAC_ADDRESS                             mDestinationAddress     = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-EFI_MAC_ADDRESS                             mSourceAddress          = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+EFI_MAC_ADDRESS                             mDestinationAddress     = { {0xff, 0xff, 0xff, 0xff, 0xff, 0xff} };
+EFI_MAC_ADDRESS                             mSourceAddress          = { {0xff, 0xff, 0xff, 0xff, 0xff, 0xff} };
 
 EFI_MANAGED_NETWORK_CONFIG_DATA             mMnpConfigDataTemplate = {
   //
@@ -95,8 +95,7 @@ EFI_MANAGED_NETWORK_TRANSMIT_DATA           mMnpTxDataTemplate = {
   0,                      // HeaderLength
   1,                      // FragmentCount
   {
-    0,
-    NULL
+    {0,NULL}
   }                       // FragmentTable
 };
 
@@ -142,12 +141,14 @@ MnpSendPacketOut (
   );
 
 VOID
+EFIAPI
 NotifyFunctionSend (
   EFI_EVENT Event,
   VOID      *Context
   );
 
 VOID
+EFIAPI
 NotifyFunctionListen (
   EFI_EVENT Event,
   VOID      *Context
@@ -180,12 +181,14 @@ SetResendTimer (
   );
 
 VOID
+EFIAPI
 ReSendTimer (
   IN EFI_EVENT    Event,
   IN VOID         *Context
   );
 
 EFI_STATUS
+EFIAPI
 ManagedNetworkMonitorUnload (
   IN EFI_HANDLE                ImageHandle
   );
@@ -755,9 +758,6 @@ Returns:
 --*/
 {
   EFI_STATUS                    Status;
-  EFI_MANAGED_NETWORK_PROTOCOL  *Mnp;
-
-  Mnp = This->MonitorIo;
 
   EntsPrint (L"MNP Send ...\n");
   if (LinkStatus == SendoutPacket) {
@@ -858,7 +858,8 @@ Returns:
     //
     if (BufferSize <= MAX_PACKET_LENGTH) {
       IsOver = TRUE;
-      CLR_FLAG_MF (FragFlag.LLFlag);
+//      CLR_FLAG_MF (FragFlag.LLFlag);
+      FragFlag.Flag.MF = 0;
       PacketLength          = (UINT32) BufferSize;
       FragFlag.Flag.Offset  = HTONS ((UINT16)PacketStartPoint);
     } else {
@@ -866,7 +867,8 @@ Returns:
       // Need more fragement
       //
       IsOver = FALSE;
-      SET_FLAG_MF (FragFlag.LLFlag);
+//      SET_FLAG_MF (FragFlag.LLFlag);
+      FragFlag.Flag.MF = 1;
       PacketLength          = MAX_PACKET_LENGTH;
       FragFlag.Flag.Offset  = HTONS ((UINT16)PacketStartPoint);
       BufferSize -= MAX_PACKET_LENGTH;
@@ -1121,6 +1123,7 @@ ManagedNetworkRefresh(
 }
 
 VOID
+EFIAPI
 NotifyFunctionListen (
   EFI_EVENT Event,
   VOID      *Context
@@ -1184,7 +1187,8 @@ Returns:
   SequenceId        = NTOHL (FragFlag.Flag.SeqId);
   PacketStartPoint  = NTOHS ((UINT16)(FragFlag.Flag.Offset));
   PacketLength      = RxData->DataLength - sizeof (EAS_MNP_FRAG_FLAG);
-  IsOver            = HAS_FLAG_MF (FragFlag.LLFlag) ? FALSE : TRUE;
+//  IsOver            = HAS_FLAG_MF (FragFlag.LLFlag) ? FALSE : TRUE;
+  IsOver            = FragFlag.Flag.MF ? FALSE : TRUE;
   OpCode            = FragFlag.Flag.OpCode;
 
   //
@@ -1399,6 +1403,7 @@ RESTART_RECEIVE:
 }
 
 VOID
+EFIAPI
 ReSendTimer (
   IN EFI_EVENT    Event,
   IN VOID         *Context

@@ -146,6 +146,7 @@ Returns:
 ;
 
 VOID
+EFIAPI
 EftpRrqRxCallback (
   IN EFI_EVENT  Event,
   IN VOID       *Context
@@ -169,7 +170,12 @@ Returns:
 --*/
 ;
 
-VOID EftpRrqTimer (IN EFI_EVENT Event, IN VOID *Context)
+VOID
+EFIAPI
+EftpRrqTimer (
+  IN EFI_EVENT Event,
+  IN VOID *Context
+  )
 /*++
 
 Routine Description:
