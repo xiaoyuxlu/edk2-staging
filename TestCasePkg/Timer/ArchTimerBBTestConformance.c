@@ -47,7 +47,7 @@ BBTestRegisterHandlerConsistencyTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
@@ -217,7 +217,7 @@ BBTestGetTimerPeriodConsistencyTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
@@ -262,4 +262,3 @@ BBTestGetTimerPeriodConsistencyTest (
 
   return EFI_SUCCESS;
 }
-

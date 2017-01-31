@@ -47,7 +47,7 @@ BBTestRegisterHandlerInterfaceTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
@@ -281,7 +281,7 @@ BBTestSetTimerPeriodInterfaceTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
@@ -609,7 +609,7 @@ BBTestGetTimerPeriodInterfaceTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
@@ -749,7 +749,7 @@ BBTestGenerateSoftInterruptInterfaceTest (
   Status = gtBS->HandleProtocol (
                    SupportHandle,
                    &gEfiStandardTestLibraryGuid,
-                   &StandardLib
+                   (VOID **)&StandardLib
                    );
   if (EFI_ERROR(Status)) {
     StandardLib->RecordAssertion (
