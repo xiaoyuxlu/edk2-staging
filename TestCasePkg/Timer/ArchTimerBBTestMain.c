@@ -88,7 +88,9 @@ EFI_BB_TEST_ENTRY_FIELD gBBTestEntryField[] = {
     EFI_TEST_CASE_AUTO | EFI_TEST_CASE_RESET_REQUIRED,
     BBTestGenerateSoftInterruptInterfaceTest
   },
-  0
+  {
+  ZERO_GUID
+  }
 };
 
 

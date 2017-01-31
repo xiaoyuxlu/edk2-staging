@@ -27,6 +27,7 @@
 // TDS 4.1
 //
 EFI_STATUS
+EFIAPI
 BBTestRegisterHandlerInterfaceTest (
     IN EFI_BB_TEST_PROTOCOL       *This,
     IN VOID                       *ClientInterface,
@@ -259,6 +260,7 @@ BBTestRegisterHandlerInterfaceTest (
 // TDS 4.2
 //
 EFI_STATUS
+EFIAPI
 BBTestSetTimerPeriodInterfaceTest (
     IN EFI_BB_TEST_PROTOCOL       *This,
     IN VOID                       *ClientInterface,
@@ -584,6 +586,7 @@ BBTestSetTimerPeriodInterfaceTest (
 // TDS 4.3
 //
 EFI_STATUS
+EFIAPI
 BBTestGetTimerPeriodInterfaceTest (
     IN EFI_BB_TEST_PROTOCOL       *This,
     IN VOID                       *ClientInterface,
@@ -728,6 +731,7 @@ BBTestGetTimerPeriodInterfaceTest (
 // TDS 4.4
 //
 EFI_STATUS
+EFIAPI
 BBTestGenerateSoftInterruptInterfaceTest (
     IN EFI_BB_TEST_PROTOCOL       *This,
     IN VOID                       *ClientInterface,
