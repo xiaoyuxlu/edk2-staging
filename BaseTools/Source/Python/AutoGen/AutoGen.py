@@ -4116,10 +4116,17 @@ class ModuleAutoGen(AutoGen):
         if self.CanSkip():
             return
 
-        # Need to generate PcdDatabase even PcdDriver is binarymodule
-        if self.IsBinaryModule and self.PcdIsDriver != '':
-            CreatePcdDatabaseCode(self, TemplateString(), TemplateString())
-            return
+        if self.PcdIsDriver != '':
+            # Need to generate PcdDatabase even PcdDriver is binarymodule
+            if self.IsBinaryModule:
+                CreatePcdDatabaseCode(self, TemplateString(), TemplateString())
+                return
+            else:
+                if self.PcdIsDriver == 'PEI_PCD_DRIVER':
+                    self._ApplyBuildRule(PathClass("PEIPcdDataBase.raw", self.OutputDir), '.bin')
+                else:
+                    self._ApplyBuildRule(PathClass("DXEPcdDataBase.raw", self.OutputDir), '.bin')
+
         if self.IsBinaryModule:
             if self.IsLibrary:
                 self.CopyBinaryFiles()
@@ -4156,6 +4163,7 @@ class ModuleAutoGen(AutoGen):
 
             if len(Dpx.PostfixNotation) <> 0:
                 self.DepexGenerated = True
+                self._ApplyBuildRule(PathClass(DpxFile, self.OutputDir), TAB_UNKNOWN_FILE)
 
             if Dpx.Generate(path.join(self.OutputDir, DpxFile)):
                 AutoGenList.append(str(DpxFile))
