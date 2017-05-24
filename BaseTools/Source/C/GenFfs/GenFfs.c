@@ -20,6 +20,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Common/PiFirmwareFile.h>
 #include <IndustryStandard/PeImage.h>
 #include <Guid/FfsSectionAlignmentPadding.h>
+#include <Guid/PiFirmwareFileSystem.h>
 
 #include "CommonLib.h"
 #include "ParseInf.h"
@@ -44,6 +45,23 @@ STATIC CHAR8 *mFfsFileType[] = {
   "EFI_FV_FILETYPE_FIRMWARE_VOLUME_IMAGE",// 0x0B
   "EFI_FV_FILETYPE_COMBINED_SMM_DXE",     // 0x0C
   "EFI_FV_FILETYPE_SMM_CORE"              // 0x0D
+ };
+
+STATIC CHAR8 *mFfsModuleType[] = {
+  NULL,                    // 0x00
+  "",                      // 0x01
+  "USER_DEFINED",          // 0x02
+  "SEC",                   // 0x03
+  "PEI_CORE",              // 0x04
+  "DXE_CORE",              // 0x05
+  "PEIM",                  // 0x06
+  "DXE_DRIVER",            // 0x07
+  "",                      // 0x08
+  "UEFI_APPLICATION",      // 0x09
+  "DXE_SMM_DRIVER",        // 0x0A
+  "DXE_RUNTIME_DRIVER",    // 0x0B
+  "UEFI_DRIVER",           // 0x0C
+  "SMM_CORE"               // 0x0D
  };
 
 STATIC CHAR8 *mAlignName[] = {
@@ -227,6 +245,16 @@ Returns:
       return Index;
     }
   }
+
+  for (Index = 0; Index < sizeof (mFfsModuleType) / sizeof (CHAR8 *); Index ++) {
+    if (mFfsModuleType [Index] != NULL && (stricmp (String, mFfsModuleType [Index]) == 0)) {
+      if (Index == 0xB || Index == 0xC) {
+        Index = 0x7;
+      }
+      return Index;
+    }
+  }
+
   return EFI_FV_FILETYPE_ALL;
 }
 
@@ -237,6 +265,7 @@ GetSectionContents (
   IN  UINT32                    *InputFileAlign,
   IN  UINT32                    InputFileNum,
   IN  EFI_FFS_FILE_ATTRIBUTES   FfsAttrib,
+  IN  EFI_FV_FILETYPE           FfsFiletype,
   OUT UINT8                     *FileBuffer,
   OUT UINT32                    *BufferLength,
   OUT UINT32                    *MaxAlignment,
@@ -286,6 +315,7 @@ Returns:
   EFI_GUID_DEFINED_SECTION            GuidSectHeader;
   EFI_GUID_DEFINED_SECTION2           GuidSectHeader2;
   UINT32                              HeaderSize;
+  UINT32                              AlignOffset;
   UINT32                              MaxEncounteredAlignment;
 
   Size                    = 0;
@@ -337,6 +367,15 @@ Returns:
         TeOffset = TeHeader.StrippedSize - sizeof (TeHeader);
       }
     } else if (TempSectHeader.Type == EFI_SECTION_PE32) {
+      if (InputFileAlign [Index] == 1) {
+        if (FfsFiletype == EFI_FV_FILETYPE_SECURITY_CORE || FfsFiletype == EFI_FV_FILETYPE_PEI_CORE || FfsFiletype == EFI_FV_FILETYPE_PEIM) {
+          fseek (InFile, 4 + 0x3C, SEEK_SET);
+          fread (&AlignOffset, 1, sizeof (AlignOffset), InFile);
+          fseek (InFile, 4 + AlignOffset + 0x38, SEEK_SET);
+          fread (&AlignOffset, 1, sizeof (AlignOffset), InFile);
+          InputFileAlign [Index] = AlignOffset;
+        }
+      }
       (*PESectionNum) ++;
     } else if (TempSectHeader.Type == EFI_SECTION_GUID_DEFINED) {
       fseek (InFile, 0, SEEK_SET);
@@ -489,6 +528,8 @@ Returns:
   UINT64                  LogLevel;
   UINT8                   PeSectionNum;
   UINT32                  HeaderSize;
+  EFI_GUID                TopGuid = EFI_FFS_VOLUME_TOP_FILE_GUID;
+  FILE                    *InFile;
   
   //
   // Init local variables
@@ -670,6 +711,10 @@ Returns:
       }
   
       InputFileName[InputFileNum] = argv[1];
+      if (CompareGuid (&FileGuid, &TopGuid) == 0) {
+        InputFileAlign[InputFileNum] = 16;
+      }
+
       argc -= 2;
       argv += 2;
 
@@ -732,14 +777,24 @@ Returns:
       continue;
     }
 
-    Error (NULL, 0, 1000, "Unknown option", argv[0]);
-    goto Finish;
+    InFile = fopen (LongFilePath (argv[0]), "rb");
+    if (InFile != NULL) {
+      fclose (InFile);
+      InputFileName[InputFileNum] = argv[0];
+      if (CompareGuid (&FileGuid, &TopGuid) == 0) {
+        InputFileAlign[InputFileNum] = 16;
+      }
+      InputFileNum ++;
+    }
+
+    argc -= 1;
+    argv += 1;
   }
 
   VerboseMsg ("%s tool start.", UTILITY_NAME);
 
   //
-  // Check the complete input parameters.
+  // Check the complete input paramters.
   //
   if (FfsFiletype == EFI_FV_FILETYPE_ALL) {
     Error (NULL, 0, 1001, "Missing option", "filetype");
@@ -798,6 +853,7 @@ Returns:
              InputFileAlign,
              InputFileNum,
              FfsAttrib,
+             FfsFiletype,
              FileBuffer,
              &FileSize,
              &MaxAlignment,
@@ -835,6 +891,7 @@ Returns:
                InputFileAlign,
                InputFileNum,
                FfsAttrib,
+               FfsFiletype,
                FileBuffer,
                &FileSize,
                &MaxAlignment,
