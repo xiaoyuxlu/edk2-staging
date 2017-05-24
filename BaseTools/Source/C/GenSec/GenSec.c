@@ -67,6 +67,23 @@ STATIC CHAR8      *mSectionTypeName[] = {
   "EFI_SECTION_SMM_DEPEX"               // 0x1C
 };
 
+STATIC CHAR8 *mFfsModuleType[] = {
+  NULL,                    // 0x00
+  "",                      // 0x01
+  "USER_DEFINED",          // 0x02
+  "SEC",                   // 0x03
+  "PEI_CORE",              // 0x04
+  "DXE_CORE",              // 0x05
+  "PEIM",                  // 0x06
+  "DXE_DRIVER",            // 0x07
+  "",                      // 0x08
+  "UEFI_APPLICATION",      // 0x09
+  "DXE_SMM_DRIVER",        // 0x0A
+  "DXE_RUNTIME_DRIVER",    // 0x0B
+  "UEFI_DRIVER",           // 0x0C
+  "SMM_CORE"               // 0x0D
+ };
+
 STATIC CHAR8      *mCompressionTypeName[]    = { "PI_NONE", "PI_STD" };
 
 #define EFI_GUIDED_SECTION_NONE 0x80
@@ -1010,6 +1027,7 @@ Returns:
   CHAR8                     **InputFileName;
   CHAR8                     *OutputFileName;
   CHAR8                     *SectionName;
+  CHAR8                     *ModuleType;
   CHAR8                     *CompressionName;
   CHAR8                     *StringBuffer;
   EFI_GUID                  VendorGuid = mZeroGuid;
@@ -1048,6 +1066,7 @@ Returns:
   SectGuidHeaderLength  = 0;
   VersionSect           = NULL;
   UiSect                = NULL;
+  ModuleType            = NULL;
   
   SetUtilityName (UTILITY_NAME);
   
@@ -1078,6 +1097,17 @@ Returns:
     if ((stricmp (argv[0], "-s") == 0) || (stricmp (argv[0], "--SectionType") == 0)) {
       SectionName = argv[1];
       if (SectionName == NULL) {
+        Error (NULL, 0, 1003, "Invalid option value", "Section Type can't be NULL");
+        goto Finish;
+      }
+      argc -= 2;
+      argv += 2;
+      continue; 
+    }
+
+    if (stricmp (argv[0], "-t") == 0) {
+      ModuleType = argv[1];
+      if (ModuleType == NULL) {
         Error (NULL, 0, 1003, "Invalid option value", "Section Type can't be NULL");
         goto Finish;
       }
@@ -1379,6 +1409,23 @@ Returns:
   } else {
     Error (NULL, 0, 1003, "Invalid option value", "SectionType = %s", SectionName);
     goto Finish;
+  }
+  
+  if ((SectType == EFI_SECTION_PEI_DEPEX) && (ModuleType != NULL)) {
+    for (Index = 0; Index < sizeof (mFfsModuleType) / sizeof (CHAR8 *); Index ++) {
+      if (mFfsModuleType [Index] != NULL && (stricmp (ModuleType, mFfsModuleType [Index]) == 0)) {
+        if (Index == 0xB || Index == 0xC) {
+          Index = 0x7;
+        }
+        break;
+      }
+    }
+    if (Index == EFI_FV_FILETYPE_DRIVER) {
+      SectType = EFI_SECTION_DXE_DEPEX;
+    }
+    if (Index == EFI_FV_FILETYPE_SMM) {
+      SectType = EFI_SECTION_SMM_DEPEX;
+    }
   }
   
   //
