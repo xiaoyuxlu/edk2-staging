@@ -410,20 +410,27 @@ LocateExPcdBinary (
 {
   EFI_STATUS            Status;
   VOID                  *PcdDb;
+  UINTN                 Index;
+  UINT32                AuthenticationStatus;
 
   PcdDb       = NULL;
+  Index       = 0;
 
   ASSERT (FileHandle != NULL);
 
-  Status = PeiServicesFfsFindSectionData (EFI_SECTION_RAW, FileHandle, &PcdDb);
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // Check the first bytes (Header Signature Guid) and build version.
-  //
-  if (!CompareGuid (PcdDb, &gPcdDataBaseSignatureGuid) ||
-      (((PEI_PCD_DATABASE *) PcdDb)->BuildVersion != PCD_SERVICE_PEIM_VERSION)) {
-    ASSERT (FALSE);
+  while (TRUE) {
+    Status = PeiServicesFfsFindSectionData3 (EFI_SECTION_RAW, Index++, FileHandle, &PcdDb, &AuthenticationStatus);
+    if (EFI_ERROR (Status)) {
+      PcdDb = NULL;
+      break;
+    }
+  
+    //
+    // Check the first bytes (Header Signature Guid) and build version.
+    //
+    if (CompareGuid (PcdDb, &gPcdDataBaseSignatureGuid) && (((PEI_PCD_DATABASE *) PcdDb)->BuildVersion == PCD_SERVICE_PEIM_VERSION)) {
+      break;
+    }
   }
   return PcdDb;
 }

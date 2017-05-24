@@ -756,26 +756,33 @@ LocateExPcdBinary (
   DXE_PCD_DATABASE      *DxePcdDbBinary;
   UINTN                 DxePcdDbSize;
   EFI_STATUS            Status;
+  UINTN                 Index;
  
   DxePcdDbBinary = NULL;
   //
   // Search the External Pcd database from one section of current FFS, 
   // and read it to memory
   //
-  Status = GetSectionFromFfs (
-             EFI_SECTION_RAW,
-             0,
-             (VOID **) &DxePcdDbBinary,
-             &DxePcdDbSize
-             );
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // Check the first bytes (Header Signature Guid) and build version.
-  //
-  if (!CompareGuid ((VOID *)DxePcdDbBinary, &gPcdDataBaseSignatureGuid) ||
-      (DxePcdDbBinary->BuildVersion != PCD_SERVICE_DXE_VERSION)) {
-    ASSERT (FALSE);
+  Index = 0;
+  while (TRUE) {
+    Status = GetSectionFromFfs (
+               EFI_SECTION_RAW,
+               Index++,
+               (VOID **) &DxePcdDbBinary,
+               &DxePcdDbSize
+               );
+    if (EFI_ERROR (Status)) {
+      DxePcdDbBinary = NULL;
+      break;
+    }
+  
+    //
+    // Check the first bytes (Header Signature Guid) and build version.
+    //
+    if (CompareGuid ((VOID *)DxePcdDbBinary, &gPcdDataBaseSignatureGuid) &&
+        (DxePcdDbBinary->BuildVersion == PCD_SERVICE_DXE_VERSION)) {
+      break;
+    }
   }
 
   return DxePcdDbBinary;
