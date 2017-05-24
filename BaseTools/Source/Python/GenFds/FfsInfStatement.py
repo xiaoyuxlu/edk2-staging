@@ -419,6 +419,8 @@ class FfsInfStatement(FfsInfStatementClassObject):
         self.__InfParse__(Dict)
         SrcFile = mws.join( GenFdsGlobalVariable.WorkSpaceDir , self.InfFileName);
         DestFile = os.path.join( self.OutputPath, self.ModuleGuid + '.ffs')
+        if os.path.exists (DestFile):
+            return DestFile
         
         SrcFileDir = "."
         SrcPath = os.path.dirname(SrcFile)
