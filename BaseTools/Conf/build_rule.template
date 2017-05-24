@@ -551,11 +551,14 @@
 
 [EFI-Image-File]
     <InputFile>
-        ?.efi, ?.Efi, ?.EFI
+        ?.efi, ?.EFI, ?.Efi
 
     <OutputFile>
+        $(OUTPUT_DIR)(+)$(MODULE_NAME)pe.sec
 
     <Command>
+        GenSec -s EFI_SECTION_PE32 -o $(OUTPUT_DIR)(+)$(MODULE_NAME)pe.sec ${src}
+        GenSec -s EFI_SECTION_USER_INTERFACE -n $(MODULE_NAME) -o $(OUTPUT_DIR)(+)$(MODULE_NAME)ui.sec
 
 [Unicode-Text-File]
     <InputFile>
@@ -645,5 +648,50 @@
         
     <Command.XCODE, Command.RVCT>
         GenFw -o $(OUTPUT_DIR)(+)$(MODULE_NAME)hii.rc -g $(MODULE_GUID) --hiibinpackage $(HII_BINARY_PACKAGES)
-        
-        
+
+[DEPEX-File]
+    <InputFile>
+        ?.depex
+
+    <OutputFile>
+        $(OUTPUT_DIR)(+)$(MODULE_NAME)depex.sec
+
+    <Command>
+        GenSec -s EFI_SECTION_PEI_DEPEX -t $(MODULE_TYPE) -o ${dst} ${src}
+
+[BinarySec-File]
+    <InputFile>
+        ?.bin, ?.acpi, ?.aml
+
+    <OutputFile>
+        $(OUTPUT_DIR)(+)${s_base}raw.sec
+
+    <Command>
+        GenSec -s EFI_SECTION_RAW -o ${dst} ${src}
+
+[FFS-Binary-File]
+    <InputFile>
+        *.sec
+
+    <ExtraDependency>
+        $(MAKE_FILE)
+
+    <OutputFile>
+        $(BUILD_DIR)(+)FV(+)Ffs(+)$(MODULE_GUID)$(MODULE_NAME)(+)$(MODULE_GUID).ffs
+
+    <Command>
+        GenFfs -g $(MODULE_GUID) -t $(MODULE_TYPE) -o ${dst} -i $(OUTPUT_DIR)(+)$(MODULE_NAME)ui.sec $(FFS_BINARY_FILES)
+
+[FFS-Binary-File.USER_DEFINED]
+    <InputFile>
+        *.sec
+
+    <ExtraDependency>
+        $(MAKE_FILE)
+
+    <OutputFile>
+        $(BUILD_DIR)(+)FV(+)Ffs(+)$(MODULE_GUID)$(MODULE_NAME)(+)$(MODULE_GUID).ffs
+
+    <Command>
+        GenFfs -g $(MODULE_GUID) -t $(MODULE_TYPE) -o ${dst} -i $(FFS_BINARY_FILES)
+
