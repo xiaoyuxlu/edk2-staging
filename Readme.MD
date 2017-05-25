@@ -1,0 +1,27 @@
+This branch is used to optimize BaseTools build performance. It bases on edk2 repo UDK2017 branch.
+
+The branch owner:
+Gao, Liming <liming.gao@intel.com>
+Zhu, Yonghong <yonghong.zhu@intel.com>
+
+## Feature Introduction
+BaseTools supports more and more features. They will take more build time. To reduce build overhead, some points have been 
+identified to be optimized. POC code will be added in this branch for evaluation.
+1) Enable the multiple thread in GenFds phase.
+2) Support to merge multiple drivers into one. It should save the link time. But, it doesn't save much in the multiple build. 
+   Besides, this feature can save the image size when the image is not compressed, such as PEI images.
+3) Reduce the extra copy actions in build process.
+4) Analyze cProfile data and enhance the parser logic. https://bugzilla.tianocore.org/show_bug.cgi?id=42
+
+## Timeline
+Target for 2017 Q3
+
+### NOTES
+Most changes in this branch are BaseTools. To apply them, user needs to run BaseTools 
+from sources. In Linux, BaseTools run from source. In Windows, BaseTools can run from source. And, Reconfig option is also 
+required to apply new config settings in BaseTools\Conf. The step is like below:
+1. enter into edk2
+2. set PYTHON_HOME=C:\Python27
+3. type edksetup.bat --nt32 Reconfig
+4. nmake -f BaseTools\Makefile
+5. type build command to build platform.
