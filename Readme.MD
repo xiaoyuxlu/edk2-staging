@@ -8,6 +8,11 @@ Zhu, Yonghong <yonghong.zhu@intel.com>
 BaseTools supports more and more features. They will take more build time. To reduce build overhead, some points have been 
 identified to be optimized. POC code will be added in this branch for evaluation.
 1) Enable the multiple thread in GenFds phase.
+   POC code has been added to moves GenSec and GenFfs step into Module Makefile. When build module, 
+   its ffs will be generated. GenFds phase just GenFv image and combine GenFv into FD image. 
+   POC has been verified in OvmfPkgIa32X64 in VS2015 and GCC5 tool chain. 
+   In Windows7 VS2015, OvmfPkgIa32X64 GenFds build time can be reduced from 28s to 6s.
+   In Ubuntu 14.04 GCC5, OvmfPkgIa32X64 GenFds build time can be reduced from 6s to 4s.
 2) Support to merge multiple drivers into one. It should save the link time. But, it doesn't save much in the multiple build. 
    Besides, this feature can save the image size when the image is not compressed, such as PEI images.
 3) Reduce the extra copy actions in build process.
