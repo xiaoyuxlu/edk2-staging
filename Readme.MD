@@ -15,6 +15,9 @@ identified to be optimized. POC code will be added in this branch for evaluation
    In Ubuntu 14.04 GCC5, OvmfPkgIa32X64 GenFds build time can be reduced from 6s to 4s.
 2) Support to merge multiple drivers into one. It should save the link time. But, it doesn't save much in the multiple build. 
    Besides, this feature can save the image size when the image is not compressed, such as PEI images.
+   POC code has been added. One example in SamplePkg\SamplePkg.dsc is added to show how to combine more than drivers into single one.
+   When more than one drivers are combined, their depex will be AND together. Platform developer can use APRIORI list to 
+   describe the combined driver and make it be dispatched correctly.
 3) Reduce the extra copy actions in build process.
 4) Analyze cProfile data and enhance the parser logic. https://bugzilla.tianocore.org/show_bug.cgi?id=42
 
