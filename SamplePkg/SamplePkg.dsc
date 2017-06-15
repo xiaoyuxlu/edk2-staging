@@ -258,3 +258,7 @@
 #
 ###################################################################################################
 [Components]
+  MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf {
+    <LibraryClasses>
+    NULL|MdeModulePkg/Universal/BootManagerPolicyDxe/BootManagerPolicyDxe.inf
+  }
