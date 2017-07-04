@@ -1,7 +1,7 @@
 ## @file
 #  Readme of how to build and launch RiscVVirtPkg on QEMU.
 #
-#  Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+#  Copyright (c) 2016-2017, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -40,19 +40,23 @@ Current capabilities:
 
 === Get source code ===
 * QEMU RISC-V PC/AT port.
- git clone https://github.com/AbnerChang/RiscVQemuPcat.git
+ git clone https://github.com/AbnerChang/RiscVQemuPcat.git (Latest commit SHA 9992f910 07/03/2017)
 
-* RISC-V tools
- $git clone https://github.com/riscv/riscv-tools.git (Lastest commit 419f1b5 2016/4/1)
+* RISC-V tools (RISC-V GCC 7.1.1)
+ $git clone https://github.com/riscv/riscv-tools.git (Lastest commit SHA 7cd1d105 06/22/2017)
 
 * EDK2 open source
 
 === Build RISC-V tool chain ===
 Before you build RISC-V tool chain, you need below packages.
-*sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc
+*sudo apt-get install autoconf automake autotools-dev curl device-tree-compiler libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev
 *Change directory to riscv-tools
  git submodule update --init --recursive
  export RISCV=~/riscv
+*In build.sh, add build option "--with-arch=rv64g" to "build_project" as below,
+build_project riscv-gnu-toolchain --prefix=$RISCV --with-arch=rv64g
+This builds RISC-V tool chain to use RISC-V "G" varient.
+*Build RISC-V tool chain
  ./build.sh
 
 The binaries needed for building EDK2 open source to RISC-V ISA are built in to ~/riscv
@@ -80,7 +84,7 @@ Before you build QEMU RISC-V EDK2, you need belwo package.
 *Conf/target.txt
 ACTIVE_PLATFORM       = RiscVVirtPkg/RiscVVirt64.dsc
 TARGET_ARCH           = RISCV64
-TOOL_CHAIN_TAG        = GCC53RISCV
+TOOL_CHAIN_TAG        = GCC711RISCV
 
 *$export PATH=$PATH:~/riscv/bin
 *$make -C BaseTools
