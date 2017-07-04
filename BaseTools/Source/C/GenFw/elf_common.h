@@ -3,7 +3,7 @@ Ported ELF include files from FreeBSD
 
 Copyright (c) 2009 - 2010, Apple Inc. All rights reserved.<BR>
 Portions Copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
-Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+Copyright (c) 2016-2017, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -1109,4 +1109,12 @@ typedef struct {
 #define R_RISCV_RVC_LUI         46
 #define R_RISCV_GPREL_I         47
 #define R_RISCV_GPREL_S         48
+#define R_RISCV_TPREL_I         49
+#define R_RISCV_TPREL_S         50
+#define R_RISCV_RELAX           51
+#define R_RISCV_SUB6            52
+#define R_RISCV_SET6            53
+#define R_RISCV_SET8            54
+#define R_RISCV_SET16           55
+#define R_RISCV_SET32           56
 #endif /* !_SYS_ELF_COMMON_H_ */

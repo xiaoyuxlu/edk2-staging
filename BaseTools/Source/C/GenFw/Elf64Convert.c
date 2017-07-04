@@ -3,7 +3,7 @@ Elf64 convert solution
 
 Copyright (c) 2010 - 2014, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2013-2014, ARM Ltd. All rights reserved.<BR>
-Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+Copyright (c) 2016-2017, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -953,6 +953,14 @@ WriteSections64 (
           case R_RISCV_GPREL_I:
           case R_RISCV_GPREL_S:
           case R_RISCV_CALL:
+          case R_RISCV_RVC_BRANCH:
+          case R_RISCV_RVC_JUMP:
+          case R_RISCV_RELAX:
+          case R_RISCV_SUB6:
+          case R_RISCV_SET6:
+          case R_RISCV_SET8:
+          case R_RISCV_SET16:
+          case R_RISCV_SET32:
             break;
 
           default:
@@ -1129,6 +1137,14 @@ WriteRelocations64 (
             case R_RISCV_GPREL_I:
             case R_RISCV_GPREL_S:
             case R_RISCV_CALL:
+            case R_RISCV_RVC_BRANCH:
+            case R_RISCV_RVC_JUMP:
+            case R_RISCV_RELAX:
+            case R_RISCV_SUB6:
+            case R_RISCV_SET6:
+            case R_RISCV_SET8:
+            case R_RISCV_SET16:
+            case R_RISCV_SET32:
               break;
 
             default:
