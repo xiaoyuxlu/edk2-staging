@@ -2,7 +2,7 @@
 //
 // RISC-V Sec module.
 //
-// Copyright (c) 2016, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+// Copyright (c) 2016-2017, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 //
 // This program and the accompanying materials
 // are licensed and made available under the terms and conditions of the BSD License
@@ -77,33 +77,33 @@ ASM_PFX(_ModuleEntryPoint):
 //
 ASM_PFX(TrapFromUserModeHandler):
     call    RiscVUserModeTrapHandler
-    eret
+    mret
 
 //
 //Supervisor mode trap handler.
 //
 ASM_PFX(TrapFromSupervisorModeHandler):
     call    RiscVSupervisorModeTrapHandler
-    eret
+    mret
 
 //
 // Hypervisor mode trap handler.
 //
 ASM_PFX(TrapFromHypervisorModeHandler):
     call    RiscVHypervisorModeTrapHandler
-    eret
+    mret
 
 //
 // Machine mode trap handler.
 //
 ASM_PFX(TrapFromMachineModeHandler):
     call    RiscVMachineModeTrapHandler
-    eret
+    mret
 
 //
 // NMI trap handler.
 //
 ASM_PFX(NmiHandler):
     call    RiscVNmiHandler
-    eret
+    mret
 
