@@ -17,9 +17,9 @@
   BASE_NAME                      = SmmCpuFeaturesLib
   MODULE_UNI_FILE                = SmmCpuFeaturesLib.uni
   FILE_GUID                      = 349BAADE-2FB1-4BED-88D4-7CFA1CCEA9FC
-  MODULE_TYPE                    = SMM_STANDALONE
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
+  PI_SPECIFICATION_VERSION       = 0x00010032
   LIBRARY_CLASS                  = StandaloneSmmCpuFeaturesLib
   CONSTRUCTOR                    = StandaloneSmmCpuFeaturesLibConstructor
 

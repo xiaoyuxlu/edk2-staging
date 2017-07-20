@@ -20,10 +20,10 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = StandaloneSmmHobLib
   FILE_GUID                      = 775C0070-0B42-4F81-95BC-F37570A1DA5A
-  MODULE_TYPE                    = SMM_STANDALONE
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  LIBRARY_CLASS                  = HobLib|SMM_STANDALONE SMM_CORE_STANDALONE
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  LIBRARY_CLASS                  = HobLib|MM_STANDALONE MM_CORE_STANDALONE
   CONSTRUCTOR                    = HobLibConstructor
 
 #

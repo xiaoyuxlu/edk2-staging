@@ -147,21 +147,21 @@
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/SmmCpuExceptionHandlerLib.inf
   SmmCpuFeaturesLib|UefiCpuPkg/Library/SmmCpuFeaturesLib/SmmCpuFeaturesLib.inf
 
-[LibraryClasses.common.SMM_CORE_STANDALONE]
+[LibraryClasses.common.MM_CORE_STANDALONE]
   SmmCoreStandaloneEntryPoint|StandaloneSmmPkg/Library/StandaloneSmmCoreEntryPoint/StandaloneSmmCoreEntryPoint.inf
   SmmMemLib|StandaloneSmmPkg/Library/StandaloneSmmMemLib/StandaloneSmmMemLib.inf
   MemoryAllocationLib|StandaloneSmmPkg/Library/StandaloneSmmCoreMemoryAllocationLib/StandaloneSmmCoreMemoryAllocationLib.inf
   HobLib|StandaloneSmmPkg/Library/StandaloneSmmHobLib/StandaloneSmmHobLib.inf
 
-[LibraryClasses.AARCH64.SMM_CORE_STANDALONE]
+[LibraryClasses.AARCH64.MM_CORE_STANDALONE]
   PeCoffExtraActionLib|StandaloneSmmPkg/Arm/Library/PermissionsPeCoffExtraActionLib/PermissionsPeCoffExtraActionLib.inf
   HobLib|StandaloneSmmPkg/Arm/Library/StandaloneSmmCoreHobLib/StandaloneSmmCoreHobLib.inf
   SmmCoreStandaloneEntryPoint|StandaloneSmmPkg/Arm/Library/StandaloneSmmCoreSecEntryPoint/StandaloneSmmCoreSecEntryPoint.inf
 
-[LibraryClasses.IA32.SMM_CORE_STANDALONE]
+[LibraryClasses.IA32.MM_CORE_STANDALONE]
   SmmServicesTableLib|StandaloneSmmPkg/Library/StandaloneSmmCoreSmmServicesTableLib/StandaloneSmmCoreSmmServicesTableLib.inf
 
-[LibraryClasses.common.SMM_STANDALONE]
+[LibraryClasses.common.MM_STANDALONE]
   StandaloneSmmDriverEntryPoint|StandaloneSmmPkg/Library/StandaloneSmmDriverEntryPoint/StandaloneSmmDriverEntryPoint.inf
   SmmServicesTableLib|StandaloneSmmPkg/Library/StandaloneSmmServicesTableLib/StandaloneSmmServicesTableLib.inf
   SmmMemLib|StandaloneSmmPkg/Library/StandaloneSmmMemLib/StandaloneSmmMemLib.inf

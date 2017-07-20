@@ -21,10 +21,10 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = StandaloneSmmMemLib
   FILE_GUID                      = EA355F14-6409-4716-829F-37B3BC7C7F26
-  MODULE_TYPE                    = SMM_STANDALONE
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  LIBRARY_CLASS                  = SmmMemLib|SMM_STANDALONE SMM_CORE_STANDALONE
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  LIBRARY_CLASS                  = SmmMemLib|MM_STANDALONE MM_CORE_STANDALONE
   CONSTRUCTOR                    = SmmMemLibConstructor
 
 #

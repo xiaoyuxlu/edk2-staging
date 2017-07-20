@@ -21,9 +21,9 @@
   BASE_NAME                      = PiSmmCpuStandaloneSmm
   MODULE_UNI_FILE                = PiSmmCpuStandaloneSmm.uni
   FILE_GUID                      = 1B3BC280-14B1-4D93-8E48-C2F80C457AF3
-  MODULE_TYPE                    = SMM_STANDALONE
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
+  PI_SPECIFICATION_VERSION       = 0x00010032
   ENTRY_POINT                    = PiCpuStandaloneSmmEntry
 
 #
