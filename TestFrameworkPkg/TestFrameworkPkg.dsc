@@ -22,7 +22,7 @@
   SUPPORTED_ARCHITECTURES        = IA32|IPF|X64|EBC|ARM
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
-  POSTBUILD                      = TestFrameworkPkg/GenFramework.cmd
+  POSTBUILD                      = python TestFrameworkPkg/GenFramework.py
 
   #
   # Platform On/Off features are defined here
