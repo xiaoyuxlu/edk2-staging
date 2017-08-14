@@ -269,7 +269,7 @@ Routine Description:
   }
 
   tmp[Index] = '\0';
-  AsciiStrCpy (ptrStr, tmp);
+  CopyMem(ptrStr, tmp, Index + 1);
 
   return ptrStr;
 }
@@ -419,7 +419,7 @@ Routine Description:
   CHAR8 ptrValue[MAX_STRING_LEN + 1];
   INI   *ptrItem;
 
-  AsciiStrCpy (ptrLine, _alltrim (ptrLine));
+  _alltrim (ptrLine);
 
   if (*ptrLine == '#') {
     // it's a comment line
