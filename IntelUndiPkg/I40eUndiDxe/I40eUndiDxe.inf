@@ -1,0 +1,161 @@
+# /**************************************************************************
+# 
+# Copyright (c) 2016, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# ***************************************************************************/
+
+
+[defines]
+INF_VERSION          = 0x00010005
+BASE_NAME            = I40eUndiDxe
+FILE_GUID              = 708C91EA-0394-4610-9EB3-A30AB99015AF
+
+# UEFI_DRIVER is compliant with EFI1.10 or UEFI 2.3 specification
+
+MODULE_TYPE          = UEFI_DRIVER
+
+VERSION_STRING       = 1.0
+ENTRY_POINT             = InitializeUNDIDriver
+UNLOAD_IMAGE         = I40eGigUndiUnload
+
+[BuildOptions.common]
+
+*_*_*_CC_FLAGS = /D UNDI_40G /D PREBOOT_SUPPORT /D I40E_NDIS_SUPPORT
+*_*_*_CC_FLAGS = /FAcs /D MDEPKG_NDEBUG /D UNDI_40G /D PF_DRIVER /D X722_SUPPORT
+#*_*_*_CC_FLAGS = /D CONFIG_ACCESS_TO_CSRS
+
+*_*_*_VFRPP_FLAGS = /D UNDI_40G
+
+[BuildOptions.X64]
+
+*_*_*_CC_FLAGS = /D EFIX64 
+
+[BuildOptions.IPF]
+
+*_*_*_CC_FLAGS = /D EFI64
+
+[BuildOptions.IA32]
+
+*_*_*_CC_FLAGS = /D EFI32
+
+[sources.common]
+  InventoryStrings.uni
+  Inventory.vfr
+  AdapterInformation.c
+  AdapterInformation.h
+  Brand.c
+  DeviceSupport.c
+  DeviceSupport.h
+  ComponentName.c
+  ComponentName.h
+  Decode.c
+  Decode.h
+  DriverDiagnostics.c
+  DriverDiagnostics.h
+  Init.c
+  Init.h
+  I40e_osdep.h
+  NVDataStruc.h
+  I40e.c
+  DriverHealth.c
+  I40e.h
+  StartStop.c
+  StartStop.h
+  EepromConfig.c
+  EepromConfig.c
+  i40e_devids.h
+  i40e_diag.c
+  i40e_diag.h
+  i40e_hmc.c
+  i40e_hmc.h
+  i40e_lan_hmc.c
+  i40e_lan_hmc.h
+  i40e_nvm.c
+  i40e_prototype.h
+  i40e_register.h
+  i40e_status.h
+  i40e_type.h
+  i40e_virtchnl.h
+  i40e_adminq.c
+  i40e_adminq.h
+  i40e_adminq_cmd.h
+  i40e_alloc.h
+  i40e_common.c
+  Hii.c
+  Hii.h
+  Version.h
+  HiiInternalLib.c
+  HiiInternalLib.h
+  wol\wol.c
+  wol\wol.h
+  wol\wolfamily.c
+  wol\wolimpl.c
+  wol\wolimpl.h
+  wol\wolinfo.c
+  wol\wol_40G.c
+
+[Packages]
+  IntelUndiPkg/IntelI40eUndiPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses.common]
+  BaseLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  BaseMemoryLib
+  SynchronizationLib
+  PrintLib
+  UefiLib
+  HiiLib
+  StdLibC
+
+[LibraryClasses.X64]
+  
+[LibraryClasses.IPF]
+
+[Protocols.common]
+  gEfiNetworkInterfaceIdentifierProtocolGuid_31
+  gEfiPciIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiFormBrowser2ProtocolGuid                  ## CONSUMES
+  gEfiHiiStringProtocolGuid                     ## CONSUMES
+  gEfiHiiConfigRoutingProtocolGuid              ## CONSUMES
+  gEfiHiiConfigAccessProtocolGuid               ## PRODUCES
+  gEfiFormBrowser2ProtocolGuid                  ## CONSUMES
+  gEfiHiiDatabaseProtocolGuid                   ## CONSUMES
+  gEfiHiiPackageListProtocolGuid    			## CONSUMES  
+  gEfiDriverSupportedEfiVersionProtocolGuid
+  gEfiDriverHealthProtocolGuid
+  
+
+[Guids]
+  gEfiIfrTianoGuid                              ## CONSUMES ## Guid
+  gEfiEventExitBootServicesGuid        			## PRODUCES ## Event
+  gEfiEventVirtualAddressChangeGuid    			## PRODUCES ## Event
+
