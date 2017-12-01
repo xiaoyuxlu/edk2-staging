@@ -1083,8 +1083,7 @@ def CreatePcdDatabasePhaseSpecificAutoGen (Platform, DynamicPcdList, Phase):
         'SYSTEM_SKU_ID_VALUE'           : '0U'
     }
     
-   
-    SkuObj = SkuClass(Platform.Platform.SkuName, Platform.Platform.SkuIds)
+    SkuObj = Platform.Platform.SkuIdMgr
     Dict['SYSTEM_SKU_ID_VALUE'] = Platform.Platform.SkuIds[SkuObj.SystemSkuId][0]
 
     Dict['PCD_INFO_FLAG'] = Platform.Platform.PcdInfoFlag
