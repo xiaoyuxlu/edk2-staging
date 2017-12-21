@@ -49,6 +49,7 @@ def GetDeclaredPcd(Platform, BuildDatabase, Arch, Target, Toolchain,additionalPk
     PkgList = set(PkgList)
     PkgList |= additionalPkgs
     DecPcds = {}
+    GuidDict = {}
     for Pkg in PkgList:
         for Pcd in Pkg.Pcds:
             PcdCName = Pcd[0]
@@ -60,7 +61,9 @@ def GetDeclaredPcd(Platform, BuildDatabase, Arch, Target, Toolchain,additionalPk
                         break
             if (PcdCName, PcdTokenName) not in DecPcds.keys():
                 DecPcds[PcdCName, PcdTokenName] = Pkg.Pcds[Pcd]
-    return DecPcds
+            if PcdTokenName not in GuidDict:
+                GuidDict[PcdTokenName] = Pkg.Guids[PcdTokenName]
+    return DecPcds, GuidDict
 
 ## Get all dependent libraries for a module
 #
