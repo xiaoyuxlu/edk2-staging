@@ -24,6 +24,11 @@ identified to be optimized. POC code will be added in this branch for evaluation
 ## Timeline
 Target for 2017 Q3
 
+## Update
+1) Enable the multiple thread in GenFds phase has been added into Edk2 trunk and UDK2018 branch. 
+   It can be enabled with --genfds-multi-thread option.
+2&3) They have no good build performance improvement. They are not added to edk2 project. 
+
 ### NOTES
 Most changes in this branch are BaseTools. To apply them, user needs to run BaseTools 
 from sources. In Linux, BaseTools run from source. In Windows, BaseTools can run from source. And, Reconfig option is also 
