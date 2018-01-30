@@ -1,7 +1,7 @@
 ## @file
 # This Package provides unit tests for the MdePkg
 #
-# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 #
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License which accompanies this distribution.
@@ -33,6 +33,7 @@
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+
   DebugLib|MdePkg/Library/UefiDebugLibStdErr/UefiDebugLibStdErr.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -50,8 +51,22 @@
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
 
+[PcdsFixedAtBuild]
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000047
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1f
+
 [Components]
   MdePkgUnitTest/SafeIntLib/SafeIntLibUnitTests.inf {
     <LibraryClasses>
       SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+  }
+  MdePkgUnitTest/UefiLib/UefiLibUnitTests.inf {
+    <LibraryClasses>
+      UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
+  }
+  MdePkgUnitTest/UefiLib/UefiLibUnitTests.inf {
+    <Defines>
+      FILE_GUID = 98286492-B21F-42CD-87BF-4DA8BF617CEB
+    <LibraryClasses>
+      UefiLib|IntelFrameworkPkg/Library/FrameworkUefiLib/FrameworkUefiLib.inf
   }
