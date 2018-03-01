@@ -155,7 +155,7 @@
   #No use of SPI PPI for now
   $(PLATFORM_SI_PACKAGE)/SouthCluster/SmmControl/Pei/SmmControl.inf
 
-  $(PLATFORM_PACKAGE_COMMON)/SampleCode/MdeModulePkg/Universal/PCD/Pei/Pcd.inf {
+  MdeModulePkg/Universal/PCD/Pei/Pcd.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
       DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf

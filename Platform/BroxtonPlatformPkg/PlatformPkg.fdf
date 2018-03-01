@@ -329,13 +329,13 @@
   FvNameGuid         = B73FE497-B92E-416e-8326-45AD0D270091
 
 APRIORI PEI {
-  INF $(PLATFORM_PACKAGE_COMMON)/SampleCode/MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+  INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   INF $(PLATFORM_PACKAGE_COMMON)/Console/PlatformDebugPei/PlatformDebugPei.inf
 }
 
   INF $(PLATFORM_SI_PACKAGE)/Cpu/SecCore/Vtf0SecCore.inf
   INF $(PLATFORM_PACKAGE_COMMON)/SampleCode/MdeModulePkg/Core/Pei/PeiMain.inf
-  INF $(PLATFORM_PACKAGE_COMMON)/SampleCode/MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+  INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 
 
   INF $(PLATFORM_SI_PACKAGE)/VariableStorage/Pei/CseVariableStoragePei/CseVariableStoragePei.inf

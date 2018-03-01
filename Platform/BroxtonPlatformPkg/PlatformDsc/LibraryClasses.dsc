@@ -61,6 +61,8 @@
 
    SmmMemLib|MdePkg/Library/SmmMemLib/SmmMemLib.inf
    Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
+   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
+   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
    #
    # UEFI & PI

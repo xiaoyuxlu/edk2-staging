@@ -14,9 +14,13 @@ set WORKSPACE=%CD%
 if %WORKSPACE:~-1%==\ (
   set WORKSPACE=%WORKSPACE:~0,-1%
 )
-set CORE_PATH=%WORKSPACE%\Core
+if not defined CORE_PATH (
+  set CORE_PATH=%WORKSPACE%\Core
+) else (
+  set EDK_TOOLS_PATH=%CORE_PATH%\BaseTools
+)
 set PLATFORM_PATH=Platform\BroxtonPlatformPkg
-set SILICON_PATH=Silicon\Src\BroxtonSoC
+set SILICON_PATH=Silicon\BroxtonSoC
 set STITCH_PATH=%WORKSPACE%\%PLATFORM_PATH%\Common\Tools\Stitch
 
 set Minnow_RVP=MINN

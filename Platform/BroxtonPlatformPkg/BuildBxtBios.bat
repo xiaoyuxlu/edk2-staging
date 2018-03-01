@@ -8,16 +8,8 @@ echo.
 ::**********************************************************************
 :: Initial Setup
 ::**********************************************************************
-set WORKSPACE=%CD%
-if %WORKSPACE:~-1%==\ (
-  set WORKSPACE=%WORKSPACE:~0,-1%
-)
-set CORE_PATH=%WORKSPACE%\Core
-set PLATFORM_PATH=Platform\BroxtonPlatformPkg
-set SILICON_PATH=Silicon\BroxtonSoC
 set AslPath=%WORKSPACE%\%PLATFORM_PATH%\Common\Tools\Iasl\iasl.exe
-set PACKAGES_PATH=%CORE_PATH%;%WORKSPACE%\Silicon\;%WORKSPACE%\Platform;%WORKSPACE%\%PLATFORM_PATH%;%WORKSPACE%\%SILICON_PATH%;%WORKSPACE%\%PLATFORM_PATH%\Common ;
-set EDK_TOOLS_BIN=%WORKSPACE%\BaseTools\Bin\Win32
+set PACKAGES_PATH=%CORE_PATH%;%WORKSPACE%\Core;%WORKSPACE%\Silicon\;%WORKSPACE%\Platform;%WORKSPACE%\%PLATFORM_PATH%;%WORKSPACE%\%SILICON_PATH%;%WORKSPACE%\%PLATFORM_PATH%\Common;
 set /a build_threads=1
 set "Nasm_Flags=-D ARCH_IA32 -D DEBUG_PORT80"
 set "Build_Flags= "
@@ -44,13 +36,16 @@ if exist conf\.cache rmdir /q/s conf\.cache
 :: Override tools_def.txt
 echo Creating Conf folder and build config files...
 if not exist %WORKSPACE%\Conf md %WORKSPACE%\Conf
-copy /y %WORKSPACE%\BaseTools\Conf\*.template %WORKSPACE%\Conf\*.txt
 
 :: Setup EDK environment. Edksetup puts new copies of target.txt, tools_def.txt, build_rule.txt in WorkSpace\Conf
 :: Also run edksetup as soon as possible to avoid it from changing environment variables we're overriding
 set "VCINSTALLDIR="
-set EDK_TOOLS_PATH=%WORKSPACE%\BaseTools
-call edksetup.bat
+
+@call %CORE_PATH%\edksetup.bat --nt32
+@if defined PYTHON_HOME (
+  @nmake -f %BASE_TOOLS_PATH%\Makefile
+)
+
 @echo off
 
 set Minnow_RVP=MINN
@@ -449,7 +444,7 @@ echo *_VS2015x86_*_ASL_PATH = %AslPath% >> Conf\tools_def.txt
 
 echo.
 echo Invoking normal EDK2 build...
-build %Build_Flags%
+call build %Build_Flags%
 if ErrorLevel 1 goto BldFail
 
 set WORKSPACE=%SaveWorkSpace%
