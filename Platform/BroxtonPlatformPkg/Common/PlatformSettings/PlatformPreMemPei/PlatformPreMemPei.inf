@@ -176,6 +176,8 @@
   gPlatformModuleTokenSpaceGuid.PcdBoardId
   gPlatformModuleTokenSpaceGuid.PcdFabId
   gPlatformModuleTokenSpaceGuid.PcdDramCreatePolicyDefaultsFunc
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNvStoreDefaultId
+  gPlatformModuleTokenSpaceGuid.PcdSetupData
 
 [FeaturePcd]
   gEfiSerialPortTokenSpaceGuid.PcdStatusCodeUseRam

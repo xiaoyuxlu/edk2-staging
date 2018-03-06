@@ -228,6 +228,17 @@
   ## The PCD is used to specify whether or not Tpm command will wait for Response to come back.
   gClientCommonModuleTokenSpaceGuid.PcdTpmSkipResponseWait|FALSE|BOOLEAN|0x00010028
 
+  gPlatformModuleTokenSpaceGuid.PcdSetupData|{0x00}|SYSTEM_CONFIGURATION|0x00010029 {
+    <HeaderFiles>
+      # Header file defines structure SYSTEM_CONFIGURATION
+      Guid/SetupVariable.h
+    <Packages>
+      # Header file depends on other files from those packages
+      MdePkg/MdePkg.dec
+      BroxtonSiPkg/BroxtonSiPkg.dec
+      BroxtonPlatformPkg/PlatformPkg.dec
+  }
+
 [PcdsFeatureFlag]   # 0x10000000
   ## This PCD specifies whether StatusCode is reported via ISA Serial port.
   gEfiSerialPortTokenSpaceGuid.PcdStatusCodeUseIsaSerial|TRUE|BOOLEAN|0x00000020

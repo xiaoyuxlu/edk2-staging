@@ -1137,7 +1137,7 @@ PlatformInitPreMemEntryPoint (
                     &SystemConfiguration
                     );
     if (EFI_ERROR (Status) || VarSize != sizeof(SYSTEM_CONFIGURATION)) {
-      Status = PlatformCreateDefaultVariableHob (EFI_HII_DEFAULT_CLASS_STANDARD);
+      Status = PcdSet16S (PcdSetNvStoreDefaultId, EFI_HII_DEFAULT_CLASS_STANDARD);
       ASSERT_EFI_ERROR (Status);
     }
     Status = VariableServices->GetVariable (
