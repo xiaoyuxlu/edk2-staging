@@ -109,6 +109,7 @@ EFI_GET_PCD_INFO_PROTOCOL  mEfiGetPcdInfoInstance = {
 };
 
 EFI_HANDLE mPcdHandle = NULL;
+UINT32 mVpdBaseAddress = 0;
 
 /**
   Main entry for PCD DXE driver.
@@ -174,6 +175,18 @@ PcdDxeInit (
     NULL,
     &Registration
     );
+
+  if (PcdToken(PcdVpdBaseAddress) > mPcdTotalTokenCount) {
+    //
+    // PcdVpdBaseAddress is not Dynamic PCD
+    //
+    mVpdBaseAddress = PcdGet32 (PcdVpdBaseAddress);
+  } else {
+    //
+    // PcdVpdBaseAddress is Dynamic PCD
+    //
+    mVpdBaseAddress = DxePcdGet32 (PcdToken(PcdVpdBaseAddress));
+  }
 
   return Status;
 }
@@ -269,13 +282,17 @@ DxePcdSetSku (
   IN  UINTN         SkuId
   )
 {
-  SKU_ID    *SkuIdTable;
-  UINTN     Index;
+  SKU_ID     *SkuIdTable;
+  UINTN      Index;
+  EFI_STATUS Status;
+
+  DEBUG ((DEBUG_INFO, "PcdDxe - SkuId 0x%lx is to be set.\n", (SKU_ID) SkuId));
 
   if (SkuId == mPcdDatabase.DxeDb->SystemSkuId) {
     //
     // The input SKU Id is equal to current SKU Id, return directly.
     //
+    DEBUG ((DEBUG_INFO, "PcdDxe - SkuId is same to current system Sku.\n"));
     return;
   }
 
@@ -294,16 +311,20 @@ DxePcdSetSku (
   SkuIdTable = (SKU_ID *) ((UINT8 *) mPcdDatabase.DxeDb + mPcdDatabase.DxeDb->SkuIdTableOffset);
   for (Index = 0; Index < SkuIdTable[0]; Index++) {
     if (SkuId == SkuIdTable[Index + 1]) {
-      DEBUG ((EFI_D_INFO, "PcdDxe - Set current SKU Id to 0x%lx.\n", (SKU_ID) SkuId));
-      mPcdDatabase.DxeDb->SystemSkuId = (SKU_ID) SkuId;
-      return;
+      DEBUG ((DEBUG_INFO, "PcdDxe - SkuId is found in SkuId table.\n"));
+      Status = UpdatePcdDatabase (SkuId, TRUE);
+      if (!EFI_ERROR (Status)) {
+        mPcdDatabase.DxeDb->SystemSkuId = (SKU_ID) SkuId;
+        DEBUG ((DEBUG_INFO, "PcdDxe - Set current SKU Id to 0x%lx.\n", (SKU_ID) SkuId));
+        return;
+      }
     }
   }
 
   //
   // Invalid input SkuId, the default SKU Id will be still used for the system.
   //
-  DEBUG ((EFI_D_INFO, "PcdDxe - Invalid input SkuId, the default SKU Id will be still used.\n"));
+  DEBUG ((DEBUG_ERROR, "PcdDxe - Invalid input SkuId, the default SKU Id will be still used.\n"));
   return;
 }
 
