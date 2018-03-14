@@ -2,7 +2,7 @@
   
   Vfr common library functions.
 
-Copyright (c) 2004 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2017, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          
 are licensed and made available under the terms and conditions of the BSD License         
 which accompanies this distribution.  The full text of the license may be found at        
@@ -15,6 +15,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "assert.h"
 #include "CommonLib.h"
 #include "VfrUtilityLib.h"
 #include "VfrFormPkg.h"
@@ -600,6 +601,65 @@ CVfrVarDataTypeDB::ExtractStructTypeName (
   return VFR_RETURN_SUCCESS;
 }
 
+/**
+  Check whether the DataType contain bit field.
+
+  @param  TypeName     The name of the type.
+
+**/
+BOOLEAN
+CVfrVarDataTypeDB::DataTypeHasBitField (
+  IN  CHAR8         *TypeName
+  )
+{
+  SVfrDataType        *pType  = NULL;
+  SVfrDataField       *pTmp;
+
+  GetDataType (TypeName, &pType);
+
+  if (pType == NULL){
+    return FALSE;
+  }
+  for (pTmp = pType->mMembers; pTmp!= NULL; pTmp = pTmp->mNext) {
+    if (pTmp->mIsBitField) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+  Check whether the field is bit field or not.
+
+  @param  VarStr     Point to the field name which may contain the structure name.
+
+**/
+BOOLEAN
+CVfrVarDataTypeDB::IsThisBitField (
+  IN  CHAR8   *VarStr
+  )
+{
+  CHAR8             FName[MAX_NAME_LEN];
+  CHAR8             TName[MAX_NAME_LEN];
+  UINT32            ArrayIdx;
+  SVfrDataType      *pType  = NULL;
+  SVfrDataField     *pField = NULL;
+
+  CHECK_ERROR_RETURN (ExtractStructTypeName (VarStr, TName), VFR_RETURN_SUCCESS);
+  CHECK_ERROR_RETURN (GetDataType (TName, &pType), VFR_RETURN_SUCCESS);
+
+  while (*VarStr != '\0') {
+    CHECK_ERROR_RETURN(ExtractFieldNameAndArrary(VarStr, FName, ArrayIdx), VFR_RETURN_SUCCESS);
+    CHECK_ERROR_RETURN(GetTypeField (FName, pType, pField), VFR_RETURN_SUCCESS);
+    pType  = pField->mFieldType;
+  }
+  if (pField != NULL && pField->mIsBitField) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
 EFI_VFR_RETURN_CODE
 CVfrVarDataTypeDB::ExtractFieldNameAndArrary (
   IN  CHAR8   *&VarStr,
@@ -697,7 +757,8 @@ EFI_VFR_RETURN_CODE
 CVfrVarDataTypeDB::GetFieldOffset (
   IN  SVfrDataField *Field,
   IN  UINT32        ArrayIdx,
-  OUT UINT32        &Offset
+  OUT UINT32        &Offset,
+  IN  BOOLEAN       IsBitField
   )
 {
   if (Field == NULL) {
@@ -729,8 +790,11 @@ CVfrVarDataTypeDB::GetFieldOffset (
   //   return VFR_RETURN_ERROR_ARRARY_NUM;
   // }
   //
-
-  Offset = Field->mOffset + Field->mFieldType->mTotalSize * ((ArrayIdx == INVALID_ARRAY_INDEX) ? 0 : ArrayIdx);
+  if (IsBitField) {
+    Offset = Field->mBitOffset + Field->mFieldType->mTotalSize * ((ArrayIdx == INVALID_ARRAY_INDEX) ? 0 : ArrayIdx) * 8;
+  } else {
+    Offset = Field->mOffset + Field->mFieldType->mTotalSize * ((ArrayIdx == INVALID_ARRAY_INDEX) ? 0 : ArrayIdx);
+  }
   return VFR_RETURN_SUCCESS;
 }
 
@@ -749,7 +813,8 @@ CVfrVarDataTypeDB::GetFieldWidth (
 UINT32
 CVfrVarDataTypeDB::GetFieldSize (
   IN SVfrDataField *Field,
-  IN UINT32       ArrayIdx
+  IN UINT32       ArrayIdx,
+  IN BOOLEAN      BitField
   )
 {
   if (Field == NULL) {
@@ -757,9 +822,13 @@ CVfrVarDataTypeDB::GetFieldSize (
   }
 
   if ((ArrayIdx == INVALID_ARRAY_INDEX) && (Field->mArrayNum != 0)) {
-    return Field->mFieldType->mTotalSize * Field->mArrayNum;
+      return Field->mFieldType->mTotalSize * Field->mArrayNum;
   } else {
-    return Field->mFieldType->mTotalSize;
+    if (BitField) {
+      return Field->mBitWidth;
+    } else {
+      return Field->mFieldType->mTotalSize;
+    }
   }
 }
 
@@ -774,7 +843,9 @@ CVfrVarDataTypeDB::InternalTypesListInit (
   for (Index = 0; gInternalTypesTable[Index].mTypeName != NULL; Index++) {
     New                 = new SVfrDataType;
     if (New != NULL) {
-      strcpy (New->mTypeName, gInternalTypesTable[Index].mTypeName);
+      assert (strlen (gInternalTypesTable[Index].mTypeName) < MAX_NAME_LEN);
+      strncpy (New->mTypeName, gInternalTypesTable[Index].mTypeName, MAX_NAME_LEN - 1);
+      New->mTypeName[MAX_NAME_LEN - 1] = 0;
       New->mType        = gInternalTypesTable[Index].mType;
       New->mAlign       = gInternalTypesTable[Index].mAlign;
       New->mTotalSize   = gInternalTypesTable[Index].mSize;
@@ -788,18 +859,21 @@ CVfrVarDataTypeDB::InternalTypesListInit (
         pYearField->mOffset      = 0;
         pYearField->mNext        = pMonthField;
         pYearField->mArrayNum    = 0;
+        pYearField->mIsBitField = FALSE;
 
         strcpy (pMonthField->mFieldName, "Month");
         GetDataType ((CHAR8 *)"UINT8", &pMonthField->mFieldType);
         pMonthField->mOffset     = 2;
         pMonthField->mNext       = pDayField;
         pMonthField->mArrayNum   = 0;
+        pMonthField->mIsBitField = FALSE;
 
         strcpy (pDayField->mFieldName, "Day");
         GetDataType ((CHAR8 *)"UINT8", &pDayField->mFieldType);
         pDayField->mOffset       = 3;
         pDayField->mNext         = NULL;
         pDayField->mArrayNum     = 0;
+        pDayField->mIsBitField = FALSE;
 
         New->mMembers            = pYearField;
       } else if (strcmp (gInternalTypesTable[Index].mTypeName, "EFI_HII_TIME") == 0) {
@@ -812,18 +886,21 @@ CVfrVarDataTypeDB::InternalTypesListInit (
         pHoursField->mOffset     = 0;
         pHoursField->mNext       = pMinutesField;
         pHoursField->mArrayNum   = 0;
+        pHoursField->mIsBitField = FALSE;
 
         strcpy (pMinutesField->mFieldName, "Minutes");
         GetDataType ((CHAR8 *)"UINT8", &pMinutesField->mFieldType);
         pMinutesField->mOffset   = 1;
         pMinutesField->mNext     = pSecondsField;
         pMinutesField->mArrayNum = 0;
+        pMinutesField->mIsBitField = FALSE;
 
         strcpy (pSecondsField->mFieldName, "Seconds");
         GetDataType ((CHAR8 *)"UINT8", &pSecondsField->mFieldType);
         pSecondsField->mOffset   = 2;
         pSecondsField->mNext     = NULL;
         pSecondsField->mArrayNum = 0;
+        pSecondsField->mIsBitField = FALSE;
 
         New->mMembers            = pHoursField;
       } else if (strcmp (gInternalTypesTable[Index].mTypeName, "EFI_HII_REF") == 0) {
@@ -837,24 +914,28 @@ CVfrVarDataTypeDB::InternalTypesListInit (
         pQuestionIdField->mOffset     = 0;
         pQuestionIdField->mNext       = pFormIdField;
         pQuestionIdField->mArrayNum   = 0;
+        pQuestionIdField->mIsBitField = FALSE;
 
         strcpy (pFormIdField->mFieldName, "FormId");
         GetDataType ((CHAR8 *)"UINT16", &pFormIdField->mFieldType);
         pFormIdField->mOffset   = 2;
         pFormIdField->mNext     = pFormSetGuidField;
         pFormIdField->mArrayNum = 0;
+        pFormIdField->mIsBitField = FALSE;
 
         strcpy (pFormSetGuidField->mFieldName, "FormSetGuid");
         GetDataType ((CHAR8 *)"EFI_GUID", &pFormSetGuidField->mFieldType);
         pFormSetGuidField->mOffset   = 4;
         pFormSetGuidField->mNext     = pDevicePathField;
         pFormSetGuidField->mArrayNum = 0;
+        pFormSetGuidField->mIsBitField = FALSE;
 
         strcpy (pDevicePathField->mFieldName, "DevicePath");
         GetDataType ((CHAR8 *)"EFI_STRING_ID", &pDevicePathField->mFieldType);
         pDevicePathField->mOffset   = 20;
         pDevicePathField->mNext     = NULL;
         pDevicePathField->mArrayNum = 0;
+        pDevicePathField->mIsBitField = FALSE;
 
         New->mMembers            = pQuestionIdField;
       } else {
@@ -877,6 +958,7 @@ CVfrVarDataTypeDB::CVfrVarDataTypeDB (
   mPackAlign     = DEFAULT_PACK_ALIGN;
   mPackStack     = NULL;
   mFirstNewDataTypeName = NULL;
+  mCurrDataType  = NULL;
 
   InternalTypesListInit ();
 }
@@ -978,6 +1060,7 @@ CVfrVarDataTypeDB::DeclareDataTypeBegin (
   pNewType->mTotalSize   = 0;
   pNewType->mMembers     = NULL;
   pNewType->mNext        = NULL;
+  pNewType->mHasBitField = FALSE;
 
   mNewDataType           = pNewType;
 }
@@ -1005,7 +1088,128 @@ CVfrVarDataTypeDB::SetNewTypeName (
     }
   }
 
-  strcpy(mNewDataType->mTypeName, TypeName);
+  strncpy(mNewDataType->mTypeName, TypeName, MAX_NAME_LEN - 1);
+  mNewDataType->mTypeName[MAX_NAME_LEN - 1] = 0;
+  return VFR_RETURN_SUCCESS;
+}
+
+/**
+  Record the bit field info in the data type.
+
+  @param  FieldName     Point to the field name.
+  @param  TypeName      Point to the type name.
+  @param  Width         The bit width.
+  @param  FieldInUnion  The filed is in Union type or Structure type.
+
+**/
+EFI_VFR_RETURN_CODE
+CVfrVarDataTypeDB::DataTypeAddBitField (
+  IN CHAR8   *FieldName,
+  IN CHAR8   *TypeName,
+  IN UINT32   Width,
+  IN BOOLEAN FieldInUnion
+  )
+{
+  SVfrDataField       *pNewField  = NULL;
+  SVfrDataType        *pFieldType = NULL;
+  SVfrDataField       *pTmp;
+  UINT32              Align;
+  UINT32              MaxDataTypeSize;
+  BOOLEAN             UpdateTotalSize;
+
+  CHECK_ERROR_RETURN (GetDataType (TypeName, &pFieldType), VFR_RETURN_SUCCESS);
+
+  if (Width > MAX_BIT_WIDTH) {
+    return VFR_RETURN_BIT_WIDTH_ERROR;
+  }
+
+  if (Width > pFieldType->mTotalSize * 8) {
+    return VFR_RETURN_BIT_WIDTH_ERROR;
+  }
+
+  if (FieldName != NULL && strlen (FieldName) >= MAX_NAME_LEN) {
+   return VFR_RETURN_INVALID_PARAMETER;
+  }
+
+  if (Width == 0 && FieldName != NULL) {
+    return VFR_RETURN_INVALID_PARAMETER;
+  }
+
+  for (pTmp = mNewDataType->mMembers; pTmp != NULL; pTmp = pTmp->mNext) {
+    if (FieldName != NULL && strcmp (pTmp->mFieldName, FieldName) == 0) {
+      return VFR_RETURN_REDEFINED;
+    }
+  }
+
+  Align = MIN (mPackAlign, pFieldType->mAlign);
+  UpdateTotalSize = FALSE;
+
+  if ((pNewField = new SVfrDataField) == NULL) {
+    return VFR_RETURN_OUT_FOR_RESOURCES;
+  }
+
+  MaxDataTypeSize = mNewDataType->mTotalSize;
+  if (FieldName != NULL) {
+    strncpy (pNewField->mFieldName, FieldName, MAX_NAME_LEN - 1);
+    pNewField->mFieldName[MAX_NAME_LEN - 1] = 0;
+  }
+  pNewField->mFieldType    = pFieldType;
+  pNewField->mIsBitField   = TRUE;
+  pNewField->mBitWidth     = Width;
+  pNewField->mArrayNum     = 0;
+  pNewField->mBitOffset    = 0;
+  pNewField->mOffset       = 0;
+
+  if (mNewDataType->mMembers == NULL) {
+    mNewDataType->mMembers = pNewField;
+    pNewField->mNext       = NULL;
+  } else {
+    for (pTmp = mNewDataType->mMembers; pTmp->mNext != NULL; pTmp = pTmp->mNext)
+      ;
+    pTmp->mNext            = pNewField;
+    pNewField->mNext       = NULL;
+  }
+
+  if (FieldInUnion) {
+    pNewField->mOffset = 0;
+    if (MaxDataTypeSize < pNewField->mFieldType->mTotalSize) {
+      mNewDataType->mTotalSize = pNewField->mFieldType->mTotalSize;
+    }
+  } else {
+    //
+    // Check whether the bit fileds can be contained within one FieldType.
+    //
+    if (pTmp != NULL && pTmp->mIsBitField && strcmp (pTmp->mFieldType->mTypeName, pNewField->mFieldType->mTypeName) == 0 &&
+       (pTmp->mBitOffset - pTmp->mOffset * 8) + pTmp->mBitWidth + pNewField->mBitWidth <= pNewField->mFieldType->mTotalSize * 8) {
+      pNewField->mBitOffset = pTmp->mBitOffset + pTmp->mBitWidth;
+      pNewField->mOffset = pTmp->mOffset;
+      //
+      // If BitWidth=0,used to force alignment at the next word boundary.
+      // So make this bit field occupy the remaing bit width of current field type.
+      //
+      if (pNewField->mBitWidth == 0) {
+        pNewField->mBitWidth = pNewField->mFieldType->mTotalSize * 8 - (pNewField->mBitOffset - pTmp->mOffset * 8);
+      }
+    } else {
+      //
+      // The bit filed start a new memory
+      //
+      pNewField->mBitOffset = mNewDataType->mTotalSize * 8;
+      UpdateTotalSize = TRUE;
+    }
+  }
+
+  if (UpdateTotalSize){
+    if ((mNewDataType->mTotalSize % Align) == 0) {
+      pNewField->mOffset     = mNewDataType->mTotalSize;
+    } else {
+      pNewField->mOffset     = mNewDataType->mTotalSize + ALIGN_STUFF(mNewDataType->mTotalSize, Align);
+    }
+    mNewDataType->mTotalSize = pNewField->mOffset + (pNewField->mFieldType->mTotalSize);
+  }
+
+  mNewDataType->mAlign     = MIN (mPackAlign, MAX (pFieldType->mAlign, mNewDataType->mAlign));
+  mNewDataType->mHasBitField = TRUE;
   return VFR_RETURN_SUCCESS;
 }
 
@@ -1013,15 +1217,18 @@ EFI_VFR_RETURN_CODE
 CVfrVarDataTypeDB::DataTypeAddField (
   IN CHAR8   *FieldName,
   IN CHAR8   *TypeName,
-  IN UINT32 ArrayNum
+  IN UINT32 ArrayNum,
+  IN BOOLEAN FieldInUnion
   )
 {
   SVfrDataField       *pNewField  = NULL;
   SVfrDataType        *pFieldType = NULL;
   SVfrDataField       *pTmp;
   UINT32              Align;
+  UINT32              MaxDataTypeSize;
 
   CHECK_ERROR_RETURN (GetDataType (TypeName, &pFieldType), VFR_RETURN_SUCCESS);
+  MaxDataTypeSize = mNewDataType->mTotalSize;
 
   if (strlen (FieldName) >= MAX_NAME_LEN) {
    return VFR_RETURN_INVALID_PARAMETER;
@@ -1038,9 +1245,11 @@ CVfrVarDataTypeDB::DataTypeAddField (
   if ((pNewField = new SVfrDataField) == NULL) {
     return VFR_RETURN_OUT_FOR_RESOURCES;
   }
-  strcpy (pNewField->mFieldName, FieldName);
+  strncpy (pNewField->mFieldName, FieldName, MAX_NAME_LEN - 1);
+  pNewField->mFieldName[MAX_NAME_LEN - 1] = 0;
   pNewField->mFieldType    = pFieldType;
   pNewField->mArrayNum     = ArrayNum;
+  pNewField->mIsBitField   = FALSE;
   if ((mNewDataType->mTotalSize % Align) == 0) {
     pNewField->mOffset     = mNewDataType->mTotalSize;
   } else {
@@ -1057,7 +1266,15 @@ CVfrVarDataTypeDB::DataTypeAddField (
   }
 
   mNewDataType->mAlign     = MIN (mPackAlign, MAX (pFieldType->mAlign, mNewDataType->mAlign));
-  mNewDataType->mTotalSize = pNewField->mOffset + (pNewField->mFieldType->mTotalSize) * ((ArrayNum == 0) ? 1 : ArrayNum);
+
+  if (FieldInUnion) {
+    if (MaxDataTypeSize < pNewField->mFieldType->mTotalSize) {
+      mNewDataType->mTotalSize = pNewField->mFieldType->mTotalSize;
+    }
+    pNewField->mOffset = 0;
+  } else {
+    mNewDataType->mTotalSize = pNewField->mOffset + (pNewField->mFieldType->mTotalSize) * ((ArrayNum == 0) ? 1 : ArrayNum);
+  }
 
   return VFR_RETURN_SUCCESS;
 }
@@ -1172,20 +1389,25 @@ CVfrVarDataTypeDB::GetDataFieldInfo (
   IN  CHAR8     *VarStr,
   OUT UINT16   &Offset,
   OUT UINT8    &Type,
-  OUT UINT32   &Size
+  OUT UINT32   &Size,
+  OUT BOOLEAN  &BitField
   )
 {
   CHAR8               TName[MAX_NAME_LEN], FName[MAX_NAME_LEN];
   UINT32              ArrayIdx, Tmp;
   SVfrDataType        *pType  = NULL;
   SVfrDataField       *pField = NULL;
+  CHAR8               *VarStrName;
 
   Offset = 0;
   Type   = EFI_IFR_TYPE_OTHER;
   Size   = 0;
+  VarStrName = VarStr;
 
   CHECK_ERROR_RETURN (ExtractStructTypeName (VarStr, TName), VFR_RETURN_SUCCESS);
   CHECK_ERROR_RETURN (GetDataType (TName, &pType), VFR_RETURN_SUCCESS);
+
+  BitField = IsThisBitField (VarStrName);
 
   //
   // if it is not struct data type
@@ -1194,13 +1416,17 @@ CVfrVarDataTypeDB::GetDataFieldInfo (
   Size  = pType->mTotalSize;
 
   while (*VarStr != '\0') {
-  	CHECK_ERROR_RETURN(ExtractFieldNameAndArrary(VarStr, FName, ArrayIdx), VFR_RETURN_SUCCESS);
+    CHECK_ERROR_RETURN(ExtractFieldNameAndArrary(VarStr, FName, ArrayIdx), VFR_RETURN_SUCCESS);
     CHECK_ERROR_RETURN(GetTypeField (FName, pType, pField), VFR_RETURN_SUCCESS);
     pType  = pField->mFieldType;
-    CHECK_ERROR_RETURN(GetFieldOffset (pField, ArrayIdx, Tmp), VFR_RETURN_SUCCESS);
-    Offset = (UINT16) (Offset + Tmp);
+    CHECK_ERROR_RETURN(GetFieldOffset (pField, ArrayIdx, Tmp, pField->mIsBitField), VFR_RETURN_SUCCESS);
+    if (BitField && !pField->mIsBitField) {
+      Offset = (UINT16) (Offset + Tmp * 8);
+    } else {
+      Offset = (UINT16) (Offset + Tmp);
+    }
     Type   = GetFieldWidth (pField);
-    Size   = GetFieldSize (pField, ArrayIdx);
+    Size   = GetFieldSize (pField, ArrayIdx, BitField);
   }
   return VFR_RETURN_SUCCESS;
 }
@@ -1349,6 +1575,7 @@ SVfrVarStorageNode::SVfrVarStorageNode (
   IN CHAR8                 *StoreName,
   IN EFI_VARSTORE_ID       VarStoreId,
   IN SVfrDataType          *DataType,
+  IN BOOLEAN               BitsVarstore,
   IN BOOLEAN               Flag
   )
 {
@@ -1365,7 +1592,11 @@ SVfrVarStorageNode::SVfrVarStorageNode (
   }
   mNext                    = NULL;
   mVarStoreId              = VarStoreId;
-  mVarStoreType            = EFI_VFR_VARSTORE_BUFFER;
+  if (BitsVarstore) {
+    mVarStoreType            = EFI_VFR_VARSTORE_BUFFER_BITS;
+  } else {
+    mVarStoreType            = EFI_VFR_VARSTORE_BUFFER;
+  }
   mStorageInfo.mDataType   = DataType;
   mAssignedFlag            = Flag;
 }
@@ -1375,6 +1606,7 @@ SVfrVarStorageNode::SVfrVarStorageNode (
   IN EFI_VARSTORE_ID       VarStoreId
   )
 {
+  memset (&mGuid, 0, sizeof (EFI_GUID));
   if (StoreName != NULL) {
     mVarStoreName = new CHAR8[strlen(StoreName) + 1];
     strcpy (mVarStoreName, StoreName);
@@ -1386,6 +1618,7 @@ SVfrVarStorageNode::SVfrVarStorageNode (
   mVarStoreType                      = EFI_VFR_VARSTORE_NAME;
   mStorageInfo.mNameSpace.mNameTable = new EFI_VARSTORE_ID[DEFAULT_NAME_TABLE_ITEMS];
   mStorageInfo.mNameSpace.mTableSize = 0;
+  mAssignedFlag                      = FALSE;
 }
 
 SVfrVarStorageNode::~SVfrVarStorageNode (
@@ -1637,6 +1870,7 @@ CVfrDataStorage::DeclareBufferVarStore (
   IN CVfrVarDataTypeDB *DataTypeDB,
   IN CHAR8             *TypeName,
   IN EFI_VARSTORE_ID   VarStoreId,
+  IN BOOLEAN           IsBitVarStore,
   IN BOOLEAN           Flag
   )
 {
@@ -1663,7 +1897,7 @@ CVfrDataStorage::DeclareBufferVarStore (
     MarkVarStoreIdUsed (VarStoreId);
   }
 
-  if ((pNew = new SVfrVarStorageNode (Guid, StoreName, VarStoreId, pDataType, Flag)) == NULL) {
+  if ((pNew = new SVfrVarStorageNode (Guid, StoreName, VarStoreId, pDataType, IsBitVarStore, Flag)) == NULL) {
     return VFR_RETURN_OUT_FOR_RESOURCES;
   }
 
@@ -2377,6 +2611,7 @@ EFI_VARSTORE_INFO::EFI_VARSTORE_INFO (
   mInfo.mVarOffset = EFI_VAROFFSET_INVALID;
   mVarType         = EFI_IFR_TYPE_OTHER;
   mVarTotalSize    = 0;
+  mIsBitVar        = FALSE;
 }
 
 EFI_VARSTORE_INFO::EFI_VARSTORE_INFO (
@@ -2388,6 +2623,7 @@ EFI_VARSTORE_INFO::EFI_VARSTORE_INFO (
   mInfo.mVarOffset = Info.mInfo.mVarOffset;
   mVarType         = Info.mVarType;
   mVarTotalSize    = Info.mVarTotalSize;
+  mIsBitVar        = Info.mIsBitVar;
 }
 
 EFI_VARSTORE_INFO&
@@ -2401,6 +2637,7 @@ EFI_VARSTORE_INFO::operator= (
     mInfo.mVarOffset = Info.mInfo.mVarOffset;
     mVarType         = Info.mVarType;
     mVarTotalSize    = Info.mVarTotalSize;
+    mIsBitVar        = Info.mIsBitVar;
   }
 
   return *this;
@@ -2415,7 +2652,8 @@ EFI_VARSTORE_INFO::operator == (
   	  (mInfo.mVarName == Info->mInfo.mVarName) &&
       (mInfo.mVarOffset == Info->mInfo.mVarOffset) &&
       (mVarType == Info->mVarType) &&
-      (mVarTotalSize == Info->mVarTotalSize)) {
+      (mVarTotalSize == Info->mVarTotalSize) &&
+      (mIsBitVar == Info->mIsBitVar)) {
     return TRUE;
   }
 

@@ -1,7 +1,7 @@
 /** @file
 This file contains the internal functions required to generate a Firmware Volume.
 
-Copyright (c) 2004 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
 Portions Copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
 Portions Copyright (c) 2016 HP Development Company, L.P.<BR>
 This program and the accompanying materials                          
@@ -34,16 +34,17 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Guid/FfsSectionAlignmentPadding.h>
 
+#include "WinNtInclude.h"
 #include "GenFvInternalLib.h"
 #include "FvLib.h"
 #include "PeCoffLib.h"
-#include "WinNtInclude.h"
 
 #define ARMT_UNCONDITIONAL_JUMP_INSTRUCTION       0xEB000000
 #define ARM64_UNCONDITIONAL_JUMP_INSTRUCTION      0x14000000
 
 BOOLEAN mArm = FALSE;
 STATIC UINT32   MaxFfsAlignment = 0;
+BOOLEAN VtfFileFlag = FALSE;
 
 EFI_GUID  mEfiFirmwareVolumeTopFileGuid       = EFI_FFS_VOLUME_TOP_FILE_GUID;
 EFI_GUID  mFileGuidArray [MAX_NUMBER_OF_FILES_IN_FV];
@@ -464,57 +465,97 @@ Returns:
   case 0:
     //
     // 1 byte alignment
+    //if bit 1 have set, 128K byte alignmnet
     //
-    *Alignment = 0;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 17;
+    } else {
+      *Alignment = 0;
+    }
     break;
 
   case 1:
     //
     // 16 byte alignment
+    //if bit 1 have set, 256K byte alignment
     //
-    *Alignment = 4;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 18;
+    } else {
+      *Alignment = 4;
+    }
     break;
 
   case 2:
     //
     // 128 byte alignment
+    //if bit 1 have set, 512K byte alignment
     //
-    *Alignment = 7;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 19;
+    } else {
+      *Alignment = 7;
+    }
     break;
 
   case 3:
     //
     // 512 byte alignment
+    //if bit 1 have set, 1M byte alignment
     //
-    *Alignment = 9;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 20;
+    } else {
+      *Alignment = 9;
+    }
     break;
 
   case 4:
     //
     // 1K byte alignment
+    //if bit 1 have set, 2M byte alignment
     //
-    *Alignment = 10;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 21;
+    } else {
+      *Alignment = 10;
+    }
     break;
 
   case 5:
     //
     // 4K byte alignment
+    //if bit 1 have set, 4M byte alignment
     //
-    *Alignment = 12;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 22;
+    } else {
+      *Alignment = 12;
+    }
     break;
 
   case 6:
     //
     // 32K byte alignment
+    //if bit 1 have set , 8M byte alignment
     //
-    *Alignment = 15;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 23;
+    } else {
+      *Alignment = 15;
+    }
     break;
 
   case 7:
     //
     // 64K byte alignment
+    //if bit 1 have set, 16M alignment
     //
-    *Alignment = 16;
+    if (FfsFile->Attributes & FFS_ATTRIB_DATA_ALIGNMENT2) {
+      *Alignment = 24;
+    } else {
+      *Alignment = 16;
+    }
     break;
 
   default:
@@ -560,7 +601,9 @@ Returns:
   UINTN               PadFileSize;
   UINT32              NextFfsHeaderSize;
   UINT32              CurFfsHeaderSize;
+  UINT32              Index;
 
+  Index = 0;
   CurFfsHeaderSize = sizeof (EFI_FFS_FILE_HEADER);
   //
   // Verify input parameters.
@@ -665,6 +708,19 @@ Returns:
     //
     // Copy Fv Extension Header and Set Fv Extension header offset
     //
+    if (ExtHeader->ExtHeaderSize > sizeof (EFI_FIRMWARE_VOLUME_EXT_HEADER)) {
+      for (Index = sizeof (EFI_FIRMWARE_VOLUME_EXT_HEADER); Index < ExtHeader->ExtHeaderSize;) {
+        if (((EFI_FIRMWARE_VOLUME_EXT_ENTRY *)((UINT8 *)ExtHeader + Index))-> ExtEntryType == EFI_FV_EXT_TYPE_USED_SIZE_TYPE) {
+          if (VtfFileFlag) {
+            ((EFI_FIRMWARE_VOLUME_EXT_ENTRY_USED_SIZE_TYPE *)((UINT8 *)ExtHeader + Index))->UsedSize = mFvTotalSize;
+          } else {
+            ((EFI_FIRMWARE_VOLUME_EXT_ENTRY_USED_SIZE_TYPE *)((UINT8 *)ExtHeader + Index))->UsedSize = mFvTakenSize;
+          }
+          break;
+        }
+        Index += ((EFI_FIRMWARE_VOLUME_EXT_ENTRY *)((UINT8 *)ExtHeader + Index))-> ExtEntrySize;
+      }
+    }
     memcpy ((UINT8 *)PadFile + CurFfsHeaderSize, ExtHeader, ExtHeader->ExtHeaderSize);
     ((EFI_FIRMWARE_VOLUME_HEADER *) FvImage->FileImage)->ExtHeaderOffset = (UINT16) ((UINTN) ((UINT8 *)PadFile + CurFfsHeaderSize) - (UINTN) FvImage->FileImage);
 	  //
@@ -768,7 +824,11 @@ Returns:
   //
   // Construct Map file Name 
   //
-  strcpy (PeMapFileName, FileName);
+  if (strlen (FileName) >= MAX_LONG_FILE_PATH) {
+    return EFI_ABORTED;
+  }
+  strncpy (PeMapFileName, FileName, MAX_LONG_FILE_PATH - 1);
+  PeMapFileName[MAX_LONG_FILE_PATH - 1] = 0;
   
   //
   // Change '\\' to '/', unified path format.
@@ -805,7 +865,11 @@ Returns:
     Cptr --;
   }
 	*Cptr2 = '\0';
-	strcpy (KeyWord, Cptr + 1);
+  if (strlen (Cptr + 1) >= MAX_LINE_LEN) {
+    return EFI_ABORTED;
+  }
+  strncpy (KeyWord, Cptr + 1, MAX_LINE_LEN - 1);
+  KeyWord[MAX_LINE_LEN - 1] = 0;
 	*Cptr2 = '.';
 
   //
@@ -1060,7 +1124,7 @@ Returns:
   // Clear the alignment bits: these have become meaningless now that we have
   // adjusted the padding section.
   //
-  FfsFile->Attributes &= ~FFS_ATTRIB_DATA_ALIGNMENT;
+  FfsFile->Attributes &= ~(FFS_ATTRIB_DATA_ALIGNMENT | FFS_ATTRIB_DATA_ALIGNMENT2);
 
   //
   // Recalculate the FFS header checksum. Instead of setting Header and State
@@ -3019,12 +3083,10 @@ Returns:
   UINT32              FfsAlignment;
   UINT32              FfsHeaderSize;
   EFI_FFS_FILE_HEADER FfsHeader;
-  BOOLEAN             VtfFileFlag;
   UINTN               VtfFileSize;
   
   FvExtendHeaderSize = 0;
   VtfFileSize = 0;
-  VtfFileFlag = FALSE;
   fpin  = NULL;
   Index = 0;
 
@@ -3470,7 +3532,7 @@ Returns:
           //
           // Xip module has the same section alignment and file alignment.
           //
-          Error (NULL, 0, 3000, "Invalid", "Section-Alignment and File-Alignment do not match : %s.", FileName);
+          Error (NULL, 0, 3000, "Invalid", "PE image Section-Alignment and File-Alignment do not match : %s.", FileName);
           return EFI_ABORTED;
         }
         //
@@ -3480,7 +3542,12 @@ Returns:
           //
           // Construct the original efi file Name 
           //
-          strcpy (PeFileName, FileName);
+          if (strlen (FileName) >= MAX_LONG_FILE_PATH) {
+            Error (NULL, 0, 2000, "Invalid", "The file name %s is too long.", FileName);
+            return EFI_ABORTED;
+          }
+          strncpy (PeFileName, FileName, MAX_LONG_FILE_PATH - 1);
+          PeFileName[MAX_LONG_FILE_PATH - 1] = 0;
           Cptr = PeFileName + strlen (PeFileName);
           while (*Cptr != '.') {
             Cptr --;
@@ -3543,7 +3610,7 @@ Returns:
           //
           // Xip module has the same section alignment and file alignment.
           //
-          Error (NULL, 0, 3000, "Invalid", "Section-Alignment and File-Alignment do not match : %s.", FileName);
+          Error (NULL, 0, 3000, "Invalid", "PE image Section-Alignment and File-Alignment do not match : %s.", FileName);
           return EFI_ABORTED;
         }
         NewPe32BaseAddress = XipBase + (UINTN) CurrentPe32Section.Pe32Section + CurSecHdrSize - (UINTN)FfsFile;
@@ -3735,7 +3802,12 @@ Returns:
       //
       // Construct the original efi file name 
       //
-      strcpy (PeFileName, FileName);
+      if (strlen (FileName) >= MAX_LONG_FILE_PATH) {
+        Error (NULL, 0, 2000, "Invalid", "The file name %s is too long.", FileName);
+        return EFI_ABORTED;
+      }
+      strncpy (PeFileName, FileName, MAX_LONG_FILE_PATH - 1);
+      PeFileName[MAX_LONG_FILE_PATH - 1] = 0;
       Cptr = PeFileName + strlen (PeFileName);
       while (*Cptr != '.') {
         Cptr --;
