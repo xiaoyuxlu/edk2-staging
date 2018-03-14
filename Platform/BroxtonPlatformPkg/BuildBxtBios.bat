@@ -41,7 +41,7 @@ if not exist %WORKSPACE%\Conf md %WORKSPACE%\Conf
 :: Also run edksetup as soon as possible to avoid it from changing environment variables we're overriding
 set "VCINSTALLDIR="
 
-@call %CORE_PATH%\edksetup.bat --nt32
+@call %WORKSPACE%\edksetup.bat --nt32
 @if defined PYTHON_HOME (
   @nmake -f %BASE_TOOLS_PATH%\Makefile
 )
@@ -444,7 +444,7 @@ echo *_VS2015x86_*_ASL_PATH = %AslPath% >> Conf\tools_def.txt
 
 echo.
 echo Invoking normal EDK2 build...
-call build %Build_Flags%
+call build %Build_Flags% -y report.txt
 if ErrorLevel 1 goto BldFail
 
 set WORKSPACE=%SaveWorkSpace%
@@ -484,6 +484,7 @@ copy /y/b %BUILD_PATH%\FV\FvIBBR.fv  %Storage_Folder% >nul
 copy /y/b %BUILD_PATH%\FV\FvOBB.fv   %Storage_Folder% >nul
 copy /y/b %BUILD_PATH%\FV\FvOBBX.fv  %Storage_Folder% >nul
 copy /y/b %BUILD_PATH%\FV\FvOBBY.fv  %Storage_Folder% >nul
+copy /y/b %BUILD_PATH%\FV\VpdData.fd %Storage_Folder% >nul
 
 if /i "%FSP_WRAPPER%" == "TRUE" (
 ::  0xFEF7A000 = gIntelFsp2WrapperTokenSpaceGuid.PcdFlashFvFspBase = $(CAR_BASE_ADDRESS) + $(BLD_RAM_DATA_SIZE) + $(FSP_RAM_DATA_SIZE) + $(FSP_EMP_DATA_SIZE) + $(BLD_IBBM_SIZE)

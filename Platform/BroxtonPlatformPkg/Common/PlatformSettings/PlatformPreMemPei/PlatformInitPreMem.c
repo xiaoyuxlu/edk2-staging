@@ -923,6 +923,9 @@ PlatformInitPreMemEntryPoint (
   UINTN                            Instance;
   UINT64                           AcpiVariableSetCompatibility;
   UINTN                            VarSize;
+  UINTN                      FvInstance;
+  EFI_FIRMWARE_VOLUME_HEADER *FvHeader;
+  EFI_FFS_FILE_HEADER        *FfsHeader;
 
   Status = (*PeiServices)->RegisterForShadow (FileHandle);
 
@@ -1060,27 +1063,6 @@ PlatformInitPreMemEntryPoint (
     //
     RtcPowerFailureHandler ();
 
-    #if (ENBDT_PF_ENABLE == 1)
-    if (GetBxtSeries() == BxtP) {
-      //
-      // DDR SSC
-      //
-      PeiDDRSSCInit ();
-
-      //
-      // USB3, PCie, SATA, eDP, DP, eMMC, SD and SDIO SSC
-      //
-    PeiHighSpeedSerialInterfaceSSCInit ();
-    }
-    #endif
-
-    #if defined(PRAM_SUPPORT)
-    //
-    // Install Ppi for BIOS reserved memory
-    //
-    Status = PeiServicesInstallPpi (&mBiosReservedMemoryPolicyPpi);
-    #endif
-
     Status = PeiServicesLocatePpi (&gEfiPeiReadOnlyVariable2PpiGuid, 0, NULL, (VOID **) &VariableServices);
     if (EFI_ERROR (Status)) {
       ASSERT_EFI_ERROR (Status);
@@ -1137,8 +1119,27 @@ PlatformInitPreMemEntryPoint (
                     &SystemConfiguration
                     );
     if (EFI_ERROR (Status) || VarSize != sizeof(SYSTEM_CONFIGURATION)) {
-      Status = PcdSet16S (PcdSetNvStoreDefaultId, EFI_HII_DEFAULT_CLASS_STANDARD);
-      ASSERT_EFI_ERROR (Status);
+      DEBUG ((DEBUG_ERROR, "Begin to set default variable\n"));
+      DEBUG ((DEBUG_ERROR, "PcdVpdBaseAddress 0x%8x\n", PcdGet32 (PcdVpdBaseAddress)));
+      //
+      // Find the FFS file that stores all default data.
+      //
+      FvInstance            = 0;
+      FfsHeader             = NULL;
+      while ((*PeiServices)->FfsFindNextVolume (PeiServices, FvInstance, (VOID **) &FvHeader) == EFI_SUCCESS) {
+        FfsHeader = NULL;
+        if ((*PeiServices)->FfsFindFileByName (&gVpdBufferGuid, FvHeader, (VOID **) &FfsHeader) == EFI_SUCCESS) {
+          break;
+        }
+        FvInstance ++;
+      }
+      if (FfsHeader != NULL) {
+        DEBUG ((DEBUG_ERROR, "Find VPD default setting, and set VpdBase\n"));
+        Status = PcdSet32S (PcdVpdBaseAddress, (UINT32)(FfsHeader + 1));
+        DEBUG ((DEBUG_ERROR, "Set PcdVpdBaseAddress 0x%8x and %r\n", PcdGet32 (PcdVpdBaseAddress), Status));
+        Status = PcdSet16S (PcdSetNvStoreDefaultId, EFI_HII_DEFAULT_CLASS_STANDARD);
+        DEBUG ((DEBUG_ERROR, "Set PcdSetNvStoreDefaultId status is %r\n", Status));
+      }
     }
     Status = VariableServices->GetVariable (
                     VariableServices,
@@ -1161,6 +1162,27 @@ PlatformInitPreMemEntryPoint (
       );
       DEBUG ((EFI_D_INFO, "FPDT: SEC Performance Hob ResetEnd = %ld\n", Performance.ResetEnd));
     }
+
+    #if (ENBDT_PF_ENABLE == 1)
+    if (GetBxtSeries() == BxtP) {
+      //
+      // DDR SSC
+      //
+      PeiDDRSSCInit ();
+
+      //
+      // USB3, PCie, SATA, eDP, DP, eMMC, SD and SDIO SSC
+      //
+    PeiHighSpeedSerialInterfaceSSCInit ();
+    }
+    #endif
+
+    #if defined(PRAM_SUPPORT)
+    //
+    // Install Ppi for BIOS reserved memory
+    //
+    Status = PeiServicesInstallPpi (&mBiosReservedMemoryPolicyPpi);
+    #endif
 
   } else {  //PostMem
 

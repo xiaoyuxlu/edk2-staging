@@ -133,6 +133,7 @@ copy /y /b %BIOS_Names%\IBBL.Fv .\BIOS_COMPONENTS
 copy /y /b %BIOS_Names%\IBB.Fv .\BIOS_COMPONENTS
 copy /y /b %BIOS_Names%\OBB.Fv .\BIOS_COMPONENTS
 copy /y /b %BIOS_Names%\NvStorage.Fv .\BIOS_COMPONENTS
+copy /y /b %BIOS_Names%\VpdData.fd .\BIOS_COMPONENTS
 
 if %BoardId%==BG (
   if %FabId%==B (

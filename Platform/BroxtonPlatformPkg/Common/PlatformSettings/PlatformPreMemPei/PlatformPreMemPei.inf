@@ -123,6 +123,7 @@
   gEfiFirmwarePerformanceGuid
   gEfiAuthenticatedVariableGuid
   gFspTempRamExitGuid
+  gVpdBufferGuid
 
 [Ppis]
   gEfiPeiStallPpiGuid
@@ -178,6 +179,7 @@
   gPlatformModuleTokenSpaceGuid.PcdDramCreatePolicyDefaultsFunc
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetNvStoreDefaultId
   gPlatformModuleTokenSpaceGuid.PcdSetupData
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress
 
 [FeaturePcd]
   gEfiSerialPortTokenSpaceGuid.PcdStatusCodeUseRam

@@ -60,4 +60,6 @@
   # a platform-specific method (e.g. Button pressed) in a actual platform in early boot phase.<BR><BR>
   # @Prompt A physical presence user status
   gEfiSecurityPkgTokenSpaceGuid.PcdUserPhysicalPresence|TRUE
+  
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress|0x0
 

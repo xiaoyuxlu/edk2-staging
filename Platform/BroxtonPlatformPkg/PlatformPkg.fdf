@@ -72,12 +72,10 @@
   DEFINE FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_OFFSET     = $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_WORKING_OFFSET) + $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_WORKING_SIZE)
   DEFINE FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_SIZE       = 0x00040000
 
-  DEFINE FLASH_REGION_FV_VPD_OFFSET                               = $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_OFFSET) + $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_SIZE)
-  DEFINE FLASH_REGION_FV_VPD_SIZE                                 = 0x00004000
+  DEFINE FLASH_REGION_FV_IBBM_OFFSET                              = $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_OFFSET) + $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_SIZE)
   DEFINE FLASH_REGION_FV_IBBL_SIZE                                = 0x00001000
 
-  DEFINE FLASH_REGION_FV_IBBM_OFFSET                              = $(FLASH_REGION_FV_VPD_OFFSET) + $(FLASH_REGION_FV_VPD_SIZE)
-  DEFINE FLASH_REGION_FV_IBBM_SIZE                                = $(BLD_IBBM_SIZE) - $(FLASH_REGION_FV_VPD_SIZE)
+  DEFINE FLASH_REGION_FV_IBBM_SIZE                                = $(BLD_IBBM_SIZE)
   DEFINE FLASH_REGION_FV_IBBL_OFFSET                              = $(FLASH_SIZE) - $(FLASH_REGION_FV_IBBL_SIZE)
 
   DEFINE FLASH_FV_RECOVERY_BASE                                   = 0xFFF80000
@@ -91,6 +89,18 @@
 
   DEFINE FLASH_OBB_REGION_MAPPED_BASE                             = 0xFFC82000
   DEFINE FLASH_OBB_REGION_SIZE                                    = 0x002EB000
+
+[FD.VpdData]
+  BaseAddress   = 0xFFFFC000                   #The base address of the FLASH Device.
+  Size          = 0x4000                       #The flash size in bytes of the FLASH Device.
+  ErasePolarity = 1
+  BlockSize     = 0x1000                       #The block size in bytes of the FLASH Device.
+  NumBlocks     = 0x4                          #The number of blocks in the FLASH Device.
+  
+#  SET gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress                 = 0xFFE67040
+
+0x00000000|0x4000
+FILE = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/8C3D856A-9BE6-468E-850A-24F7A8D38E08.bin
 
 ################################################################################
 #
@@ -166,7 +176,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashFvOBBXBase|gPlatformModuleTokenSpaceGuid.PcdFlashFvOBBXSize
   FV = FVOBBX
 
-
   $(FLASH_REGION_VPD_OFFSET)|$(FLASH_REGION_VPD_SIZE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
   !if $(SECURE_BOOT_ENABLE)
@@ -192,12 +201,6 @@
   $(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_OFFSET)|$(FLASH_REGION_NVSTORAGE_SUBREGION_NV_FTW_SPARE_SIZE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
 
-  #
-  # VPD
-  #
-  $(FLASH_REGION_FV_VPD_OFFSET)|$(FLASH_REGION_FV_VPD_SIZE)
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVpdBaseAddress
-  FILE = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/8C3D856A-9BE6-468E-850A-24F7A8D38E08.bin
 
   #
   # FV IBBM
@@ -358,6 +361,9 @@ APRIORI PEI {
 # -------------------------------------------------------------------------------------------------
 #
   INF $(PLATFORM_PACKAGE_COMMON)/PlatformSettings/PlatformPreMemPei/PlatformPreMemPei.inf
+  FILE RAW = A2A9007C-B4D3-4D24-B5F7-EAC1874C85E7 {
+    $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/8C3D856A-9BE6-468E-850A-24F7A8D38E08.bin
+  }
   INF $(PLATFORM_PACKAGE_COMMON)/SampleCode/IntelFsp2WrapperPkg/FspmWrapperPeim/FspmWrapperPeim.inf
   INF  RuleOverride = RESET_VECTOR USE = IA32 BroxtonSiPkg/Cpu/ResetVector/Vtf1/Bin/ResetVector.inf
 
