@@ -302,19 +302,6 @@ cp -f $WORKSPACE/Silicon/BroxtonSoC/BroxtonFspPkg/ApolloLakeFspBinPkg/FspBin/FSP
 cp -f $WORKSPACE/Silicon/BroxtonSoC/BroxtonFspPkg/ApolloLakeFspBinPkg/FspBin/FSP_M.Fv $WORKSPACE/Platform/BroxtonPlatformPkg/Common/Tools/Stitch
 cp -f $WORKSPACE/Silicon/BroxtonSoC/BroxtonFspPkg/ApolloLakeFspBinPkg/FspBin/FSP_S.Fv $WORKSPACE/Platform/BroxtonPlatformPkg/Common/Tools/Stitch
 
-echo "Running fce..."
-cat $BUILD_PATH/FV/FVIBBM.Fv $BUILD_PATH/FV/SOC.fd > $BUILD_PATH/FV/Temp.fd
-# Extract Hii data from build and store a copy in HiiDefaultData.txt
-# UQI 0006 005C 0078 0030 0031 0030 0031 is for question prompt(STR_IPU_ENABLED)
-# First 0006 is the length of string; Next six byte values are mapped to STR_IPU_ENABLED string value defined in Platform/BroxtonPlatformPkg/Common/PlatformSettings/PlatformSetupDxe/VfrStrings.uni.
-./$PLATFORM_PACKAGE/Common/Tools/FCE/FCE read -i $BUILD_PATH/FV/Temp.fd 0006 005C 0078 0030 0031 0030 0031 > $BUILD_PATH/FV/HiiDefaultData.txt
-
-## copy the Setup variable to the SetupDefault variable and save changes to BxtXXX.fd
-./$PLATFORM_PACKAGE/Common/Tools/FCE/FCE update -i $BUILD_PATH/FV/Temp.fd -s $BUILD_PATH/FV/HiiDefaultData.txt -o $BUILD_PATH/FV/Bxt"$Arch".fd -g B73FE497-B92E-416e-8326-45AD0D270091 -a 1>>EDK2.log 2>&1
-#echo "Skip FCE tool..."
-Split -f $BUILD_PATH/FV/Bxt"$Arch".fd -s 0x35000 -o $BUILD_PATH/FV/FVIBBM.Fv
-#cp $BUILD_PATH/FV/SOC.fd $BUILD_PATH/FV/Bxt"$Arch".fd
-
 ## Set the Board_Id, Build_Type, Version_Major, and Version_Minor environment variables
 ##find /v "#" Conf\BiosId.env > ver_strings
 ##for /f "tokens=1,3" %%i in (ver_strings) do set %%i=%%j

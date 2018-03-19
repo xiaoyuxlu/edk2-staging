@@ -28,6 +28,7 @@
   SUPPORTED_ARCHITECTURES             = IA32|X64
   BUILD_TARGETS                       = DEBUG|RELEASE
   SKUID_IDENTIFIER                    = DEFAULT
+  VPD_TOOL_GUID                       = 8C3D856A-9BE6-468E-850A-24F7A8D38E08
 
   #
   # Set platform specific package/folder names, same as passed from PREBUILD script.
@@ -48,6 +49,10 @@
 ################################################################################
 [SkuIds]
   0|DEFAULT              # The entry: 0|DEFAULT is reserved and always required.
+
+[DefaultStores]
+  0|STANDARD             # UEFI Standard default  0|STANDARD is reserved.
+  1|MANUFACTURING        # UEFI Manufacturing default 1|MANUFACTURING is reserved.
 
 ################################################################################
 #
@@ -145,6 +150,9 @@
 
 [PcdsDynamicHii.Common.DEFAULT]
   !include PlatformDsc/PcdsDynamicHii.Default.dsc
+
+[PcdsDynamicExVpd.common.DEFAULT]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdNvStoreDefaultValueBuffer|*
 
 [PcdsDynamicDefault.Common.DEFAULT]
   !include PlatformDsc/PcdsDynamicDefault.Default.dsc

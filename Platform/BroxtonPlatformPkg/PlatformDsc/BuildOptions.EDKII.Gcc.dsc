@@ -103,5 +103,7 @@ DEFINE EDK_EDKII_DSC_FEATURE_BUILD_OPTIONS = $(EDK_EDKII_DSC_FEATURE_BUILD_OPTIO
   *_*_X64_PP_FLAGS       = $(EDK_EDKII_DSC_FEATURE_BUILD_OPTIONS)
   *_*_X64_ASLPP_FLAGS    = $(EDK_EDKII_DSC_FEATURE_BUILD_OPTIONS)
   *_*_*_ASL_FLAGS        = $(EDK_EDKII_DSC_FEATURE_BUILD_OPTIONS) -we
-
+  
+  # disable the duplicated function name checker
+  *_*_*_DLINK_FLAGS = -Wl,--no-whole-archive
 
