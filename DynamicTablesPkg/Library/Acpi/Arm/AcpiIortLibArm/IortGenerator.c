@@ -12,7 +12,7 @@
 
   @par Reference(s):
   - IO Remapping Table, Platform Design Document,
-    Document number: ARM DEN 0049C, Issue C, 15 May 2017
+    Document number: ARM DEN 0049D, Issue D, March 2018
 
 **/
 
@@ -843,7 +843,7 @@ AddNamedComponentNodes (
     NcNode->Node.Type = EFI_ACPI_IORT_TYPE_NAMED_COMP;
     NcNode->Node.Length =
       GetNamedComponentNodeSize (NodeList);
-    NcNode->Node.Revision = 1;
+    NcNode->Node.Revision = 2;
     NcNode->Node.Reserved = EFI_ACPI_RESERVED_DWORD;
     NcNode->Node.NumIdMappings = NodeList->IdMappingCount;
 
@@ -950,7 +950,7 @@ AddRootComplexNodes (
     // Populate the node header
     RcNode->Node.Type = EFI_ACPI_IORT_TYPE_ROOT_COMPLEX;
     RcNode->Node.Length = GetRootComplexNodeSize (NodeList);
-    RcNode->Node.Revision = 0;
+    RcNode->Node.Revision = 1;
     RcNode->Node.Reserved = EFI_ACPI_RESERVED_DWORD;
     RcNode->Node.NumIdMappings = NodeList->IdMappingCount;
     RcNode->Node.IdReference = sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE);
@@ -962,6 +962,10 @@ AddRootComplexNodes (
     RcNode->MemoryAccessFlags = NodeList->MemoryAccessFlags;
     RcNode->AtsAttribute = NodeList->AtsAttribute;
     RcNode->PciSegmentNumber = NodeList->PciSegmentNumber;
+    RcNode->MemoryAddressSize = NodeList->MemoryAddressSize;
+    RcNode->Reserved1[0] = EFI_ACPI_RESERVED_BYTE;
+    RcNode->Reserved1[1] = EFI_ACPI_RESERVED_BYTE;
+    RcNode->Reserved1[2] = EFI_ACPI_RESERVED_BYTE;
 
     if ((NodeList->IdMappingCount > 0) &&
         (NodeList->IdMappingToken != CM_NULL_TOKEN)) {
@@ -1247,7 +1251,7 @@ AddSmmuV3Nodes (
     // Populate the node header
     SmmuV3Node->Node.Type = EFI_ACPI_IORT_TYPE_SMMUv3;
     SmmuV3Node->Node.Length = GetSmmuV3NodeSize (NodeList);
-    SmmuV3Node->Node.Revision = 1;
+    SmmuV3Node->Node.Revision = 2;
     SmmuV3Node->Node.Reserved = EFI_ACPI_RESERVED_DWORD;
     SmmuV3Node->Node.NumIdMappings = NodeList->IdMappingCount;
     SmmuV3Node->Node.IdReference =
@@ -1270,10 +1274,6 @@ AddSmmuV3Nodes (
     } else {
       SmmuV3Node->ProximityDomain = 0;
     }
-
-    SmmuV3Node->Reserved1[0] = EFI_ACPI_RESERVED_BYTE;
-    SmmuV3Node->Reserved1[1] = EFI_ACPI_RESERVED_BYTE;
-    SmmuV3Node->Reserved1[2] = EFI_ACPI_RESERVED_BYTE;
 
     if ((SmmuV3Node->Event != 0) && (SmmuV3Node->Pri != 0) &&
         (SmmuV3Node->Gerr != 0) && (SmmuV3Node->Sync != 0)) {
@@ -1355,7 +1355,7 @@ AddPmcgNodes (
     // Populate the node header
     PmcgNode->Node.Type = EFI_ACPI_IORT_TYPE_PMCG;
     PmcgNode->Node.Length = GetPmcgNodeSize (NodeList);
-    PmcgNode->Node.Revision = 0;
+    PmcgNode->Node.Revision = 1;
     PmcgNode->Node.Reserved = EFI_ACPI_RESERVED_DWORD;
     PmcgNode->Node.NumIdMappings = NodeList->IdMappingCount;
     PmcgNode->Node.IdReference = sizeof (EFI_ACPI_6_0_IO_REMAPPING_PMCG_NODE);
@@ -1363,6 +1363,7 @@ AddPmcgNodes (
     // PMCG specific data
     PmcgNode->Base = NodeList->BaseAddress;
     PmcgNode->OverflowInterruptGsiv = NodeList->OverflowInterrupt;
+    PmcgNode->Page1Base = NodeList->Page1BaseAddress;
 
     Status = GetNodeOffsetReferencedByToken (
               Generator->NodeIndexer,

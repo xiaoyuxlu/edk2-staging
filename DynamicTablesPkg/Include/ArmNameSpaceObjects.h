@@ -459,6 +459,8 @@ typedef struct CmArmRootComplexNode {
   UINT32            AtsAttribute;
   /// PCI segment number
   UINT32            PciSegmentNumber;
+  /// Memory address size limit
+  UINT8             MemoryAddressSize;
 } CM_ARM_ROOT_COMPLEX_NODE;
 
 /** A structure that describes the
@@ -530,7 +532,7 @@ typedef struct CmArmSmmuV3Node {
   UINT32            SyncInterrupt;
 
   /// Proximity domain flag
-  UINT8             ProximityDomain;
+  UINT32            ProximityDomain;
   /// Index into the array of ID mapping
   UINT32            DeviceIdMappingIndex;
 } CM_ARM_SMMUV3_NODE;
@@ -550,6 +552,8 @@ typedef struct CmArmPmcgNode {
   UINT64            BaseAddress;
   /// GSIV for the Overflow interrupt
   UINT32            OverflowInterrupt;
+  /// Page 1 Base address
+  UINT64            Page1BaseAddress;
 
   /// Reference token for the IORT node associated with this node
   CM_OBJECT_TOKEN   ReferenceToken;
