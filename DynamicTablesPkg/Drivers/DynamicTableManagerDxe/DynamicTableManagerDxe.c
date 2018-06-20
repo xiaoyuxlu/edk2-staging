@@ -301,7 +301,7 @@ ProcessAcpiTables (
   EFI_ACPI_TABLE_PROTOCOL     * AcpiTableProtocol;
   CM_STD_OBJ_ACPI_TABLE_INFO  * AcpiTableInfo;
   UINT32                        AcpiTableCount;
-  UINT32                        idx;
+  UINT32                        Idx;
 
   ASSERT (TableFactoryProtocol != NULL);
   ASSERT (CfgMgrProtocol != NULL);
@@ -367,14 +367,14 @@ ProcessAcpiTables (
   }
 
   // Add the FADT Table first.
-  for (idx = 0; idx < AcpiTableCount; idx++) {
+  for (Idx = 0; Idx < AcpiTableCount; Idx++) {
     if (CREATE_STD_ACPI_TABLE_GEN_ID (ESTD_ACPI_TABLE_ID_FADT) ==
-        AcpiTableInfo[idx].TableGeneratorId) {
+        AcpiTableInfo[Idx].TableGeneratorId) {
       Status = BuildAndInstallAcpiTable (
                  TableFactoryProtocol,
                  CfgMgrProtocol,
                  AcpiTableProtocol,
-                 &AcpiTableInfo[idx]
+                 &AcpiTableInfo[Idx]
                  );
       if (EFI_ERROR (Status)) {
         DEBUG ((
@@ -390,29 +390,29 @@ ProcessAcpiTables (
   } // for
 
   // Add remaining ACPI Tables
-  for (idx = 0; idx < AcpiTableCount; idx++) {
+  for (Idx = 0; Idx < AcpiTableCount; Idx++) {
     DEBUG ((
       DEBUG_INFO,
       "INFO: AcpiTableInfo[%d].TableGeneratorId = 0x%x\n",
-      idx,
-      AcpiTableInfo[idx].TableGeneratorId
+      Idx,
+      AcpiTableInfo[Idx].TableGeneratorId
       ));
 
     // Skip FADT Table since we have already added
     if (CREATE_STD_ACPI_TABLE_GEN_ID (ESTD_ACPI_TABLE_ID_FADT) ==
-        AcpiTableInfo[idx].TableGeneratorId) {
+        AcpiTableInfo[Idx].TableGeneratorId) {
       continue;
     }
 
     // Skip the Reserved table Generator ID
     if ((CREATE_STD_ACPI_TABLE_GEN_ID (ESTD_ACPI_TABLE_ID_RESERVED) >=
-           AcpiTableInfo[idx].TableGeneratorId)                     ||
+           AcpiTableInfo[Idx].TableGeneratorId)                     ||
         (CREATE_STD_ACPI_TABLE_GEN_ID (ESTD_ACPI_TABLE_ID_MAX)      <=
-           AcpiTableInfo[idx].TableGeneratorId)) {
+           AcpiTableInfo[Idx].TableGeneratorId)) {
       DEBUG ((
         DEBUG_WARN,
         "WARNING: Invalid ACPI Generator table ID = 0x%x, Skipping...\n",
-        AcpiTableInfo[idx].TableGeneratorId
+        AcpiTableInfo[Idx].TableGeneratorId
         ));
       continue;
     }
@@ -421,7 +421,7 @@ ProcessAcpiTables (
                TableFactoryProtocol,
                CfgMgrProtocol,
                AcpiTableProtocol,
-               &AcpiTableInfo[idx]
+               &AcpiTableInfo[Idx]
                );
     if (EFI_ERROR (Status)) {
       DEBUG ((

@@ -382,7 +382,7 @@ BuildGtdtTable (
   CM_ARM_GENERIC_WATCHDOG_INFO                  * WatchdogInfoList;
   CM_ARM_GTBLOCK_INFO                           * GTBlockInfo;
   EFI_ACPI_6_2_GENERIC_TIMER_DESCRIPTION_TABLE  * Gtdt;
-  UINT32                                          idx;
+  UINT32                                          Idx;
   UINT32                                          GTBlockOffset;
   UINT32                                          WatchdogOffset = 0;
 
@@ -441,20 +441,20 @@ BuildGtdtTable (
     TableSize += (sizeof (EFI_ACPI_6_2_GTDT_GT_BLOCK_STRUCTURE) *
                   BlockTimerCount);
 
-    for (idx = 0; idx < BlockTimerCount; idx++) {
-      if (GTBlockInfo[idx].GTBlockTimerFrameCount > 8) {
+    for (Idx = 0; Idx < BlockTimerCount; Idx++) {
+      if (GTBlockInfo[Idx].GTBlockTimerFrameCount > 8) {
         Status = EFI_INVALID_PARAMETER;
         DEBUG ((
           DEBUG_ERROR,
           "GTDT: GTBockFrameCount cannot be more than 8." \
           " GTBockFrameCount = %d, Status = %r\n",
-          GTBlockInfo[idx].GTBlockTimerFrameCount,
+          GTBlockInfo[Idx].GTBlockTimerFrameCount,
           Status
           ));
         goto error_handler;
       }
       TableSize += (sizeof (EFI_ACPI_6_2_GTDT_GT_BLOCK_TIMER_STRUCTURE) *
-        GTBlockInfo[idx].GTBlockTimerFrameCount);
+        GTBlockInfo[Idx].GTBlockTimerFrameCount);
     }
 
     DEBUG ((
