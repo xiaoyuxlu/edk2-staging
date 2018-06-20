@@ -69,8 +69,8 @@ BuildAndInstallAcpiTable (
 {
   EFI_STATUS                    Status;
   EFI_STATUS                    Status1;
-  CONST ACPI_TABLE_GENERATOR  * Generator = NULL;
-  EFI_ACPI_DESCRIPTION_HEADER * AcpiTable = NULL;
+  CONST ACPI_TABLE_GENERATOR  * Generator;
+  EFI_ACPI_DESCRIPTION_HEADER * AcpiTable;
   UINTN                         TableHandle;
 
   ASSERT (TableFactoryProtocol != NULL);
@@ -86,6 +86,7 @@ BuildAndInstallAcpiTable (
     AcpiTableInfo->TableGeneratorId
     ));
 
+  Generator = NULL;
   Status = TableFactoryProtocol->GetAcpiTableGenerator (
                                    TableFactoryProtocol,
                                    AcpiTableInfo->TableGeneratorId,
@@ -123,6 +124,7 @@ BuildAndInstallAcpiTable (
     return Status;
   }
 
+  AcpiTable = NULL;
   Status = Generator->BuildAcpiTable (
                         Generator,
                         AcpiTableInfo,
@@ -214,14 +216,21 @@ VerifyMandatoryTablesArePresent (
   IN       UINT32                              AcpiTableCount
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
-  BOOLEAN     FadtFound = FALSE;
-  BOOLEAN     MadtFound = FALSE;
-  BOOLEAN     GtdtFound = FALSE;
-  BOOLEAN     DsdtFound = FALSE;
-  BOOLEAN     Dbg2Found = FALSE;
-  BOOLEAN     SpcrFound = FALSE;
+  EFI_STATUS  Status;
+  BOOLEAN     FadtFound;
+  BOOLEAN     MadtFound;
+  BOOLEAN     GtdtFound;
+  BOOLEAN     DsdtFound;
+  BOOLEAN     Dbg2Found;
+  BOOLEAN     SpcrFound;
 
+  Status = EFI_SUCCESS;
+  FadtFound = FALSE;
+  MadtFound = FALSE;
+  GtdtFound = FALSE;
+  DsdtFound = FALSE;
+  Dbg2Found = FALSE;
+  SpcrFound = FALSE;
   ASSERT (AcpiTableInfo != NULL);
 
   while (AcpiTableCount-- != 0) {

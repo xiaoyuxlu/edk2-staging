@@ -688,7 +688,8 @@ AcpiMadtLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&MadtGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&MadtGenerator);
   DEBUG ((DEBUG_INFO, "MADT: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -710,7 +711,8 @@ AcpiMadtLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&MadtGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&MadtGenerator);
   DEBUG ((DEBUG_INFO, "MADT: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

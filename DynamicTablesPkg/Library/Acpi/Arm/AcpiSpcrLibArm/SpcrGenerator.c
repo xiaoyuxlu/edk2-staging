@@ -295,7 +295,8 @@ AcpiSpcrLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&SpcrGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&SpcrGenerator);
   DEBUG ((DEBUG_INFO, "SPCR: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -317,7 +318,8 @@ AcpiSpcrLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&SpcrGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&SpcrGenerator);
   DEBUG ((DEBUG_INFO, "SPCR: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

@@ -112,7 +112,8 @@ AcpiRawLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&RawGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&RawGenerator);
   DEBUG ((DEBUG_INFO, "RAW: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -134,7 +135,8 @@ AcpiRawLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&RawGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&RawGenerator);
   DEBUG ((DEBUG_INFO, "RAW: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

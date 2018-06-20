@@ -313,7 +313,8 @@ AcpiMcfgLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&McfgGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&McfgGenerator);
   DEBUG ((DEBUG_INFO, "MCFG: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -335,7 +336,8 @@ AcpiMcfgLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&McfgGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&McfgGenerator);
   DEBUG ((DEBUG_INFO, "MCFG: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

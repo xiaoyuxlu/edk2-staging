@@ -410,7 +410,8 @@ AcpiDbg2LibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&Dbg2Generator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&Dbg2Generator);
   DEBUG ((DEBUG_INFO, "DBG2: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
 
@@ -433,7 +434,8 @@ AcpiDbg2LibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&Dbg2Generator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&Dbg2Generator);
   DEBUG ((DEBUG_INFO, "DBG2: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

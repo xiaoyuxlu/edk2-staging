@@ -143,12 +143,11 @@ GetItsGroupNodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of ITS Group Node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_ITS_NODE);
-
-  // Size of ITS Identifier array
-  Size += (Node->ItsIdCount * sizeof (UINT32));
-  return Size;
+  /* Size of ITS Group Node +
+     Size of ITS Identifier array
+  */
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_ITS_NODE) +
+           (Node->ItsIdCount * sizeof (UINT32));
 }
 
 /** Returns the total size required for the ITS Group nodes and
@@ -175,10 +174,11 @@ GetSizeofItsGroupNodes (
   IN OUT        IORT_NODE_INDEXER     ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -213,17 +213,14 @@ GetNamedComponentNodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of Named Component node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_NAMED_COMP_NODE);
-
-  // Size of ID mapping array
-  Size += (Node->IdMappingCount * sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
-
-  /* Size of ASCII string + NULL termination + 'padding to
-     32-bit word aligned'.
+  /* Size of Named Component node +
+     Size of ID mapping array +
+     Size of ASCII string + 'padding to 32-bit word aligned'.
   */
-  Size += ALIGN32 (AsciiStrLen (Node->ObjectName) + 1);
-  return Size;
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_NAMED_COMP_NODE) +
+            (Node->IdMappingCount *
+             sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE)) +
+            ALIGN32 (AsciiStrSize (Node->ObjectName));
 }
 
 /** Returns the total size required for the Named Component nodes and
@@ -250,10 +247,11 @@ GetSizeofNamedComponentNodes (
   IN OUT        IORT_NODE_INDEXER          ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -289,13 +287,12 @@ GetRootComplexNodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of Root Complex node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE);
-
-  // Size of ID mapping array
-  Size += (Node->IdMappingCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
-  return Size;
+  /* Size of Root Complex node +
+     Size of ID mapping array
+  */
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_RC_NODE) +
+           (Node->IdMappingCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
 }
 
 /** Returns the total size required for the Root Complex nodes and
@@ -322,10 +319,11 @@ GetSizeofRootComplexNodes (
   IN OUT        IORT_NODE_INDEXER          ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -361,21 +359,18 @@ GetSmmuV1V2NodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of SMMU v1/SMMU v2 node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_NODE);
-
-  // Size of ID mapping array
-  Size += (Node->IdMappingCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
-
-  // Size of context interrupt array
-  Size += (Node->ContextInterruptCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_INT));
-
-  // Size of PMU interrupt array
-  Size += (Node->PmuInterruptCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_INT));
-  return Size;
+  /* Size of SMMU v1/SMMU v2 node +
+     Size of ID mapping array +
+     Size of context interrupt array +
+     Size of PMU interrupt array
+  */
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_NODE) +
+           (Node->IdMappingCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE)) +
+           (Node->ContextInterruptCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_INT)) +
+           (Node->PmuInterruptCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU_INT));
 }
 
 /** Returns the total size required for the SMMUv1/SMMUv2 nodes and
@@ -402,10 +397,11 @@ GetSizeofSmmuV1V2Nodes (
   IN OUT        IORT_NODE_INDEXER          ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -440,13 +436,12 @@ GetSmmuV3NodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of SMMU v1/SMMU v2 node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE);
-
-  // Size of ID mapping array
-  Size += (Node->IdMappingCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
-  return Size;
+  /* Size of SMMU v1/SMMU v2 node +
+     Size of ID mapping array
+  */
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE) +
+           (Node->IdMappingCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
 }
 
 /** Returns the total size required for the SMMUv3 nodes and
@@ -473,10 +468,11 @@ GetSizeofSmmuV3Nodes (
   IN OUT        IORT_NODE_INDEXER   ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -511,13 +507,12 @@ GetPmcgNodeSize (
 {
   ASSERT (Node != NULL);
 
-  // Size of PMCG node
-  UINT32 Size = sizeof (EFI_ACPI_6_0_IO_REMAPPING_PMCG_NODE);
-
-  // Size of ID mapping array
-  Size += (Node->IdMappingCount *
-           sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
-  return Size;
+  /* Size of PMCG node +
+     Size of ID mapping array
+  */
+  return sizeof (EFI_ACPI_6_0_IO_REMAPPING_PMCG_NODE) +
+           (Node->IdMappingCount *
+            sizeof (EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE));
 }
 
 /** Returns the total size required for the PMCG nodes and
@@ -544,10 +539,11 @@ GetSizeofPmcgNodes (
   IN OUT        IORT_NODE_INDEXER ** CONST NodeIndexer
   )
 {
-  UINT32  Size = 0;
+  UINT32  Size;
 
   ASSERT (NodeList != NULL);
 
+  Size = 0;
   while (NodeCount-- != 0) {
     (*NodeIndexer)->Token = NodeList->Token;
     (*NodeIndexer)->Object = (VOID*)NodeList;
@@ -650,9 +646,11 @@ AddIdMappingArray (
   EFI_STATUS            Status;
   CM_ARM_ID_MAPPING   * IdMappings;
   UINT32                IdMappingCount;
-  ACPI_IORT_GENERATOR * Generator = (ACPI_IORT_GENERATOR*)This;
+  ACPI_IORT_GENERATOR * Generator;
 
   ASSERT (IdMapArray != NULL);
+
+  Generator = (ACPI_IORT_GENERATOR*)This;
 
   // Get the Id Mapping Array
   Status = GetEArmObjIdMapping (
@@ -1351,10 +1349,11 @@ AddPmcgNodes (
   EFI_STATUS                             Status;
   EFI_ACPI_6_0_IO_REMAPPING_PMCG_NODE  * PmcgNode;
   EFI_ACPI_6_0_IO_REMAPPING_ID_TABLE   * IdMapArray;
-  ACPI_IORT_GENERATOR                  * Generator = (ACPI_IORT_GENERATOR*)This;
+  ACPI_IORT_GENERATOR                  * Generator;
 
   ASSERT (Iort != NULL);
 
+  Generator = (ACPI_IORT_GENERATOR*)This;
   PmcgNode = (EFI_ACPI_6_0_IO_REMAPPING_PMCG_NODE*)((UINT8*)Iort +
               NodesStartOffset);
 
@@ -2025,7 +2024,8 @@ AcpiIortLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&IortGenerator.Header);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&IortGenerator.Header);
   DEBUG ((DEBUG_INFO, "IORT: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -2047,7 +2047,8 @@ AcpiIortLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&IortGenerator.Header);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&IortGenerator.Header);
   DEBUG ((DEBUG_INFO, "Iort: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

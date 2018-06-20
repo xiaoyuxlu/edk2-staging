@@ -637,7 +637,8 @@ AcpiFadtLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&FadtGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&FadtGenerator);
   DEBUG ((DEBUG_INFO, "FADT: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -659,7 +660,8 @@ AcpiFadtLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&FadtGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&FadtGenerator);
   DEBUG ((DEBUG_INFO, "FADT: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;

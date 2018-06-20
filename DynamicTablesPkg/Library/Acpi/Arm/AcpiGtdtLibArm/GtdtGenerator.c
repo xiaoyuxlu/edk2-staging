@@ -376,7 +376,7 @@ BuildGtdtTable (
 {
   EFI_STATUS                                      Status;
   UINT32                                          TableSize;
-  UINT32                                          PlatformTimerCount = 0;
+  UINT32                                          PlatformTimerCount;
   UINT32                                          WatchdogCount;
   UINT32                                          BlockTimerCount;
   CM_ARM_GENERIC_WATCHDOG_INFO                  * WatchdogInfoList;
@@ -384,7 +384,7 @@ BuildGtdtTable (
   EFI_ACPI_6_2_GENERIC_TIMER_DESCRIPTION_TABLE  * Gtdt;
   UINT32                                          Idx;
   UINT32                                          GTBlockOffset;
-  UINT32                                          WatchdogOffset = 0;
+  UINT32                                          WatchdogOffset;
 
   ASSERT (This != NULL);
   ASSERT (AcpiTableInfo != NULL);
@@ -434,6 +434,7 @@ BuildGtdtTable (
     ));
 
   // Calculate the GTDT Table Size
+  PlatformTimerCount = 0;
   TableSize = sizeof (EFI_ACPI_6_2_GENERIC_TIMER_DESCRIPTION_TABLE);
   if (BlockTimerCount != 0) {
     GTBlockOffset = TableSize;
@@ -465,6 +466,7 @@ BuildGtdtTable (
       ));
   }
 
+  WatchdogOffset = 0;
   if (WatchdogCount != 0) {
     WatchdogOffset = TableSize;
     PlatformTimerCount += WatchdogCount;
@@ -641,7 +643,8 @@ AcpiGtdtLibConstructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = RegisterAcpiTableGenerator (&GtdtGenerator);
+  EFI_STATUS  Status;
+  Status = RegisterAcpiTableGenerator (&GtdtGenerator);
   DEBUG ((DEBUG_INFO, "GTDT: Register Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
@@ -663,7 +666,8 @@ AcpiGtdtLibDestructor (
   IN       EFI_SYSTEM_TABLE  * CONST SystemTable
   )
 {
-  EFI_STATUS  Status = DeregisterAcpiTableGenerator (&GtdtGenerator);
+  EFI_STATUS  Status;
+  Status = DeregisterAcpiTableGenerator (&GtdtGenerator);
   DEBUG ((DEBUG_INFO, "GTDT: Deregister Generator. Status = %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   return Status;
