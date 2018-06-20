@@ -92,7 +92,7 @@ GET_OBJECT_LIST (
 
   @param [in]  Gicc      Pointer to GIC CPU Interface structure.
   @param [in]  GicCInfo  Pointer to the GIC CPU Interface Information.
-*/
+**/
 STATIC
 VOID
 AddGICC (
@@ -153,7 +153,7 @@ AddGICC (
   @param [in]  GicCInfo  Pointer to the GIC CPU
                          Information list.
   @param [in]  GicCCount Count of GIC CPU Interfaces.
-*/
+**/
 STATIC
 VOID
 AddGICCList (
@@ -174,7 +174,7 @@ AddGICCList (
 
   @param [in]  Gicd      Pointer to GIC Distributor structure.
   @param [in]  GicDInfo  Pointer to the GIC Distributor Information.
-*/
+**/
 STATIC
 VOID
 AddGICD (
@@ -209,7 +209,7 @@ AddGICD (
 
   @param [in]  GicMsiFrame      Pointer to GIC MSI Frame structure.
   @param [in]  GicMsiFrameInfo  Pointer to the GIC MSI Frame Information.
-*/
+**/
 STATIC
 VOID
 AddGICMsiFrame (
@@ -236,7 +236,7 @@ AddGICMsiFrame (
   @param [in]  GicMsiFrame      Pointer to GIC MSI Frame structure list.
   @param [in]  GicMsiFrameInfo  Pointer to the GIC MSI Frame info list.
   @param [in]  GicMsiFrameCount Count of GIC MSI Frames.
-*/
+**/
 STATIC
 VOID
 AddGICMsiFrameInfoList (
@@ -257,7 +257,7 @@ AddGICMsiFrameInfoList (
 
   @param [in]  Gicr                 Pointer to GIC Redistributor structure.
   @param [in]  GicRedisributorInfo  Pointer to the GIC Redistributor Info.
-*/
+**/
 STATIC
 VOID
 AddGICRedistributor (
@@ -281,7 +281,7 @@ AddGICRedistributor (
   @param [in]  Gicr      Pointer to GIC Redistributor structure list.
   @param [in]  GicRInfo  Pointer to the GIC Distributor info list.
   @param [in]  GicRCount Count of GIC Distributors.
-*/
+**/
 STATIC
 VOID
 AddGICRedistributorList (
@@ -302,7 +302,7 @@ AddGICRedistributorList (
 
   @param [in]  GicIts      Pointer to GIC ITS structure.
   @param [in]  GicItsInfo  Pointer to the GIC ITS Information.
-*/
+**/
 STATIC
 VOID
 AddGICInterruptTranslationService (
@@ -327,7 +327,7 @@ AddGICInterruptTranslationService (
   @param [in]  GicIts       Pointer to GIC ITS structure list.
   @param [in]  GicItsInfo   Pointer to the GIC ITS list.
   @param [in]  GicItsCount  Count of GIC ITS.
-*/
+**/
 STATIC
 VOID
 AddGICItsList (
@@ -365,7 +365,7 @@ AddGICItsList (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -617,7 +617,7 @@ error_handler:
 
   @retval EFI_SUCCESS           The resources were freed successfully.
   @retval EFI_INVALID_PARAMETER The table pointer is NULL or invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 FreeMadtTableResources (
@@ -680,7 +680,7 @@ ACPI_TABLE_GENERATOR MadtGenerator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiMadtLibConstructor (
@@ -702,7 +702,7 @@ AcpiMadtLibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiMadtLibDestructor (

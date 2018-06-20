@@ -90,7 +90,7 @@ GET_OBJECT_LIST (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -149,7 +149,7 @@ AddGenericTimerInfo (
                                 GTDT Table.
   @param [in]  WatchdogInfoList Pointer to the watchdog information list.
   @param [in]  WatchdogCount    Platform timer count.
-*/
+**/
 STATIC
 VOID
 AddGenericWatchdogList (
@@ -195,7 +195,7 @@ AddGenericWatchdogList (
 
   @retval EFI_SUCCESS           Table generated successfully.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 AddGTBlockTimerFrames (
@@ -262,7 +262,7 @@ AddGTBlockTimerFrames (
 
   @retval EFI_SUCCESS           Table generated successfully.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 AddGTBlockList (
@@ -363,7 +363,7 @@ AddGTBlockList (
                                 Manager is less than the Object size for the
                                 requested object.
   @retval EFI_OUT_OF_RESOURCES  Memory allocation failed.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -570,7 +570,7 @@ error_handler:
 
   @retval EFI_SUCCESS           The resources were freed successfully.
   @retval EFI_INVALID_PARAMETER The table pointer is NULL or invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 FreeGtdtTableResources (
@@ -633,7 +633,7 @@ ACPI_TABLE_GENERATOR GtdtGenerator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiGtdtLibConstructor (
@@ -655,7 +655,7 @@ AcpiGtdtLibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiGtdtLibDestructor (

@@ -58,7 +58,7 @@ typedef struct PlatformRepositoryInfo       EFI_PLATFORM_REPOSITORY_INFO;
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration Manager
                                 is less than the Object size for the requested
                                 object.
-*/
+**/
 typedef
 EFI_STATUS
 (EFIAPI * EFI_CONFIGURATION_MANAGER_GET_OBJECT) (
@@ -86,7 +86,7 @@ EFI_STATUS
                                 is less than the Object size for the requested
                                 object.
   @retval EFI_UNSUPPORTED       This operation is not supported.
-*/
+**/
 typedef
 EFI_STATUS
 (EFIAPI * EFI_CONFIGURATION_MANAGER_SET_OBJECT) (

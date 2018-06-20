@@ -56,7 +56,7 @@ GET_OBJECT_LIST (
   @retval EFI_BAD_BUFFER_SIZE   Size returned by the Configuration Manager
                                 is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -205,7 +205,7 @@ exit_handler:
 
   @retval EFI_SUCCESS           Success.
   @retval EFI_NOT_FOUND         If mandatory table is not found.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -288,7 +288,7 @@ VerifyMandatoryTablesArePresent (
 
   @retval EFI_SUCCESS   Success.
   @retval EFI_NOT_FOUND If a mandatory table or a generator is not found.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -455,7 +455,7 @@ ProcessAcpiTables (
   @retval EFI_OUT_OF_RESOURCES  Memory allocation failed.
   @retval EFI_NOT_FOUND         Required interface/object was not found.
   @retval EFI_INVALID_PARAMETER Some parameter is incorrect/invalid.
-*/
+**/
 EFI_STATUS
 EFIAPI
 DynamicTableManagerDxeInitialize (

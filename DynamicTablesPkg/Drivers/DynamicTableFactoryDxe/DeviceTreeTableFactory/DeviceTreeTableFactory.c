@@ -41,7 +41,7 @@ extern EFI_DYNAMIC_TABLE_FACTORY_INFO TableFactoryInfo;
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 GetDtTableGenerator (
@@ -106,7 +106,7 @@ GetDtTableGenerator (
                                 the Generator pointer is NULL.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID is
                                 already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 RegisterDtTableGenerator (
@@ -167,7 +167,7 @@ RegisterDtTableGenerator (
   @retval EFI_INVALID_PARAMETER The generator is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 DeregisterDtTableGenerator (

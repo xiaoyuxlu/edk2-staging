@@ -70,7 +70,7 @@ GET_OBJECT_LIST (
   @param [in]  PciCfgSpaceInfoList Pointer to the PCI Configuration Space
                                    Info List.
   @param [in]  PciCfgSpaceCount    Count of PCI Configuration Space Info.
-*/
+**/
 STATIC
 VOID
 AddPciConfigurationSpaceList (
@@ -121,7 +121,7 @@ AddPciConfigurationSpaceList (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -242,7 +242,7 @@ error_handler:
 
   @retval EFI_SUCCESS           The resources were freed successfully.
   @retval EFI_INVALID_PARAMETER The table pointer is NULL or invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 FreeMcfgTableResources (
@@ -305,7 +305,7 @@ ACPI_TABLE_GENERATOR McfgGenerator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiMcfgLibConstructor (
@@ -327,7 +327,7 @@ AcpiMcfgLibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiMcfgLibDestructor (

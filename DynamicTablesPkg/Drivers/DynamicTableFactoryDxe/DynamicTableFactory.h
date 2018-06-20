@@ -69,7 +69,7 @@ typedef struct DynamicTableFactoryInfo {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 GetAcpiTableGenerator (
@@ -90,7 +90,7 @@ GetAcpiTableGenerator (
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 GetSmbiosTableGenerator (
@@ -111,7 +111,7 @@ GetSmbiosTableGenerator (
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 GetDtTableGenerator (

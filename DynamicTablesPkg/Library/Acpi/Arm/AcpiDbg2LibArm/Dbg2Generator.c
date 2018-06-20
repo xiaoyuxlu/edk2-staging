@@ -102,7 +102,7 @@ typedef struct {
   @param [in]  UartBase     The UART port base address.
   @param [in]  UartAddrLen  The UART port address range length.
   @param [in]  UartNameStr  The UART port name string.
-*/
+**/
 #define DBG2_DEBUG_PORT_DDI(                                          \
           NumReg,                                                     \
           SubType,                                                    \
@@ -192,7 +192,7 @@ GET_OBJECT_LIST (
   @retval EFI_SUCCESS           Success.
   @retval EFI_INVALID_PARAMETER The parameters for serial port initialization
                                 are invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 SetupDebugUart (
@@ -260,7 +260,7 @@ SetupDebugUart (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -402,7 +402,7 @@ ACPI_TABLE_GENERATOR Dbg2Generator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiDbg2LibConstructor (
@@ -425,7 +425,7 @@ AcpiDbg2LibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiDbg2LibDestructor (

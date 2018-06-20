@@ -154,8 +154,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  TableGeneratorId  The table generator ID.
 
-  @returns the Table ID described by the TableGeneratorId.
-*/
+  @return the Table ID described by the TableGeneratorId.
+**/
 #define GET_TABLE_ID(TableGeneratorId)         \
           ((TableGeneratorId) & TABLE_ID_MASK)
 
@@ -163,8 +163,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  TableGeneratorId  The table generator ID.
 
-  @returns the Table type described by the TableGeneratorId.
-*/
+  @return the Table type described by the TableGeneratorId.
+**/
 #define GET_TABLE_TYPE(TableGeneratorId)                                   \
           (((TableGeneratorId) & TABLE_TYPE_MASK) >> TABLE_TYPE_BIT_SHIFT)
 
@@ -172,8 +172,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  TableGeneratorId  The table generator ID.
 
-  @returns the Namespace described by the TableGeneratorId.
-*/
+  @return the Namespace described by the TableGeneratorId.
+**/
 #define GET_TABLE_NAMESPACEID(TableGeneratorId)             \
           (((TableGeneratorId) & TABLE_NAMESPACEID_MASK) >> \
             TABLE_NAMESPACE_ID_BIT_SHIFT)
@@ -182,8 +182,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  TableGeneratorId  The table generator ID.
 
-  @returns TRUE if the TableGeneratorId is in the Standard Namespace.
-*/
+  @return TRUE if the TableGeneratorId is in the Standard Namespace.
+**/
 #define IS_GENERATOR_NAMESPACE_STD(TableGeneratorId) \
           (                                          \
           GET_TABLE_NAMESPACEID(TableGeneratorId) == \
@@ -196,8 +196,8 @@ typedef enum TableGeneratorNameSpace {
   @param [in]  TableNameSpaceId The namespace ID for the table.
   @param [in]  TableId          The table ID.
 
-  @returns a TableGeneratorId calculated from the inputs.
-*/
+  @return a TableGeneratorId calculated from the inputs.
+**/
 #define CREATE_TABLE_GEN_ID(TableType, TableNameSpaceId, TableId)      \
           ((((TableType) << TABLE_TYPE_BIT_SHIFT) & TABLE_TYPE_MASK) | \
            (((TableNameSpaceId) << TABLE_NAMESPACE_ID_BIT_SHIFT) &     \
@@ -221,8 +221,8 @@ typedef enum TableGeneratorNameSpace {
   @param [in]  Major  The Major revision.
   @param [in]  Minor  The Minor revision.
 
-  @returns a 32 bit representation of the type Major.Minor.
-*/
+  @return a 32 bit representation of the type Major.Minor.
+**/
 #define CREATE_REVISION(Major, Minor)                                      \
           ((((Major) & MAJOR_REVISION_MASK) << MAJOR_REVISION_BIT_SHIFT) | \
             ((Minor) & MINOR_REVISION_MASK))
@@ -233,8 +233,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  Revision  The Revision value which is 32 bit.
 
-  @returns the Major part of the revision.
-*/
+  @return the Major part of the revision.
+**/
 #define GET_MAJOR_REVISION(Revision)                                       \
           (((Revision) >> MAJOR_REVISION_BIT_SHIFT) & MAJOR_REVISION_MASK)
 
@@ -244,8 +244,8 @@ typedef enum TableGeneratorNameSpace {
 
   @param [in]  Revision  The Revision value which is 32 bit.
 
-  @returns the Minor part of the revision.
-*/
+  @return the Minor part of the revision.
+**/
 #define GET_MINOR_REVISION(Revision)  ((Revision) & MINOR_REVISION_MASK)
 
 #endif // TABLE_GENERATOR_H_

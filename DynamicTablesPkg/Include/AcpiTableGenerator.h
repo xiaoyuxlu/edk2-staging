@@ -85,9 +85,9 @@ typedef enum StdAcpiTableId {
 
   @param [in] TableGeneratorId  The table generator ID.
 
-  @returns TRUE if the table generator ID is for an ACPI Table
+  @return TRUE if the table generator ID is for an ACPI Table
         Generator.
-*/
+**/
 #define IS_GENERATOR_TYPE_ACPI(TableGeneratorId) \
           (GET_TABLE_TYPE (TableGeneratorId) == ETableGeneratorTypeAcpi)
 
@@ -96,9 +96,9 @@ typedef enum StdAcpiTableId {
 
   @param [in] TableGeneratorId  The table generator ID.
 
-  @returns TRUE if the table generator ID is for a standard ACPI
+  @return TRUE if the table generator ID is for a standard ACPI
           Table Generator.
-*/
+**/
 #define IS_VALID_STD_ACPI_GENERATOR_ID(TableGeneratorId)               \
           (                                                            \
           IS_GENERATOR_NAMESPACE_STD (TableGeneratorId) &&             \
@@ -111,8 +111,8 @@ typedef enum StdAcpiTableId {
 
   @param [in] TableId  The table generator ID.
 
-  @returns a standard ACPI table generator ID.
-*/
+  @return a standard ACPI table generator ID.
+**/
 #define CREATE_STD_ACPI_TABLE_GEN_ID(TableId) \
           CREATE_TABLE_GEN_ID (               \
             ETableGeneratorTypeAcpi,          \
@@ -131,7 +131,7 @@ typedef enum StdAcpiTableId {
   @param [in] Signature The ACPI table signature.
   @param [in] Type      The ACPI table structure.
   @param [in] Revision  The ACPI table revision.
-*/
+**/
 #define ACPI_HEADER(Signature, Type, Revision) {              \
           Signature,             /* UINT32  Signature */      \
           sizeof (Type),         /* UINT32  Length */         \
@@ -148,7 +148,7 @@ typedef enum StdAcpiTableId {
     defined by the EFI_ACPI_DESCRIPTION_HEADER structure.
 
   @param [in] AcpiHeader The pointer to the ACPI table header.
-*/
+**/
 #define DUMP_ACPI_TABLE_HEADER(AcpiHeader)                        \
           DEBUG ((                                                \
             DEBUG_INFO,                                           \
@@ -177,9 +177,9 @@ typedef struct AcpiTableGenerator           ACPI_TABLE_GENERATOR;
                                Protocol interface.
   @param [out] Table           Pointer to the generated ACPI table.
 
-  @returns  EFI_SUCCESS If the table is generated successfully or other
+  @return  EFI_SUCCESS If the table is generated successfully or other
                         failure codes as returned by the generator.
-*/
+**/
 typedef EFI_STATUS (*ACPI_TABLE_GENERATOR_BUILD_TABLE) (
   IN  CONST ACPI_TABLE_GENERATOR                *       This,
   IN  CONST CM_STD_OBJ_ACPI_TABLE_INFO          * CONST AcpiTableInfo,
@@ -197,9 +197,9 @@ typedef EFI_STATUS (*ACPI_TABLE_GENERATOR_BUILD_TABLE) (
                                   Protocol Interface.
   @param [in, out] Table          Pointer to the ACPI Table.
 
-  @returns EFI_SUCCESS  If freed successfully or other failure codes
+  @return EFI_SUCCESS  If freed successfully or other failure codes
                         as returned by the generator.
-*/
+**/
 typedef EFI_STATUS (*ACPI_TABLE_GENERATOR_FREE_TABLE) (
   IN      CONST ACPI_TABLE_GENERATOR                * CONST This,
   IN      CONST CM_STD_OBJ_ACPI_TABLE_INFO          * CONST AcpiTableInfo,
@@ -209,7 +209,7 @@ typedef EFI_STATUS (*ACPI_TABLE_GENERATOR_FREE_TABLE) (
 
 /** The ACPI_TABLE_GENERATOR structure provides an interface that the
     Table Manager can use to invoke the functions to build ACPI tables.
-*/
+**/
 typedef struct AcpiTableGenerator {
   /// The ACPI table generator ID.
   ACPI_TABLE_GENERATOR_ID                GeneratorID;
@@ -251,7 +251,7 @@ typedef struct AcpiTableGenerator {
                                 the Generator pointer is NULL.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID is
                                 already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 RegisterAcpiTableGenerator (
@@ -269,7 +269,7 @@ RegisterAcpiTableGenerator (
   @retval EFI_INVALID_PARAMETER The generator is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 DeregisterAcpiTableGenerator (

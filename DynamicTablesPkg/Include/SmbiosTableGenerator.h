@@ -90,9 +90,9 @@ typedef enum StdSmbiosTableGeneratorId {
 
   @param [in] TableGeneratorId  The table generator ID.
 
-  @returns  TRUE if the table generator ID is for an SMBIOS Table
+  @return  TRUE if the table generator ID is for an SMBIOS Table
             Generator.
-*/
+**/
 #define IS_GENERATOR_TYPE_SMBIOS(TableGeneratorId) \
           (                                        \
           GET_TABLE_TYPE (TableGeneratorId) ==     \
@@ -104,9 +104,9 @@ typedef enum StdSmbiosTableGeneratorId {
 
   @param [in] TableGeneratorId  The table generator ID.
 
-  @returns  TRUE if the table generator ID is for a standard SMBIOS
+  @return  TRUE if the table generator ID is for a standard SMBIOS
             Table Generator.
-*/
+**/
 #define IS_VALID_STD_SMBIOS_GENERATOR_ID(TableGeneratorId)            \
           (                                                           \
           IS_GENERATOR_NAMESPACE_STD(TableGeneratorId) &&             \
@@ -119,8 +119,8 @@ typedef enum StdSmbiosTableGeneratorId {
 
   @param [in] TableId  The table generator ID.
 
-  @returns a standard SMBIOS table generator ID.
-*/
+  @return a standard SMBIOS table generator ID.
+**/
 #define CREATE_STD_SMBIOS_TABLE_GEN_ID(TableId) \
           CREATE_TABLE_GEN_ID (                 \
             ETableGeneratorTypeSmbios,          \
@@ -144,9 +144,9 @@ typedef struct SmbiosTableGenerator         SMBIOS_TABLE_GENERATOR;
                                Protocol interface.
   @param [out] Table           Pointer to the generated SMBIOS table.
 
-  @returns EFI_SUCCESS  If the table is generated successfully or other
+  @return EFI_SUCCESS  If the table is generated successfully or other
                         failure codes as returned by the generator.
-*/
+**/
 typedef EFI_STATUS (*SMBIOS_TABLE_GENERATOR_BUILD_TABLE) (
   IN  CONST SMBIOS_TABLE_GENERATOR              *       Generator,
   IN        CM_STD_OBJ_SMBIOS_TABLE_INFO        * CONST SmbiosTableInfo,
@@ -164,9 +164,9 @@ typedef EFI_STATUS (*SMBIOS_TABLE_GENERATOR_BUILD_TABLE) (
                                Protocol interface.
   @param [in]  Table           Pointer to the generated SMBIOS table.
 
-  @returns  EFI_SUCCESS If freed successfully or other failure codes
+  @return  EFI_SUCCESS If freed successfully or other failure codes
                         as returned by the generator.
-*/
+**/
 typedef EFI_STATUS (*SMBIOS_TABLE_GENERATOR_FREE_TABLE) (
   IN  CONST SMBIOS_TABLE_GENERATOR              *       Generator,
   IN  CONST CM_STD_OBJ_SMBIOS_TABLE_INFO        * CONST SmbiosTableInfo,
@@ -210,7 +210,7 @@ typedef struct SmbiosTableGenerator {
                                 the Generator pointer is NULL.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID is
                                 already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 RegisterSmbiosTableGenerator (
@@ -228,7 +228,7 @@ RegisterSmbiosTableGenerator (
   @retval EFI_INVALID_PARAMETER The generator is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 EFI_STATUS
 EFIAPI
 DeregisterSmbiosTableGenerator (

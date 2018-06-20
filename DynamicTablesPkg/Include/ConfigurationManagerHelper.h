@@ -52,7 +52,7 @@
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 #define GET_OBJECT_LIST(CmObjectNameSpace, CmObjectId, Type)                  \
 STATIC                                                                        \
 EFI_STATUS                                                                    \

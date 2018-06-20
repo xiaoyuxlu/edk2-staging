@@ -56,7 +56,7 @@ EFI_DYNAMIC_TABLE_FACTORY_PROTOCOL DynamicTableFactoryProtocol = {
   @retval EFI_OUT_OF_RESOURCES  Memory allocation failed.
   @retval EFI_NOT_FOUND         Required interface/object was not found.
   @retval EFI_INVALID_PARAMETER Some parameter is incorrect/invalid.
-*/
+**/
 EFI_STATUS
 EFIAPI
 DynamicTableFactoryDxeInitialize (

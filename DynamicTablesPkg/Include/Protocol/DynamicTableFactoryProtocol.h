@@ -56,7 +56,7 @@ typedef struct DynamicTableFactoryInfo EFI_DYNAMIC_TABLE_FACTORY_INFO;
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 typedef
 EFI_STATUS
 EFIAPI
@@ -78,7 +78,7 @@ EFIAPI
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 typedef
 EFI_STATUS
 EFIAPI
@@ -100,7 +100,7 @@ EFIAPI
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The requested generator is not found
                                 in the list of registered generators.
-*/
+**/
 typedef
 EFI_STATUS
 EFIAPI

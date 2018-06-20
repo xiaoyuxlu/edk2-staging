@@ -34,7 +34,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   @retval EFI_NOT_FOUND         The requested Object is not found.
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size.
-*/
+**/
 EFI_STATUS
 EFIAPI
 GetCgfMgrInfo (
@@ -98,7 +98,7 @@ GetCgfMgrInfo (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AddAcpiHeader (

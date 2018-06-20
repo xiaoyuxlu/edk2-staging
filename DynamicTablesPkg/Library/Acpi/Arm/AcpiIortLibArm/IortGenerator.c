@@ -134,7 +134,7 @@ GET_OBJECT_LIST (
     @param [in]  Node    Pointer to ITS Group node.
 
     @retval Size of the ITS Group Node.
-*/
+**/
 STATIC
 UINT32
 GetItsGroupNodeSize (
@@ -165,7 +165,7 @@ GetItsGroupNodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the ITS Group Nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofItsGroupNodes (
@@ -204,7 +204,7 @@ GetSizeofItsGroupNodes (
     @param [in]  Node    Pointer to Named Component node.
 
     @retval Size of the Named Component node.
-*/
+**/
 STATIC
 UINT32
 GetNamedComponentNodeSize (
@@ -240,7 +240,7 @@ GetNamedComponentNodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the Named Component nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofNamedComponentNodes (
@@ -280,7 +280,7 @@ GetSizeofNamedComponentNodes (
     @param [in]  Node    Pointer to Root Complex node.
 
     @retval Size of the Root Complex node.
-*/
+**/
 STATIC
 UINT32
 GetRootComplexNodeSize (
@@ -312,7 +312,7 @@ GetRootComplexNodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the Root Complex nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofRootComplexNodes (
@@ -352,7 +352,7 @@ GetSizeofRootComplexNodes (
     @param [in]  Node    Pointer to SMMUv1/SMMUv2 node list.
 
     @retval Size of the SMMUv1/SMMUv2 node.
-*/
+**/
 STATIC
 UINT32
 GetSmmuV1V2NodeSize (
@@ -392,7 +392,7 @@ GetSmmuV1V2NodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the SMMUv1/SMMUv2 nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofSmmuV1V2Nodes (
@@ -431,7 +431,7 @@ GetSizeofSmmuV1V2Nodes (
     @param [in]  Node    Pointer to SMMUv3 node list.
 
     @retval Total size of the SMMUv3 nodes.
-*/
+**/
 STATIC
 UINT32
 GetSmmuV3NodeSize (
@@ -463,7 +463,7 @@ GetSmmuV3NodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the SMMUv3 nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofSmmuV3Nodes (
@@ -502,7 +502,7 @@ GetSizeofSmmuV3Nodes (
     @param [in]  Node    Pointer to PMCG node.
 
     @retval Size of the PMCG node.
-*/
+**/
 STATIC
 UINT32
 GetPmcgNodeSize (
@@ -534,7 +534,7 @@ GetPmcgNodeSize (
     @param [in, out]  NodeIndexer     Pointer to the next Node Indexer.
 
     @retval Total size of the PMCG nodes.
-*/
+**/
 STATIC
 UINT32
 GetSizeofPmcgNodes (
@@ -579,7 +579,7 @@ GetSizeofPmcgNodes (
     @retval EFI_SUCCESS       Success.
     @retval EFI_NOT_FOUND     No matching token reference
                               found in node indexer array.
-*/
+**/
 STATIC
 EFI_STATUS
 GetNodeOffsetReferencedByToken (
@@ -625,6 +625,7 @@ GetNodeOffsetReferencedByToken (
     This function retrieves the Id Mapping Array object referenced by the
     IdMappingToken and updates the IdMapArray.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     IdMapArray       Pointer to an array of Id Mappings.
@@ -635,7 +636,7 @@ GetNodeOffsetReferencedByToken (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddIdMappingArray (
@@ -711,6 +712,7 @@ AddIdMappingArray (
 
 /** Update the ITS Group Node Information.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -723,7 +725,7 @@ AddIdMappingArray (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddItsGroupNodes (
@@ -803,6 +805,7 @@ AddItsGroupNodes (
     This function updates the Named Component node information in the IORT
     table.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -815,7 +818,7 @@ AddItsGroupNodes (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddNamedComponentNodes (
@@ -913,6 +916,7 @@ AddNamedComponentNodes (
 
     This function updates the Root Complex node information in the IORT table.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -925,7 +929,7 @@ AddNamedComponentNodes (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddRootComplexNodes (
@@ -1003,17 +1007,17 @@ AddRootComplexNodes (
     This function retrieves the InterruptArray object referenced by the
     InterruptToken and updates the SMMU InterruptArray.
 
-    @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
-                                     Protocol Interface.
-    @param [in]     InterruptArray   Pointer to an array of Interrupts.
-    @param [in]     InterruptCount   Number of entries in the InterruptArray.
-    @param [in]     InterruptToken   Reference Token for retrieving the SMMU
-                                     InterruptArray object.
+    @param [in]      CfgMgrProtocol   Pointer to the Configuration Manager
+                                      Protocol Interface.
+    @param [in, out] InterruptArray   Pointer to an array of Interrupts.
+    @param [in]      InterruptCount   Number of entries in the InterruptArray.
+    @param [in]      InterruptToken   Reference Token for retrieving the SMMU
+                                      InterruptArray object.
 
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddSmmuInterrruptArray (
@@ -1066,6 +1070,7 @@ AddSmmuInterrruptArray (
 
 /** Update the SMMU v1/v2 Node Information.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -1078,7 +1083,7 @@ AddSmmuInterrruptArray (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddSmmuV1V2Nodes (
@@ -1216,6 +1221,7 @@ AddSmmuV1V2Nodes (
 
     This function updates the SMMUv3 node information in the IORT table.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -1226,7 +1232,7 @@ AddSmmuV1V2Nodes (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddSmmuV3Nodes (
@@ -1319,6 +1325,7 @@ AddSmmuV3Nodes (
 
     This function updates the PMCG node information in the IORT table.
 
+    @param [in]     This             Pointer to the table Generator.
     @param [in]     CfgMgrProtocol   Pointer to the Configuration Manager
                                      Protocol Interface.
     @param [in]     Iort             Pointer to IORT table structure.
@@ -1329,7 +1336,7 @@ AddSmmuV3Nodes (
     @retval EFI_SUCCESS           Table generated successfully.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The required object was not found.
-*/
+**/
 STATIC
 EFI_STATUS
 AddPmcgNodes (
@@ -1436,7 +1443,7 @@ AddPmcgNodes (
     @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                   Manager is less than the Object size for the
                                   requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -1929,7 +1936,7 @@ error_handler:
 
   @retval EFI_SUCCESS           The resources were freed successfully.
   @retval EFI_INVALID_PARAMETER The table pointer is NULL or invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 FreeIortTableResources (
@@ -2010,7 +2017,7 @@ ACPI_IORT_GENERATOR IortGenerator = {
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                   is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiIortLibConstructor (
@@ -2032,7 +2039,7 @@ AcpiIortLibConstructor (
     @retval EFI_SUCCESS           The Generator is deregistered.
     @retval EFI_INVALID_PARAMETER A parameter is invalid.
     @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiIortLibDestructor (

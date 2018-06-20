@@ -43,7 +43,7 @@
 
   Note: The token value 0 is reserved for a NULL token and does
         not identify any object.
-*/
+**/
 typedef UINTN   CM_OBJECT_TOKEN;
 
 /** The ESTD_OBJECT_ID enum describes the Object IDs

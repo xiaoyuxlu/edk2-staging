@@ -251,7 +251,7 @@ GET_OBJECT_LIST (
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -304,7 +304,7 @@ error_handler:
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -356,7 +356,7 @@ error_handler:
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -417,7 +417,7 @@ error_handler:
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -498,7 +498,7 @@ error_handler:
   @retval EFI_BAD_BUFFER_SIZE   The size returned by the Configuration
                                 Manager is less than the Object size for the
                                 requested object.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -629,7 +629,7 @@ ACPI_TABLE_GENERATOR FadtGenerator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiFadtLibConstructor (
@@ -651,7 +651,7 @@ AcpiFadtLibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiFadtLibDestructor (

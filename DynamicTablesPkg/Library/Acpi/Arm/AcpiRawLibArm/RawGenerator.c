@@ -39,7 +39,7 @@
 
   @retval EFI_SUCCESS           Table generated successfully.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
-*/
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -104,7 +104,7 @@ ACPI_TABLE_GENERATOR RawGenerator = {
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_ALREADY_STARTED   The Generator for the Table ID
                                 is already registered.
-*/
+**/
 EFI_STATUS
 EFIAPI
 AcpiRawLibConstructor (
@@ -126,8 +126,7 @@ AcpiRawLibConstructor (
   @retval EFI_SUCCESS           The Generator is deregistered.
   @retval EFI_INVALID_PARAMETER A parameter is invalid.
   @retval EFI_NOT_FOUND         The Generator is not registered.
-*/
-
+**/
 EFI_STATUS
 EFIAPI
 AcpiRawLibDestructor (
