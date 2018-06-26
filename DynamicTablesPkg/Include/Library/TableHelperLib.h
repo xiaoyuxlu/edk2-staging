@@ -17,7 +17,7 @@
 
 /** A helper macro to align a value to the 32-bit word boundary
 */
-#define ALIGN32(x) ((x) + (sizeof (UINT32) - 1)) & ~(sizeof (UINT32) - 1)
+#define ALIGN32(x) (((x) + (sizeof (UINT32) - 1)) & ~(sizeof (UINT32) - 1))
 
 /** The GetCgfMgrInfo function gets the CM_STD_OBJ_CONFIGURATION_MANAGER_INFO
     object from the Configuration Manager.
