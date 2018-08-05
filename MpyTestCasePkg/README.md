@@ -1,0 +1,3 @@
+# MicroPython TestCase Package
+
+This is a placeholder for MicroPython-based Platform TestCases repository...
