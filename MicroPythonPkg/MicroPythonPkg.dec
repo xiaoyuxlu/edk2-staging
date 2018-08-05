@@ -1,0 +1,35 @@
+## @file  MicroPythonPkg.dec
+# This Package provides UEFI porting of MicroPython
+#
+# Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+# This program and the accompanying materials are licensed and made available under
+# the terms and conditions of the BSD License which accompanies this distribution.
+# The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = MicroPythonPkg
+  PACKAGE_GUID                   = 3CC2E46D-463F-4A49-9D35-5E748D24CACF
+  PACKAGE_VERSION                = 0.9
+
+[Includes]
+  Include
+  MicroPython
+
+[LibraryClasses]
+  ##  @libraryclass  Defines some routines that are generic for IA32 family CPU
+  ##                 to be UEFI specification compliant.
+  ##
+
+[Protocols]
+  gEfiScriptEngineProtocolGuid = {0x63e9dd8c, 0xbe55, 0x430a, {0xae, 0xb1, 0x1d, 0x9d, 0xc1, 0x25, 0xaf, 0x7d}} 
+  gEfiScriptFileProtocolGuid   = {0x9e4c83f6, 0xc27a, 0x4084, {0x86, 0x21, 0x91, 0x36, 0xab, 0xe1, 0xc2, 0xa4}}
+  gEdkiiVirtualConsoleProtocolGuid = { 0x372f6584, 0xf4c3, 0x47d4, { 0x92, 0x99, 0xac, 0x6c, 0x1b, 0xbe, 0x4e, 0xc } }
+
