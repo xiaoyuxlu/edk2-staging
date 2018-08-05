@@ -1,0 +1,17 @@
+{
+  "test_suites": [
+    { "name":"nt32_related_suites",
+      "test_suite":
+      [
+        {
+          "name":"nt32_test_cases",
+          "order": -1
+        },
+        {
+          "name":"nt32_test_cases2",
+          "order": 1
+        }
+      ]
+    }
+  ]
+}

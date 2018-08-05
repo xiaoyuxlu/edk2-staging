@@ -1,0 +1,33 @@
+{
+  "test_suite": [
+    { "name":"nt32_test_cases",
+      "run_times":1,
+      "sequence":
+      [
+        {
+          "name":"nt32_helloworld.py",
+          "order": 1
+        },
+        {
+          "name":"nt32_shell_hii.py",
+          "order": 2
+        }
+      ]
+    },
+
+    { "name":"nt32_test_cases2",
+      "run_times":1,
+      "sequence":
+      [
+        {
+          "name":"nt32_helloworld.py",
+          "order": 1
+        },
+        {
+          "name":"nt32_shell_hii.py",
+          "order": -1
+        }
+      ]
+    }
+  ]
+}

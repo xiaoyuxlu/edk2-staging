@@ -1,0 +1,243 @@
+body {
+	background-color:#f1f1f2;
+	font-family:Arial;
+}
+
+#header {
+  background-color: #2171b8;
+  color:white;
+  padding-left:20%;
+  padding-top:10px;
+  padding-bottom:10px;
+}
+
+#header h2 {
+  margin:0;
+}
+
+.main-flex-container {
+  display: flex;
+  flex-direction: column  ;
+}
+
+#title {
+  margin-left:20%;
+  margin-right: 20%;
+  position: relative;
+  background-color:#f1f1f2;
+}
+
+#title img {
+  margin-right:10px;
+}
+
+#title h3 {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #555555;
+  font-size: 20pt;
+}
+
+.sub-title{
+  margin-top:1%;
+  margin-left:5%;
+  margin-bottom: 2%;
+  padding-top: 1%;
+  color: gray;
+}
+
+#chart{
+  margin-left:20%;
+  margin-right: 20%;
+  margin-bottom: 2%;
+  padding-bottom: 2%;
+  background-color: white;
+}
+
+#pieChart{
+  width: 300;
+  height: 300;
+  display: inline-block;
+  margin-left: 20%;
+}
+
+#barChart {
+  width: 300;
+  height: 300;
+  display: inline-block;
+  margin-left: 20%;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 100%;
+  text-align: center;
+  background-color: #dbdbdd;
+  font-size: 14px;
+}
+
+table td, table th {
+  border: 1px solid #898989;
+  padding: 8px;
+  border-collapse:collapse;
+}
+
+table tr:not(:first-child) {cursor:pointer;}
+
+tr:nth-child(even){background-color: white}
+
+table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background-color: #6cb1ea;
+    color: white;
+    border: none;
+}
+
+table td {
+	border: none;
+}
+
+.table-wrapper{
+	border: 1px solid #898989;
+	border-collapse:collapse;
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+.table-area{
+	background-color:white;
+    margin-left:20%;
+    margin-right:20%;
+    padding-bottom: 2%;
+}
+
+/* Style the list */
+ul.breadcrumb {
+    padding: 10px 16px;
+    padding-left: 20%;
+    list-style: none;
+    display:inline-block;
+    font-size: 14pt;
+    color: #58585b;
+}
+
+/* Display list items side by side */
+ul.breadcrumb li {
+    display: inline;
+    font-size: 18px;
+}
+
+/* Add a slash symbol (/) before/behind each list item */
+ul.breadcrumb li+li:before {
+    padding: 8px;
+    color: black;
+    content: "/\00a0";
+}
+
+/* Add a color to all links inside the list */
+ul.breadcrumb li a {
+    color: #3c91e6;
+    text-decoration: none;
+}
+
+/* Add a color on mouse-over */
+ul.breadcrumb li a:hover {
+    color: #01447e;
+    text-decoration: underline;
+}
+
+.side-toolbar{
+	margin-left: 20%; 
+	max-width:10%;
+	min-width:10%;
+	display:inline-block;
+	padding-right:3%;
+	background-color:white;
+	padding-bottom:2px;
+}
+
+.toolbar-item{
+	margin-top:2%;
+	padding: 5%;
+	padding-left: 15%;
+	color:white;
+	height: 4%;
+}
+
+.dot {
+  float: right;
+  margin-right: 10%;
+  color: white;
+}
+
+#fail-item{
+  background-color: #d94b3b;
+}
+
+#warn-item{
+  background-color: #ffa105;
+}
+
+#pass-item{
+  background-color: #7eddb5;
+}
+
+.script-content{
+  min-width: 45%;
+  max-width: 45%;
+  margin-right: 20%;
+  display: inline-block;	
+  background-color: white;
+  float:right;
+}
+
+.script-block{
+  margin-bottom: 1%;
+  background-color: #7eddb5;
+}
+
+.script-block-fold{
+  display: inline-block;	
+  padding: 20px;
+  padding-left:1%;
+  background-color: white;
+  min-width: 90%;
+  margin-left: 1%;
+  margin-right: 3%;
+  font-size:14pt;
+}
+
+.script-block-unfold{
+  background-color:white;
+  display:none;
+}
+
+.fold-unfold{
+  float:right;
+}
+
+.statement{
+  margin:auto;
+  margin-left: 1%;
+  padding: 1%;
+  color: #58585b;
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+#fail-script-content{
+  display:none;	
+}
+
+#warn-script-content{
+  display:none;	
+}
+
+#pass-script-content{
+  display:inline-block;	
+}
+
+.none-prompt{
+  color: #334455;
+}
