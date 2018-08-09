@@ -9,24 +9,40 @@ The framework leverages [MicroPython](https://micropython.org) for a lightweight
 This test framework is dependent on the MicroPython Interpreter for UEFI: [MicroPythonPkg](..\MicroPythonPkg). Please build `MicroPythonPkg` prior to compiling `MpyTestFrameworkPkg`.
 
 ### Download Required Tools
- * Install [Python27](https://www.python.org/) and set the `PYTHON_HOME` environment variable to the Python 2.7 installation directory (`C:\Python27`)
- * Install Maven, using the official site tutorial: [Installing Apache Maven](https://maven.apache.org/install.html). JDK 1.8 is prefered.
- * Download `Chart.bundle.min.js` from the [ChartJS official site](https://github.com/chartjs/Chart.js/releases) and copy it to ```MpyTestFrameworkPkg\Report\resources\js```
- * Download `jquery-3.3.1.js` from the [JQuery official site](https://jquery.com/download/) and copy it to ```MpyTestFrameworkPkg\Report\resources\js```
+
+ * Install [Python27](https://www.python.org/).
+ * Install Maven, using the official site tutorial: [Installing Apache Maven](https://maven.apache.org/install.html). JDK 1.8 is preferred.
+ * Download `Chart.bundle.min.js` from the [ChartJS official site](https://github.com/chartjs/Chart.js/releases) and copy it to `MpyTestFrameworkPkg\Report\resources\js`
+ * Download `jquery-3.3.1.js` from the [JQuery official site](https://jquery.com/download/) and copy it to `MpyTestFrameworkPkg\Report\resources\js`
+
+### Configuration
+
+Using Python and Apache Maven in Microsoft Windows require several environment variables to be set for proper use:
+
+ * Set the `PYTHON_HOME` environment variable to the Python 2.7 installation directory (ex: `C:\Python27`).
+ * Add the Python 2.7 installation directory (ex: `C:\Python27`) to the system `PATH` environment variable, so Python can be run directly from the command prompt.
+ * Set the `M2_HOME` and `MAVEN_HOME` environment variables to the Maven installation directory (ex: `C:\Program Files\apache-maven-3.5.4`). Additional info: https://www.mkyong.com/maven/how-to-install-maven-in-windows/
 
 ### Compile
 
 Use the following commands to compile the package
-(examples below assume workspace directory is `C:\edk2`):
+(examples below assume workspace directory is `C:\edk2`).
+
+Open a Microsoft Visual Studio* Command Prompt (ex: "Developer Command Prompt for VS2017").
+
+Type `cd C:\edk2` to enter the workspace directory.
 
  ```
  C:\edk2> edksetup.bat
- C:\edk2> python setup.py VS2013 DEBUG
+ C:\edk2> cd MpyTestFrameworkPkg
+ C:\edk2\MpyTestFrameworkPkg> python setup.py VS2013 DEBUG
  ```
- For `setup.py`, the first parameter sets the compiler (`['VS2013', 'VS2015', 'VS2017']`) and the second parameter sets the build output type (`['DEBUG', 'RELEASE', 'NOOPT']`).
- The executable binary is located under `Build\MpyTest`.
 
-### Currently supported EDK II tool chains
+For `setup.py`, the first parameter sets the compiler (`['VS2013', 'VS2015', 'VS2017']`) and the second parameter sets the build output type (`['DEBUG', 'RELEASE', 'NOOPT']`).
+
+The executable binary is located under `Build\MpyTest`.
+
+### Supported EDK II Tool Chains
 
 * `VS2013/VS2013x86`
 * `VS2015/VS2015x86`
@@ -43,6 +59,18 @@ The following instructions configure the MicroPython Test Framework for UEFI to 
  3. Create a sub-directory for test scripts named `Scripts` under the `MpyTest` folder.
  4. Mount the media disk on the System Under Test (SUT) and boot the SUT to the UEFI shell.
  5. Enter the `MpyTest` directory and execute `startup.nsh` to run the MicroPython Test Framework for UEFI.
+
+NOTE: Not every platform includes the UEFI shell by default. Prior to Step 4, Using the following steps to create a bootable USB driver with UEFI Shell.
+
+ * Create the directory structure in the root of MPTF USB drive (`/efi/boot`).
+ * Download the binary UEFI Shell image ([`ShellBinPkg`](https://github.com/tianocore/edk2/tree/master/ShellBinPkg)) that matches the system architecture ([IA32 Shell Image](https://github.com/tianocore/edk2/blob/master/ShellBinPkg/UefiShell/Ia32/Shell.efi) / [x64 Shell Image](https://github.com/tianocore/edk2/blob/master/ShellBinPkg/UefiShell/X64/Shell.efi)]
+ * Rename the UEFI Shell file to `BootIA32.efi` or `Bootx64.efi` (depending on system architecture).
+ * Copy the renamed UEFI Shell to the `/efi/boot` directory on the USB drive.
+ * Change the following settings in BIOS setup:
+    * Enable boot from USB devices.
+    * Set USB device as the first priority in the boot order.
+    * Disable UEFI Secure Boot (UEFI Shell & MicroPython are not signed applications).
+ * Reboot to the USB drive (this will boot to UEFI Shell), then continue Step 4 in `Setup` (above).
 
 ## File Structure
 
@@ -71,7 +99,7 @@ The `MpyTest` folder contains the following:
  * `Scripts`
    Some sample test cases are included in the `Scripts` folder by default. For normal operation, all test cases must be under this folder. Modifying and executing sample scripts is a good way to get familiar with the test framework.
 * `startup.nsh`
-   Launches the framework. Usage is described below:  
+   Launches the framework. Usage is described below:
    ```
     startup.nsh [-h] [-a [ia32 | x64] [-d] [-t [script name]] [-s [sequence name]] ]
         -h   Help info
