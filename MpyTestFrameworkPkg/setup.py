@@ -31,8 +31,8 @@ def check_environment():
         error_p('Please download Chart.bundle.min.js to MpyTestFrameworkPkg/Report/resources/js folder')
         return False
 
-    if not os.path.exists(origin + '/Report' + '/resources' + '/js' + '/jquery-3.3.1.js'):
-        error_p('Please download jquery-3.3.1.jsChart.bundle.min.js to MpyTestFrameworkPkg/Report/resources/js folder')
+    if not os.path.exists(origin + '/Report' + '/resources' + '/js' + '/jquery-3.3.1.min.js'):
+        error_p('Please download jquery-3.3.1.min.js MpyTestFrameworkPkg/Report/resources/js folder')
         return False
     
     return True

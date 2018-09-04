@@ -13,7 +13,7 @@ This test framework is dependent on the MicroPython Interpreter for UEFI: [Micro
  * Install [Python27](https://www.python.org/).
  * Install Maven, using the official site tutorial: [Installing Apache Maven](https://maven.apache.org/install.html). JDK 1.8 is preferred.
  * Download `Chart.bundle.min.js` from the [ChartJS official site](https://github.com/chartjs/Chart.js/releases) and copy it to `MpyTestFrameworkPkg\Report\resources\js`
- * Download `jquery-3.3.1.js` from the [JQuery official site](https://jquery.com/download/) and copy it to `MpyTestFrameworkPkg\Report\resources\js`
+ * Download `jquery-3.3.1.min.js` from the [JQuery official site](https://jquery.com/download/) and copy it to `MpyTestFrameworkPkg\Report\resources\js`
 
 ### Configuration
 

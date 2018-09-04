@@ -3,7 +3,7 @@
   <title>ETS Report</title>
   <link rel="stylesheet" href="../resources/css/style.css">
   <script src="../resources/js/Chart.bundle.min.js"></script>
-  <script src="../resources/js/jquery-3.3.1.js"></script>
+  <script src="../resources/js/jquery-3.3.1.min.js"></script>
 </head>
 
 <body>
