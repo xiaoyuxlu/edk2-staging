@@ -155,24 +155,24 @@ def parseArgs():
 
     if case != "":
         time_stamp = get_stamp()
-        suites_folder = "TEST_SUITES__" + "CASE" + "__" + time_stamp
+        suites_folder = "SUITES__" + "CASE" + "__" + time_stamp
         uos.mkdir(log_path_abs + suites_folder)
-        suite_folder = "TEST_SUITE__" + "CASE" + "__" + time_stamp
+        suite_folder = "SUITE__" + "CASE" + "__" + time_stamp
         uos.mkdir(log_path_abs + suites_folder + "\\" + suite_folder)
-        iteration_folder = "Number0"
+        iteration_folder = "NO0"
         uos.mkdir(log_path_abs + suites_folder + "\\" + suite_folder + "\\" + iteration_folder)
         schedule_case(case, suites_folder + "\\" + suite_folder + "\\" + iteration_folder)
 
     if suite != "":
         time_stamp = get_stamp()
-        suites_folder = "TEST_SUITES__" + "SUITE" + "__" + time_stamp
+        suites_folder = "SUITES__" + "SUITE" + "__" + time_stamp
         uos.mkdir(log_path_abs + suites_folder)
-        suite_folder = "TEST_SUITE__" + suite + "__" + time_stamp
+        suite_folder = "SUITE__" + suite + "__" + time_stamp
         uos.mkdir(log_path_abs + suites_folder + "\\" + suite_folder)
         schedule_suite(suite, suites_folder + "\\" + suite_folder)
 
     if suites != "":
-        suites_folder = "TEST_SUITES__" + "SUITES" + "__" + get_stamp()
+        suites_folder = "SUITES__" + suites + "__" + get_stamp()
         uos.mkdir(log_path_abs + suites_folder)
         schedule_suites(suites, suites_folder)
 
@@ -182,7 +182,7 @@ def schedule_case(case_name, relative_path):
         case_name = case_name[:-3]
     script_module = __import__(case_name)
     if relative_path == "":
-        relative_path = "TEST_CASE__" + case_name
+        relative_path = "CASE__" + case_name
     else:
         relative_path = relative_path + "\\" + case_name
     print ("The relative path is: " + relative_path)
@@ -213,10 +213,10 @@ def schedule_suite(suite_name, relative_path):
     cases = execution_item['sequence']
 
     for i in range(0, execution_item['run_times']):
-        iteration_folder = log_path_abs + relative_path + "\\" + "Number" + str(i)
+        iteration_folder = log_path_abs + relative_path + "\\" + "NO" + str(i)
         uos.mkdir(iteration_folder)
         for case in cases:
-            schedule_case(case['name'], relative_path + "\\" + "Number" + str(i))
+            schedule_case(case['name'], relative_path + "\\" + "NO" + str(i))
 
 def schedule_suites(suites_name, relative_path):
     f = open(config_test_suites_path)
@@ -242,7 +242,7 @@ def schedule_suites(suites_name, relative_path):
     '''
 
     for suite in execution_item['test_suite']:
-        suite_folder = "TEST_SUITE__" + suite['name'] + "__" + get_stamp()
+        suite_folder = "SUITE__" + suite['name'] + "__" + get_stamp()
         uos.mkdir(log_path_abs + relative_path + "\\" + suite_folder)
         schedule_suite(suite['name'], relative_path + "\\" + suite_folder)
 

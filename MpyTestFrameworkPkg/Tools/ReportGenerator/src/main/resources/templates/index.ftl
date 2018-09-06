@@ -71,7 +71,7 @@
   	function rowListener(name, startedTime){
   		console.log(name);
   		console.log(startedTime);
-  		var sequence_folder = "SEQUENCE" + "__" + name + "__" + startedTime;
+  		var sequence_folder = "SUITE" + "__" + name + "__" + startedTime;
   		window.location.href = sequence_folder + "/" + name + ".html";
   	}
   </script>

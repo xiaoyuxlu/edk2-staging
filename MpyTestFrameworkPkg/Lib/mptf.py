@@ -385,16 +385,8 @@ class mptf(object):
     # @retval:              None
     #
     def __init__(self, logPath='log', volumeLabel='MPTF', logLevel='TRACE | INFO | PASS | FAIL | WARN'):
-        localtime = utime.localtime()
-        year = "{0:04d}".format(localtime[0])
-        month = "{0:02d}".format(localtime[1])
-        day = "{0:02d}".format(localtime[2])
-        hour = "{0:02d}".format(localtime[3])
-        minute = "{0:02d}".format(localtime[4])
-        second = "{0:02d}".format(localtime[5])
-        time_in_format = year + "_" + month + "_" + day + "__" + hour + "_" + minute + "_" + second
         root = "mpytest" + "\\log\\"
-        self.logPath = root + logPath + "__" + time_in_format  + ".json"
+        self.logPath = root + logPath + ".json"
         self.volumeLabel = volumeLabel
         self.logstr = ''
         self.interval = 1000

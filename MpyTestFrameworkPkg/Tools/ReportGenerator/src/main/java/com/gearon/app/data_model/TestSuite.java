@@ -4,9 +4,9 @@ import java.util.List;
 
 public class TestSuite {
 	private String name;
-	private String startedTime;
 	private List<Iteration> iterations;
 	private int iterationNumber;
+	private String startedTime;
 	private String result;
 
 	private int passNumber;
@@ -19,13 +19,6 @@ public class TestSuite {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getStartedTime() {
-		return startedTime;
-	}
-	public void setStartedTime(String startedTime) {
-		this.startedTime = startedTime;
-	}
-	
 	public List<Iteration> getIterations() {
 		return iterations;
 	}
@@ -62,5 +55,10 @@ public class TestSuite {
 	public void setFailNumber(int failNumber) {
 		this.failNumber = failNumber;
 	}
-	
+	public String getStartedTime() {
+		return startedTime;
+	}
+	public void setStartedTime(String startedTime) {
+		this.startedTime = startedTime;
+	}
 }

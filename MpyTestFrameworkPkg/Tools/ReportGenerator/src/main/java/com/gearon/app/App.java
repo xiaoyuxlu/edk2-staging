@@ -48,17 +48,13 @@ public class App {
 			App app = new App();
 
 			for(String log: existedLogs){
-				if(log.startsWith("TEST_SUITES")){
+				if(log.startsWith("SUITES")){
 					app.generateTestSuitesReport(logFolder, log);
-				}else if(log.startsWith("TEST_SUITE")){
-					app.generateSequenceReport(logFolder, log);
-				}else if(log.startsWith("TEST_CASE")){
-					app.generateScriptReport(logFolder, log);
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("Something bad happens at main method...");
+			System.out.println("Error. At least one of the log is invalid. Please delete those log and try again");
 		}
 	}
 	
@@ -78,7 +74,7 @@ public class App {
 		template.process(dm, out);
 		
 		for(TestSuite sequence: testSuitesDM.getTestSuites()){
-			File sequenceFolder = new File(concreteFolder.getAbsolutePath() + "/" + "SEQUENCE__" + sequence.getName()+ "__" + sequence.getStartedTime());
+			File sequenceFolder = new File(concreteFolder.getAbsolutePath() + "/" + "SUITE__" + sequence.getName()+ "__" + sequence.getStartedTime());
 			if(!sequenceFolder.exists()){
 				sequenceFolder.mkdir();
 			}
@@ -105,18 +101,10 @@ public class App {
 		}
 	}
 	
-	public void generateSequenceReport(String logFolder, String log) throws Exception{
-		Configuration cfg = ConfigurationHolder.getInstance().getConfiguration();
-	}
-
-	public void generateScriptReport(String logFolder, String log) throws Exception{
-		Configuration cfg = ConfigurationHolder.getInstance().getConfiguration();
-	}
-
 	public TestSuites getTestSuitesData(String parent, String path) {
 
 		TestSuites testSuitesDM = new TestSuites();
-		String regex = "TEST_SUITES__(.*)";
+		String regex = "SUITES__(.*)";
 		Pattern pattern = Pattern.compile(regex);
 		Matcher timestampMatcher = pattern.matcher(path);
 		String startedTime = "";
@@ -140,7 +128,6 @@ public class App {
 		Collections.sort(testSuites, new Comparator<TestSuite>(){
 
 			public int compare(TestSuite o1, TestSuite o2) {
-				// TODO Auto-generated method stub
 				try{
 					Date d1 = sdf.parse(o1.getStartedTime());
 					Date d2 = sdf.parse(o2.getStartedTime());
@@ -154,7 +141,6 @@ public class App {
 				}
 				return 0;
 			}
-			
 		});
 
 		testSuitesDM.setTestSuites(testSuites);
@@ -183,7 +169,7 @@ public class App {
 
 	public TestSuite getTestSuiteData(String parent, String path) {
 		TestSuite testSuite = new TestSuite();
-		String r1 = "TEST_SUITE__(.*?)__(.*)";
+		String r1 = "SUITE__(.*?)__(.*)";
 		Pattern p1 = Pattern.compile(r1);
 		Matcher sm = p1.matcher(path);
 		if (sm.find()) {
@@ -301,18 +287,17 @@ public class App {
 			script = objectMapper.readValue(file, TestCase.class);
 		}catch(Exception e){
 			e.printStackTrace();
-			System.out.println("The file " + filePath + " is not a valid JSON file.");
+			System.out.println("The file " + filePath + " is not a valid JSON file. "
+					+ "Please move it to other folder rather than log folder to generate the report");
 		}
 		
-		String regex = "(.*?)__(.*?)\\.json";
+		String regex = "(.*?)\\.json";
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(path);
 		
 		if(matcher.find()){
 			String name = matcher.group(1);
-			String startedTime = matcher.group(2);
 			script.setName(name);
-			script.setStartedTime(startedTime);
 		}
 		String result = Constants.PASS;
 		if(script.getLog() != null){
