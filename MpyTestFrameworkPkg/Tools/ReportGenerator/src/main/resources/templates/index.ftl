@@ -39,41 +39,41 @@
   <div class='sub-title'>Detailed Result</div>
   <div class="table-wrapper">
   <table id="sequence_table">
-	<tr>
+  <tr>
       <th>Order
       <th>Suite Name
       <th>Started
       <th>Result
       <th>Recurrence
     </tr>
-	<#list 0..default.testSuites?size-1 as i>
-  	<tr onclick="rowListener('${default.testSuites[i].name}', '${default.testSuites[i].startedTime}')">
-  		<td>${i + 1}	
-  		<td>${default.testSuites[i].name}
-		<td>${default.testSuites[i].startedTime}
-		<#if default.testSuites[i].result == "PASS">
-		<td style="color:#7eddb5;">${default.testSuites[i].result}
-		</#if>
-		<#if default.testSuites[i].result == "WARN">
-		<td style="color:#ffa105;">${default.testSuites[i].result}
-		</#if>
-		<#if default.testSuites[i].result == "FAIL">
-		<td style="color:#b94b3b;">${default.testSuites[i].result}
-		</#if>
-		<td>${default.testSuites[i].iterationNumber}
-  	</tr>
-  	</#list>
+  <#list 0..default.testSuites?size-1 as i>
+    <tr onclick="rowListener('${default.testSuites[i].name}', '${default.testSuites[i].startedTime}')">
+      <td>${i + 1}  
+      <td>${default.testSuites[i].name}
+    <td>${default.testSuites[i].startedTime}
+    <#if default.testSuites[i].result == "PASS">
+    <td style="color:#7eddb5;">${default.testSuites[i].result}
+    </#if>
+    <#if default.testSuites[i].result == "WARN">
+    <td style="color:#ffa105;">${default.testSuites[i].result}
+    </#if>
+    <#if default.testSuites[i].result == "FAIL">
+    <td style="color:#b94b3b;">${default.testSuites[i].result}
+    </#if>
+    <td>${default.testSuites[i].iterationNumber}
+    </tr>
+    </#list>
   </table>
   </div>
   </div>
 
   <script>
-  	function rowListener(name, startedTime){
-  		console.log(name);
-  		console.log(startedTime);
-  		var sequence_folder = "SUITE" + "__" + name + "__" + startedTime;
-  		window.location.href = sequence_folder + "/" + name + ".html";
-  	}
+    function rowListener(name, startedTime){
+      console.log(name);
+      console.log(startedTime);
+      var sequence_folder = "SUITE" + "__" + name + "__" + startedTime;
+      window.location.href = sequence_folder + "/" + name + ".html";
+    }
   </script>
 
   <script>

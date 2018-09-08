@@ -40,35 +40,35 @@
   <div class='sub-title'>Detailed Result ( ${sequence.iterationNumber} recurrences )</div>
   <div class="table-wrapper">
   <table id="script_table">
-	<tr>
+  <tr>
       <th>Iteration
       <th>Result
     </tr>
-  	
-  	<#list sequence.iterations?size-1..0 as i>
-  	<tr onclick = "rowListener('${i + 1}')">
-  		<td>${i + 1}	
-		<#if sequence.iterations[i].result == "PASS">
-		<td style="color:#7eddb5;">${sequence.iterations[i].result}
-		</#if>
-		<#if sequence.iterations[i].result == "WARN">
-		<td style="color:#ffa105;">${sequence.iterations[i].result}
-		</#if>
-		<#if sequence.iterations[i].result == "FAIL">
-		<td style="color:#b94b3b;">${sequence.iterations[i].result}
-		</#if>
-  	</tr>
-  	</#list>
+    
+    <#list sequence.iterations?size-1..0 as i>
+    <tr onclick = "rowListener('${i + 1}')">
+      <td>${i + 1}  
+    <#if sequence.iterations[i].result == "PASS">
+    <td style="color:#7eddb5;">${sequence.iterations[i].result}
+    </#if>
+    <#if sequence.iterations[i].result == "WARN">
+    <td style="color:#ffa105;">${sequence.iterations[i].result}
+    </#if>
+    <#if sequence.iterations[i].result == "FAIL">
+    <td style="color:#b94b3b;">${sequence.iterations[i].result}
+    </#if>
+    </tr>
+    </#list>
   </table>
   </div>
   </div>
   
   <script>
-  	function rowListener(iteration_order){
-  		console.log(iteration_order);
-  		var iteration_folder = "Number" + iteration_order;
-  		window.location.href = iteration_folder + "/" + "iteration" + iteration_order + ".html";
-  	}
+    function rowListener(iteration_order){
+      console.log(iteration_order);
+      var iteration_folder = "Number" + iteration_order;
+      window.location.href = iteration_folder + "/" + "iteration" + iteration_order + ".html";
+    }
   </script>
 
   <script>
