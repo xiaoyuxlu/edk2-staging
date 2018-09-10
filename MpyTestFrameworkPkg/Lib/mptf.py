@@ -871,8 +871,8 @@ class mptf(object):
     #  @param message:           The log message
     #  @param volumeLabel:       The volume label of the disk where the log stores
     def write2disk(self, logPath, message, volumeLabel):
-        f = open("\\\\LABEL:" + volumeLabel + "\\" + logPath, "a+")
-        f.write(message + "\n")
+        with open("\\\\LABEL:" + volumeLabel + "\\" + logPath, "a+") as f:
+            f.write(message + "\n")
 
     ## Redirect message to memory buffer or filesystem
     #
