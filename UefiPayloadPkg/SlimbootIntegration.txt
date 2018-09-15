@@ -1,0 +1,19 @@
+1. Check https://slimbootloader.github.io/getting-started/build-host-setup.html for build host setup.
+
+2. Start a new command line window different than the one used for building Payload.
+
+3. Download Slim Bootloader:
+  Run DownloadSlimBootloader.py in folder UefiPayloadPkg\Tools.
+
+4. Download stitching base binary (Optional, only needed for minnowboard3)
+  1). Go to https://firmware.intel.com/projects/minnowboard3.
+  2). Choose the latest version of MinnowBoard Firmware Images to download.
+  3). Pick one image from the downloaded zip and put it into folder UefiPayloadPkg\WorkSpace\SlimBootloader\.
+  4). Rename the binary "base.bin".
+
+5. Build Slim Bootloader
+  Run SlimBootloaderIntegration.bat or SlimBootloaderIntegration.bat.sh in UefiPayloadPkg\Tools depending on your os.
+  The parameters should match the ones used in building payload.
+  For example:
+    If you built payload with command "BuildPayload.bat Qemu X64 DEBUG", you should use "SlimBootloaderIntegration.bat Qemu X64 DEBUG" to build Slim Bootloader
+  The resulting image is in UefiPayloadPkg named firmware.bin.

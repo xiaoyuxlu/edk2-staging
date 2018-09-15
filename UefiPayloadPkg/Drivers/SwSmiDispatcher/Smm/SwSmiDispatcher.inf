@@ -1,0 +1,93 @@
+## @file
+#  Software Smi Dispatcher driver.
+#
+#  Copyright (c) 2012 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SwSmiDispatcher
+  FILE_GUID                      = 1E5CD25A-F0AE-4D7F-B28B-D33F82AA8EC9
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x0001000A
+  ENTRY_POINT                    = InitializeSwSmmDispatcher
+
+[sources.common]
+  ScSmm.h
+  ScSmmCore.c
+  ScSmmHelpers.h
+  ScSmmHelpers.c
+  ScxSmmHelpers.h
+  ScxSmmHelpers.c
+  ScSmmSw.c
+  VariableSmm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  IoLib
+  DebugLib
+  PcdLib
+  BaseLib
+  BaseMemoryLib
+  DevicePathLib
+  SmmServicesTableLib
+  ReportStatusCodeLib
+  PerformanceLib
+  DxeServicesTableLib
+  CustomPlatformLib
+  VarCheckLib
+  SmmMemLib
+  AuthVariableLib
+  MemoryAllocationLib
+  PcdLib
+  SmmServicesTableLib
+
+[Protocols]
+  gEfiPciRootBridgeIoProtocolGuid           #CONSUMES
+  gEfiSmmSwDispatch2ProtocolGuid            #PRODUCES
+  gEfiSmmBase2ProtocolGuid                  #CONSUMES
+  gEfiSmmCpuProtocolGuid                    #CONSUMES
+  gEfiHeciProtocolGuid          ## CONSUMES
+  gVariableStorageProtocolGuid  ## PRODUCES
+  gEfiSmmVariableProtocolGuid
+  gEdkiiSmmVarCheckProtocolGuid
+
+[Guids]
+  gCseVariableStorageProtocolInstanceGuid  ## PRODUCES
+  gCseVariableFileInfoHobGuid              ## CONSUMES       ## GUID
+  gCsePreMemoryIndexFileDataHobGuid        ## CONSUMES       ## GUID
+  gCsePrimaryIndexFileDataHobGuid          ## CONSUMES       ## GUID
+  gFdoModeEnabledHobGuid                   ## CONSUMES       ## GUID
+  gEfiEventVirtualAddressChangeGuid        ## CONSUMES       ## Event
+  gEfiBootMediaHobGuid                     ## CONSUMES
+  gZeroGuid
+  gSmmVariableWriteGuid 
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdReclaimVariableSpaceAtEndOfDxe       ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize          ## CONSUMES
+
+[Depex]
+  gEfiSmmCpuProtocolGuid AND
+  gEfiSmmBase2ProtocolGuid AND
+  gEfiPciRootBridgeIoProtocolGuid
+
+[BuildOptions]
+  *_*_X64_CC_FLAGS  = -D X64_BUILD_SUPPORT=1

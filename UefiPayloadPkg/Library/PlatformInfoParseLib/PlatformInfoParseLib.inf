@@ -1,0 +1,61 @@
+## @file
+#  Platform Info Parse Library. Provides functions to parse information passed from the
+#  previous boot stage.
+#
+#  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PlatformInfoParseLib
+  FILE_GUID                      = 2D9EDAD5-9926-47DB-9020-9CAF886D5AFB
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PlatformInfoParseLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  ParseLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec  
+  SecurityPkg/SecurityPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  IoLib
+  DebugLib
+  PcdLib
+  HobLib
+
+[Guids]
+  gUefiFrameBufferInfoGuid
+  gUefiSystemTableInfoGuid
+  gUefiSerialPortInfoGuid
+  gLoaderMemoryMapInfoGuid
+  gLoaderFspInfoGuid
+  gTcgEventEntryHobGuid                                                ## PRODUCES               ## HOB
+  gTcgEvent2EntryHobGuid                                               ## PRODUCES               ## HOB
+  gUefiTpmInfoGuid
+  gEfiHeciMbpDataHobGuid
+
+[Pcd]    
+  gUefiPayloadPkgTokenSpaceGuid.PcdPayloadStackTop
+  gUefiPayloadPkgTokenSpaceGuid.PcdCbHeaderPointer 

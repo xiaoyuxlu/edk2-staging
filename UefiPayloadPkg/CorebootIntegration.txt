@@ -1,0 +1,23 @@
+1. Copy the payload image (UEFIPAYLOAD.fd) into the top-level directory of Coreboot source tree.
+2. Run "make menuconfig" in linux console to start Coreboot configuration surface.
+3. In the Payload section,
+   1) Choose "An ELF executable payload" for the option of "Add a payload".
+   2) Type the path of payload image for the option of "Payload path and filename".
+   3) Select the option of "Use LZMA compression for payloads".
+   
+4. If the graphics console is required in Coreboot UEFI payload, running VGA option rom should be enabled.
+   For details:
+   1) In the Device section, select the option of "Run VGA Option ROMs".
+   2) In the VGA BIOS section, select the option of "Add a VGA BIOS Image", Input the path of vga bios image 
+   for the option of VGA BIOS path and filename, give the values of vendor id and device id for the option 
+   of  "VGA device PCI IDs".
+   3) In the Display section,
+      Select the option of "Set framebuffer graphics resolution"
+      Choose a right display mode for the option of "framebuffer graphics resolution".
+      Note: If the boot OS is windows, please choose the display mode supporting 32 bit color.
+      Select the option of "Keep VESA framebuffer"
+   
+5. Press ESC key to exit the Coreboot configuration surface. If there is a question prompted like "Do you wish to save your new configuration?",
+   choose Yes.
+   
+6. Run "make" to build the coreboot firmware image.

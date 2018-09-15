@@ -1,0 +1,1656 @@
+{
+    "Format Version": "0.001", 
+    "Rules": [
+        {
+            "SourceSection": "Per\\s*Platform\\s*SEC\\s*Settings", 
+            "SourceKey": "devicenonce", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "PER_PLATFORM_SEC_CFG_DATA\\.DeviceNonce\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Per\\s*Platform\\s*SEC\\s*Settings", 
+            "SourceKey": "usernonce", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "PER_PLATFORM_SEC_CFG_DATA\\.UserNonce\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Platform", 
+            "SourceKey": "platformid", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x0000 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "PLATFORMID_CFG_DATA\\.PlatformId\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "mrcfastboot", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MrcFastBoot\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "igd", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Igd\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "igddvmt50prealloc", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x02:64 MB, 0x03:96 MB, 0x04:128 MB, 0x05:160 MB, 0x06:192 MB, 0x07:224 MB, 0x08:256 MB, 0x09:288 MB, 0x0A:320 MB, 0x0B:352 MB, 0x0C:384 MB, 0x0D:416 MB, 0x0E:448 MB, 0x0F:480 MB, 0x10:512 MB", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.IgdDvmt50PreAlloc\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "igdaperturesize", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x1:2 MB, 0x2:4 MB, 0x3:8 MB", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.IgdApertureSize\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "gttsize", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:AUTO, 0x2:IGD, 0x3:PCI", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.GttSize\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "primaryvideoadaptor", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:AUTO, 0x2:IGD, 0x3:PCI", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.PrimaryVideoAdaptor\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "package", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:SODIMM, 0x1:BGA, 0x2:BGA mirrored (LPDDR3 only), 0x3:SODIMM/UDIMM with Rank 1 Mirrored (DDR3L)", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Package\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "profile", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Profile\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "memorydown", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:No, 0x1:Yes, 0x2:1MD+SODIMM (for DDR3L only) ACRD, 0x3:1x32 LPDDR4", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MemoryDown\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ddr3lpagesize", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:0, 0x1:1KB, 0x2:2KB", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DDR3LPageSize\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ddr3lasr", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Not Supported, 0x1:Supported", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DDR3LASR\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "scramblersupport", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.ScramblerSupport\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "channelhashmask", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.ChannelHashMask\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "slicehashmask", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.SliceHashMask\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "interleavedmode", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Disable, 0x2:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.InterleavedMode\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "channelsslicesenable", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.ChannelsSlicesEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "minrefrate2xenable", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MinRefRate2xEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "dualranksupportenable", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DualRankSupportEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "rmtmode", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Disabled, 0x3:Enabled", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.RmtMode\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "memorysizelimit", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MemorySizeLimit\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "lowmemorymaxvalue", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.LowMemoryMaxValue\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "highmemorymaxvalue", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.HighMemoryMaxValue\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "disablefastboot", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DisableFastBoot\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "dimm0spdaddress", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DIMM0SPDAddress\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "dimm1spdaddress", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.DIMM1SPDAddress\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_rankenable", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_RankEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_devicewidth", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:x8, 0x1:x16, 0x2:x32, 0x3:x64", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_DeviceWidth\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_dramdensity", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:4Gb, 0x1:6Gb, 0x2:8Gb, 0x3:12Gb, 0x4:16Gb", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_DramDensity\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_option", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_Option\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_odtconfig", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_OdtConfig\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_tristateclk1", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_TristateClk1\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_mode2n", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Auto, 0x1:Force 2N CMD Timing Mode", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_Mode2N\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_odtlevels", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:ODT Connected to SoC, 0x1:ODT held high", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_OdtLevels\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_rankenable", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_RankEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_devicewidth", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:x8, 0x1:x16, 0x2:x32, 0x3:x64", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_DeviceWidth\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_dramdensity", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:4Gb, 0x1:6Gb, 0x2:8Gb, 0x3:12Gb, 0x4:16Gb", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_DramDensity\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_option", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_Option\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_odtconfig", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_OdtConfig\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_tristateclk1", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_TristateClk1\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_mode2n", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Auto, 0x1:Force 2N CMD Timing Mode", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_Mode2N\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_odtlevels", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:ODT Connected to SoC, 0x1:ODT held high", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_OdtLevels\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_rankenable", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_RankEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_devicewidth", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:x8, 0x1:x16, 0x2:x32, 0x3:x64", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_DeviceWidth\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_dramdensity", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:4Gb, 0x1:6Gb, 0x2:8Gb, 0x3:12Gb, 0x4:16Gb", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_DramDensity\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_option", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_Option\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_odtconfig", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_OdtConfig\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_tristateclk1", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_TristateClk1\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_mode2n", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Auto, 0x1:Force 2N CMD Timing Mode", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_Mode2N\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_odtlevels", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:ODT Connected to SoC, 0x1:ODT held high", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_OdtLevels\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_rankenable", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_RankEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_devicewidth", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:x8, 0x1:x16, 0x2:x32, 0x3:x64", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_DeviceWidth\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_dramdensity", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:4Gb, 0x1:6Gb, 0x2:8Gb, 0x3:12Gb, 0x4:16Gb", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_DramDensity\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_option", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_Option\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_odtconfig", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_OdtConfig\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_tristateclk1", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_TristateClk1\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_mode2n", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:Auto, 0x1:Force 2N CMD Timing Mode", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_Mode2N\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_odtlevels", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0x0:ODT Connected to SoC, 0x1:ODT held high", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_OdtLevels\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "rmtcheckrun", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.RmtCheckRun\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "rmtmargincheckscalehighthreshold", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.RmtMarginCheckScaleHighThreshold\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch0_bit_swizzling", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch0_Bit_swizzling\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch1_bit_swizzling", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch1_Bit_swizzling\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch2_bit_swizzling", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch2_Bit_swizzling\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "ch3_bit_swizzling", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.Ch3_Bit_swizzling\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "msglevelmask", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MsgLevelMask\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "enhanceport8xhdecoding", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.EnhancePort8xhDecoding\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "mrcdatasaving", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.MrcDataSaving\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Memory\\s*Settings", 
+            "SourceKey": "spdwriteenable", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "MEMORY_CFG_DATA\\.SpdWriteEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Dynamic\\s*Settings", 
+            "SourceKey": "mrctrainingenforcement", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "DYNAMIC_CFG_DATA\\.MrcTrainingEnforcement\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Dynamic\\s*Settings", 
+            "SourceKey": "emmctuningenforcement", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "DYNAMIC_CFG_DATA\\.EmmcTuningEnforcement\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Dynamic\\s*Settings", 
+            "SourceKey": "recalibration", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "DYNAMIC_CFG_DATA\\.Recalibration\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Silicon\\s*Settings", 
+            "SourceKey": "silicontest1", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00000000 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "SILICON_CFG_DATA\\.SiliconTest1\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Silicon\\s*Settings", 
+            "SourceKey": "silicontest2", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00000000 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "SILICON_CFG_DATA\\.SiliconTest2\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "gpioskip", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half0\\.", 
+                "GpioSkip\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "defvalue", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Low, 1:High", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "DefValue\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "direction", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:GPIO, 1:GPI, 2:GPO, 3:HI_Z, 0xFF:Native", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "Direction\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "altfunc", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:M0, 1:M1, 2:M2, 3:M3", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "AltFunc\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "interruptroute", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:None/NA, 1:NMI, 2:SMI, 4:SCI, 8:IOAPIC", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "InterruptRoute\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "rxinvert", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:NotInverted, 1:Inverted", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "RxInvert\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "interrupttype", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Level, 1:Edge, 3:Both Edge, 2:Disable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "InterruptType\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "pupdenable", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Same, 1:Disable PuPd, 2:Enable Pull Down, 3:Enable Pull Up", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "PuPdEnable\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "pupdvalue", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:None, 2:PD_5K, 4:PD_20K, 9:PU_1K, 11:PU_2K, 12:PU_20K, 10:PU_5K, 13:PU_1K2K, 15:Native", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "PuPdValue\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "iostate", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Last Value, 1:D0RxDRx0I, 2:D0RxDRx1I, 3:D1RxDRx0I, 4:D1RxDRx1I, 5:D0RxE, 6:D1RxE, 7:HizRx0I, 8:HizRx1I, 9:TxDRxE, 15:IOS_Masked", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "IoState\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "hostsw", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:ACPI driver, 1:GPIO driver", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "HostSw\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "GPIO\\s*(.+)", 
+            "SourceKey": "wakectrl", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GPIO_CFG_DATA\\.", 
+                "$(S1)", 
+                "_Half1\\.", 
+                "WakeCtrl\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "General\\s*Settings", 
+            "SourceKey": "debugprintlevel", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0x00000000 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GEN_CFG_DATA\\.DebugPrintLevel\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "General\\s*Settings", 
+            "SourceKey": "oscrashmemorysize", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:0MB, 1:4MB, 2:8MB, 3:16MB, 4:32MB, 5:64MB", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GEN_CFG_DATA\\.OsCrashMemorySize\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "General\\s*Settings", 
+            "SourceKey": "enablecrashmode", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Disable, 1:Enable", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GEN_CFG_DATA\\.EnableCrashMode\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "bootflags", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:Normal, 1:A/B support, 4:Trusty support, 5:Trusty and A/B support)", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.BootFlags_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "bootdevice", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MAX", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.BootDevice_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "hwpart", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.HwPart_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "swpart", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 127", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.SwPart_", 
+                "$(S1)", 
+                "_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "fstype", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "0:FAT, 1:EXT2, 2:AUTO, 3:RAW", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.FsType_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "bootimage", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.BootImage_", 
+                "$(S1)", 
+                "_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "lbaaddr", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.LbaAddr_", 
+                "$(S1)", 
+                "_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "bootimage_1", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.BootImage_1_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "swpart_1", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 127", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.SwPart_1_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "lbaaddr_1", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.LbaAddr_1_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "bootimage_2", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.BootImage_2_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "swpart_2", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 127", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.SwPart_2_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Boot\\s*Option\\s*(.+)", 
+            "SourceKey": "lbaaddr_2", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$)|(L*\".+\")|({\\s*0x[a-fA-F0-9][a-fA-F0-9](\\s*,\\s*0x[a-fA-F0-9][a-fA-F0-9])*\\s*}))", 
+            "SourceValueRange": "0 - 0xFFFFFFFF", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "OS_CFG_DATA\\.LbaAddr_2_", 
+                "$(S1)", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "SerialPort", 
+            "SourceKey": "registerbase", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$))", 
+            "SourceValueRange": "0x0000000000000000 - 0xFFFFFFFFFFFFFFFF", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "gEfiMdeModulePkgTokenSpaceGuid\\.PcdSerialRegisterBase\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "SerialPort", 
+            "SourceKey": "baudrate", 
+            "SourceValue": "((^[0-9]+$)|(^0x[a-fA-F0-9]+$))", 
+            "SourceValueRange": "921600, 460800, 230400, 115200, 57600, 38400, 19200, 9600, 7200, 4800, 3600, 2400, 2000, 1800, 1200, 600, 300, 150, 134, 110, 75, 50", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*BAUD_RATE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "TPM", 
+            "SourceKey": "userphysicalpresence", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "gEfiSecurityPkgTokenSpaceGuid\\.PcdUserPhysicalPresence\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        },
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "ftpm", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*FTPM_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "smm", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*SMM_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "secure_boot", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*SECURE_BOOT_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "pci_express_base", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*PCIE_BASE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "emu_variable", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*EMU_VARIABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "use_hpet_timer", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*USE_HPET_TIMER\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        },
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "payload", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgData_Ext_MB3.dlt", 
+            "DestItem": [
+                "GEN_CFG_DATA\\.PayloadId", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,44 @@
+## @file
+#
+#  API Base service Library
+#  
+#  Copyright (c) 2008 - 2016, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CustomPlatformLib
+  FILE_GUID                      = EEC5817D-0E08-466E-8E08-CB6467D16443
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CustomPlatformLib
+
+[Sources]
+  NullPlatformLib.c
+  Hooks.c
+  Smm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+
+[LibraryClasses]
+  SerialPortLib
+
+[Pcd]
+
+[FeaturePcd]
+
+[Guids]
+
+[Protocols]

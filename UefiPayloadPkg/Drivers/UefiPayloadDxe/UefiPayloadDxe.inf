@@ -1,0 +1,74 @@
+## @file
+# This driver processes platform info handed from PEI.
+#
+#  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UefiPayloadDxe
+  FILE_GUID                      = B0048476-8AB2-4436-9266-24D5388827C2
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = PayloadDxeEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+[Sources]
+  UefiPayloadDxe.c
+  UefiPayloadDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+  IntelSiliconPkg/IntelSiliconPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DxeServicesTableLib
+  DebugLib
+  BaseMemoryLib
+  UefiLib
+  HobLib
+  CustomPlatformLib
+  PerformanceLib
+  MemoryAllocationLib
+
+[Guids]
+  gEfiAcpiTableGuid
+  gEfiSmbiosTableGuid
+  gUefiSystemTableInfoGuid
+  gUefiAcpiBoardInfoGuid
+  gUefiFrameBufferInfoGuid
+  gEfiEndOfDxeEventGroupGuid
+  gEfiEventExitBootServicesGuid
+
+[Protocols]
+  gEfiTcg2ProtocolGuid                           ## CONSUMES
+  gEfiMpServiceProtocolGuid                      ## CONSUMES
+  gEfiPciEnumerationCompleteProtocolGuid         ## PRODUCES
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution
+
+[Depex]
+  TRUE

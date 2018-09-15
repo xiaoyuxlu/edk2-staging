@@ -1,0 +1,1 @@
+The files in this folder are copied from CustomizationSample\Boards\*\SourceCodes\PlatformLib

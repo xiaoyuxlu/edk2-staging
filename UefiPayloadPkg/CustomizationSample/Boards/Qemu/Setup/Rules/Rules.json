@@ -1,0 +1,104 @@
+{
+    "Format Version": "0.001", 
+    "Rules": [
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "ftpm", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*FTPM_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "smm", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*SMM_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "secure_boot", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*SECURE_BOOT_ENABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "pci_express_base", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*PCIE_BASE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "emu_variable", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*EMU_VARIABLE\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }, 
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "use_hpet_timer", 
+            "SourceValue": "(FALSE|TRUE)", 
+            "SourceValueRange": "TRUE, FALSE", 
+            "DestFile": "UefiPayloadPkgIA32X64.dsc", 
+            "DestItem": [
+                "DEFINE\\s*USE_HPET_TIMER\\s*\\s*=\\s*\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        },
+        {
+            "SourceSection": "Miscs", 
+            "SourceKey": "payload", 
+            "SourceValue": "(.+)", 
+            "SourceValueRange": "", 
+            "DestFile": "CfgDataExt_Brd1.dlt", 
+            "DestItem": [
+                "GEN_CFG_DATA\\.PayloadId", 
+                "\\s*\\|\\s*", 
+                "$(D.*)"
+            ], 
+            "DestValue": [
+                "$(V1)"
+            ]
+        }
+    ]
+}
