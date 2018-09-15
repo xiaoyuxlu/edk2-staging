@@ -17,7 +17,7 @@ The platform supporting codes in `CustomizationSample/Boards` are for illustrati
 
 ### To get UEFI Payload and construct a work tree:
 
-1. `git clone https://github.com/tianocore/edk2-staging.git -b UefiPayload`
+1. `git clone https://github.com/tianocore/edk2-staging.git -b UEFIPayload`
 2. `git clone --recurse-submodules https://github.com/tianocore/edk2.git`
 3. Rename `edk2-staging` to `UEFIPayload` (otherwise there is some path handling error during build which is yet to be root-caused)
 
