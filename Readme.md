@@ -33,8 +33,8 @@ The platform supporting codes in `CustomizationSample/Boards` are for illustrati
 
 ### To test UEFI Payload on [Qemu](https://www.qemu.org/)'s q35 platform:
 1. (This step is needed if you use a recent version of Qemu) In `CustomizationSample\Boards\Qemu\Setup\Miscs\Setup.ini`:
-  - Set `pci_express_base = 0xb0000000` if you intend to integrate with Coreboot, 
-  - Or, set `pci_express_base = 0xe0000000` if you intend to integrate with Slim Bootloader
+  - Set `pci_express_base = 0xb0000000` if you intend to integrate with [Coreboot](https://www.coreboot.org/), 
+  - Or, set `pci_express_base = 0xe0000000` if you intend to integrate with [Slim Bootloader](https://github.com/slimbootloader/slimbootloader)
 2. Build UEFI Payload and integrate with [Coreboot](https://www.coreboot.org/) or [Slim Bootloader](https://github.com/slimbootloader/slimbootloader) 
 3. Copy the resulting firmware after integration (e.g., `firmware.bin`) to Qemu folder
 4. Run qemu optionally with an OS image. 
