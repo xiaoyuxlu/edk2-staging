@@ -46,15 +46,11 @@ def prep_env():
         shutil.copy (
           os.path.join(workspace, 'BaseTools/Conf/%s.template' % name),
           os.path.join(workspace, 'Conf/%s.txt' % name))
-    ret = 0
-    if os.name == 'posix':
-      genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Source', 'C', 'bin', 'GenFfs')
-      genffs_exist = os.path.exists(genffs_exe_path)
-      if not genffs_exist:
-        ret = subprocess.call(['make', '-C', 'BaseTools'])
-    if ret:
-      print('Build BaseTools failed, please check required build environment and utilities !')
-      sys.exit(1)
+    genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Source', 'C', 'bin', 'GenFfs')
+    if not os.path.exists(genffs_exe_path):
+      if subprocess.call(['make', '-C', 'BaseTools']):
+        print('Build BaseTools failed, please check required build environment and utilities !')
+        sys.exit(1)
   elif os.name == 'nt':
     if 'WORKSPACE' not in os.environ:
       print 'Please run edkSetup.bat first !'
@@ -105,7 +101,7 @@ def build(platform, architectrue, target, threadnum):
     if os.path.exists(Inc):
         copytree(Inc, '../UEFIPayload/UefiPayloadPkg/Include/Library')
     os.chdir('../UEFIPayload/UefiPayloadPkg/Tools')
-    ret = subprocess.call(['python', 'TranslateConfig.py', '-b', platform])
+    ret = subprocess.call(['python', 'TranslateConfig.py', '-b', platform, '-a', architectrue])
     os.chdir(os.getenv('WORKSPACE'))
     if ret:
         print('translating configuration failed!')

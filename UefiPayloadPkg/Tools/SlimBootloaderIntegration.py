@@ -58,7 +58,7 @@ def build(platform, architectrue, target):
         print('corresponding payload binary not found, please build payload first')
         exit(1)
     os.chdir('../../Tools')
-    ret = subprocess.call(['python', 'TranslateConfig.py', '-b', platform])
+    ret = subprocess.call(['python', 'TranslateConfig.py', '-b', platform, '-a', architectrue])
     os.chdir('../WorkSpace/SlimBootloader')
     print('start building Slim Bootloader ...')
     cmd = 'python BuildLoader.py build -p OsLoader.efi:LLDR:Lz4;UefiPld.fd:UEFI:Lzma %s %s' % \
@@ -87,10 +87,6 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
-
-    if not args.p: parser.error('platform argument missing')
-    if not args.a: parser.error('payload\'s architecture missing')
-    if not args.t: parser.error('target argument missing')
 
     if args.c:
         print('Removing Build and Conf directories ...')

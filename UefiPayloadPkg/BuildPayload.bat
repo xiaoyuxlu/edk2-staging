@@ -14,6 +14,8 @@
 @echo off
 if /I "%1" == "" goto Usage
 if /I "%1" == "-h" goto Usage
+if /I "%1" == "--help" goto Usage
+
 call python -c "from BuildPayload import parse_arg; parse_arg()" %*
 if %errorlevel% NEQ 0 goto Exit
 
@@ -21,8 +23,18 @@ set PYTHON_HOME=C:\Python27
 set WORKSPACE=%CD%\..\..\edk2
 set PACKAGES_PATH=%WORKSPACE%;%CD%\..
 cd %WORKSPACE%
+
+set arg=%*
+echo %arg% | findstr " -c | -c$" > nul
+if %errorlevel% EQU 0 ( 
+  if exist Conf rmdir /S /Q Conf
+  if exist Build rmdir /S /Q Build
+  echo cleaning finished
+  set arg=%arg:-c=%
+)
+
 call edksetup.bat Rebuild
-python ../UEFIPayload/UefiPayloadPkg/BuildPayload.py %*
+python ../UEFIPayload/UefiPayloadPkg/BuildPayload.py %arg%
 cd ../UEFIPayload/UefiPayloadPkg
 goto Exit
 

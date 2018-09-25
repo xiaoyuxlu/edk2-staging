@@ -28,6 +28,7 @@ RULES_FILE = "Rules.json"
 CONFIG_FILE_BASE = r"../CustomizationSample/Boards/"
 SLIM_BOOT_DSC_FILE_BASE = r"../WorkSpace/SlimBootloader/Platform/"
 UEFI_PAYLOAD_DSC_FILE_BASE = r".."
+Arch = "IA32X64"
 
 def load_rules_from_json(file):
     fd = open(file)
@@ -135,6 +136,8 @@ def translate(item, rule, SecMatches, ValueMatches, SlimBootDscFileBase):
         # print ("  Value group: %s" % ValueGroup)
 
     if rule["DestFile"] == "UefiPayloadPkgIA32X64.dsc":
+        if Arch == 'IA32':
+            rule["DestFile"] = "UefiPayloadPkgIA32.dsc"
         DestPath = UEFI_PAYLOAD_DSC_FILE_BASE
     else:
         DestPath = SlimBootDscFileBase
@@ -292,12 +295,12 @@ def main(args=sys.argv[1:]):
     #ConfigFileList = ['SlimbootConfigSample.ini','UefipayloadConfigSample.ini']
     ConfigFileList = []
     rc = 0
-    
+    global Arch
     #
     # get the -b BoardName option
     #
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "b:")
+        opts, args = getopt.getopt(sys.argv[1:], "b:a:")
     except getopt.GetoptError as err:
         # print help information and exit:
         print "Command line option error\n"
@@ -314,6 +317,8 @@ def main(args=sys.argv[1:]):
             print "ConfigFileBase = %s\n" % ConfigFileBase
             print "RulesFile = %s\n" % RulesFile
             print "SlimBootDscFileBase = %s\n" % SlimBootDscFileBase
+        elif o in ("-a"):
+            Arch = a
         else:
             assert False, "unhandled option"
 
