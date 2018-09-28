@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library\SynchronizationLib.h>
 #include <Library\UefiLib.h>
 #include <Library/PrintLib.h>
+#include "Dma.h"
 
 // Remove "conversion from ... to ..., possible lost of data" warning
 #pragma warning(disable : 4244)
@@ -354,9 +355,10 @@ typedef BOOLEAN bool;
           ((UINT16) ((((UINT16)(Hi)) << 8) | (Low)))
 
 struct i40e_dma_mem {
-  VOID   *va;
-  UINT64 pa;
-  UINT32 size;
+  VOID              *va;
+  UINT64            pa;
+  UINT32            size;
+  UNDI_DMA_MAPPING  Mapping;
 };
 
 /** Wrapper for I40eAllocateDmaMem()

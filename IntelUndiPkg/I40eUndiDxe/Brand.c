@@ -57,6 +57,7 @@ BRAND_STRUCT mBrandingTable[] = {
   {0x8086, 0x108E, 0x1586, 0x4857, L"Intel(R) Ethernet Controller X710 for 10GBASE-T"},
   {0x8086, 0x0000, 0x158A, 0x0000, L"Intel(R) Ethernet Controller XXV710 for 25GbE backplane"},
   {0x8086, 0x0000, 0x158B, 0x0000, L"Intel(R) Ethernet Controller XXV710 for 25GbE SFP28"},
+  {0x8086, 0x0000, 0x15FF, 0x0000, L"Intel(R) Ethernet Controller XL710-TM4"},
 
   // OEM Gen adapters
   {0x8086, 0x8086, 0x1572, 0x0008, L"Intel(R) Ethernet Converged Network Adapter X710-2"},
@@ -72,11 +73,18 @@ BRAND_STRUCT mBrandingTable[] = {
   {0x8086, 0x8086, 0x158B, 0x0004, L"Intel(R) Ethernet Network Adapter XXV710-1"},
   {0x8086, 0x8086, 0x158B, 0x0006, L"Intel(R) Ethernet Network Adapter OCP XXV710-2"},
   {0x8086, 0x8086, 0x158B, 0x0008, L"Intel(R) Ethernet Network Adapter OCP XXV710-1"},
+#ifdef X722_SUPPORT
+
+  // Champagne Fountain OEM Gen
+  {0x8086, 0x8086, 0x37D0, 0x0002, L"Intel(R) Ethernet Network Adapter X722-2"},
+  {0x8086, 0x8086, 0x37D0, 0x0004, L"Intel(R) Ethernet Network Adapter X722-4"},
+#endif /* X722_SUPPORT */
 
   // Retail adapters
   {0x8086, 0x8086, 0x1572, 0x0007, L"Intel(R) Ethernet Converged Network Adapter X710-2"},
   {0x8086, 0x8086, 0x1572, 0x0001, L"Intel(R) Ethernet Converged Network Adapter X710-4"},
   {0x8086, 0x8086, 0x1572, 0x000E, L"Intel(R) Ethernet Server Adapter OCP X710-2"},
+  {0x8086, 0x8086, 0x1572, 0x000F, L"Intel(R) Ethernet Server Adapter OCP X710-2"},
   {0x8086, 0x8086, 0x1584, 0x0001, L"Intel(R) Ethernet Converged Network Adapter XL710-Q1"},
   {0x8086, 0x8086, 0x1583, 0x0001, L"Intel(R) Ethernet Converged Network Adapter XL710-Q2"},
   {0x8086, 0x8086, 0x1584, 0x0004, L"Intel(R) Ethernet Server Adapter XL710-Q1OCP"},
@@ -85,6 +93,12 @@ BRAND_STRUCT mBrandingTable[] = {
   {0x8086, 0x8086, 0x158B, 0x0003, L"Intel(R) Ethernet Network Adapter XXV710-1"},
   {0x8086, 0x8086, 0x158B, 0x0005, L"Intel(R) Ethernet Network Adapter OCP XXV710-2"},
   {0x8086, 0x8086, 0x158B, 0x0007, L"Intel(R) Ethernet Network Adapter OCP XXV710-1"},
+#ifdef X722_SUPPORT
+
+  // Champagne Fountain Retail
+  {0x8086, 0x8086, 0x37D0, 0x0001, L"Intel(R) Ethernet Network Adapter X722-2"},
+  {0x8086, 0x8086, 0x37D0, 0x0003, L"Intel(R) Ethernet Network Adapter X722-4"},
+#endif /* X722_SUPPORT */
 
   // Generic branding strings applicable for functions with zeroed out Sub Device ID
   {0x8086, 0x8086, 0x1572, 0x0000, L"Intel(R) Ethernet Converged Network Adapter X710"},
@@ -179,6 +193,11 @@ BRAND_STRUCT mBrandingTable[] = {
   {0x8086, 0x1590, 0x1572, 0x0225, L"HPE Eth 10Gb 4p 563SFP+ Adptr"},
   {0x8086, 0x1590, 0x1572, 0x0000, L"Intel(R) Ethernet Controller X710 for 10GbE SFP+"},
   {0x8086, 0x1590, 0x1572, 0x022F, L"HPE Ethernet 10Gb 2-port 564i Communication Board "},
+  {0x8086, 0x1590, 0x158B, 0x0000, L"Intel(R) Ethernet Network Adapter XXV710-2"},
+  {0x8086, 0x1590, 0x158B, 0x0253, L"HPE Ethernet 10/25Gb 2-port 661SFP28 Adapter"},
+  {0x8086, 0x1590, 0x158A, 0x0286, L"HPE Synergy 4610C 10/25Gb Ethernet Adapter"},
+  {0x8086, 0x1590, 0x158A, 0x0000, L"HPE 10/25Gb Ethernet Adapter"},
+
 #ifdef X722_SUPPORT
   {0x8086, 0x1590, 0x37CE, 0x0215, L"HPE Ethernet 10Gb 2-port 568i Adapter"},
 #endif

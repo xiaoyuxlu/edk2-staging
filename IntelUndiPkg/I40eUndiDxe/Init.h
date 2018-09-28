@@ -46,7 +46,8 @@ typedef enum {
   FW_COMPATIBLE = 0,
   FW_NEWER_THAN_EXPECTED,
   FW_OLDER_THAN_EXPECTED,
-  FW_INCOMPATIBLE
+  FW_INCOMPATIBLE,
+  FW_RECOVERY_MODE
 } FW_COMPATIBILITY_LEVEL;
 
 /** Return the health status of the controller.

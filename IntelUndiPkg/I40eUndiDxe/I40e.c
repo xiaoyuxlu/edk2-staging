@@ -396,9 +396,11 @@ I40eTransmit (
   IN UINT16            OpFlags
   )
 {
-  PXE_CPB_TRANSMIT_FRAGMENTS *TxFrags;
-  PXE_CPB_TRANSMIT           *TxBuffer;
-  UINT8                      *PacketPtr;
+  PXE_CPB_TRANSMIT_FRAGMENTS  *TxFrags;
+  PXE_CPB_TRANSMIT            *TxBuffer;
+  UINT8                       *PacketPtr;
+  I40E_RING                   *TxRing;
+  EFI_STATUS                  Status;
 
   struct i40e_tx_desc *TransmitDescriptor;
   UINT16               Size;
@@ -410,9 +412,12 @@ I40eTransmit (
   UINT32 i;
   INT32  WaitMsec;
 
+  TxRing = &AdapterInfo->Vsi.TxRing;
+
   // Transmit buffers must be freed by the upper layer before we can transmit any more.
-  if (AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToUse] != 0) {
+  if (TxRing->TxBufferMappings[TxRing->NextToUse].PhysicalAddress != 0) {
     DEBUGPRINT (CRITICAL, ("TX buffers have all been used!\n"));
+    DEBUGWAIT (CRITICAL);
     return PXE_STATCODE_QUEUE_FULL;
   }
 
@@ -422,25 +427,21 @@ I40eTransmit (
   TxBuffer  = (PXE_CPB_TRANSMIT *) (UINTN) Cpb;
   TxFrags   = (PXE_CPB_TRANSMIT_FRAGMENTS *) (UINTN) Cpb;
 
-  if (AdapterInfo->VlanEnable) {
-    TdCommand |= I40E_TX_DESC_CMD_IL2TAG1;
-    TdTag = AdapterInfo->VlanTag;
-  }
 
   // quicker pointer to the next available Tx descriptor to use.
-  TransmitDescriptor = I40E_TX_DESC (&AdapterInfo->Vsi.TxRing, AdapterInfo->Vsi.TxRing.NextToUse);
+  TransmitDescriptor = I40E_TX_DESC (TxRing, TxRing->NextToUse);
 
   // Opflags will tell us if this Tx has fragments
   // So far the linear case (the no fragments case, the else on this if) is the majority
   // of all frames sent.
   if (OpFlags & PXE_OPFLAGS_TRANSMIT_FRAGMENTED) {
-  
+
     // this count cannot be more than 8;
     DEBUGPRINT (TX, ("Fragments %x\n", TxFrags->FragCnt));
 
     // for each fragment, give it a descriptor, being sure to keep track of the number used.
     for (i = 0; i < TxFrags->FragCnt; i++) {
-    
+
       // Put the size of the fragment in the descriptor
       TransmitDescriptor->buffer_addr = TxFrags->FragDesc[i].FragAddr;
       Size = (UINT16) TxFrags->FragDesc[i].FragLen;
@@ -451,7 +452,7 @@ I40eTransmit (
                                                 | ((UINT64) Size << I40E_TXD_QW1_TX_BUF_SZ_SHIFT)
                                                 | ((UINT64) TdTag << I40E_TXD_QW1_L2TAG1_SHIFT);
 
-      AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToUse] = TxFrags->FragDesc[i].FragAddr;
+      TxRing->TxBufferMappings[TxRing->NextToUse].PhysicalAddress = TxFrags->FragDesc[i].FragAddr;
 
       // If this is the last fragment we must also set the EOP bit
       if ((i + 1) == TxFrags->FragCnt) {
@@ -468,9 +469,24 @@ I40eTransmit (
       TransmitDescriptor = I40E_TX_DESC (&AdapterInfo->Vsi.TxRing, AdapterInfo->Vsi.TxRing.NextToUse);
     }
   } else {
-    TransmitDescriptor->buffer_addr = TxBuffer->FrameAddr;
-
     Size = (UINT16) ((UINT16) TxBuffer->DataLen + TxBuffer->MediaheaderLen);
+
+    TxRing->TxBufferMappings[TxRing->NextToUse].UnmappedAddress = TxBuffer->FrameAddr;
+    TxRing->TxBufferMappings[TxRing->NextToUse].Size = Size;
+
+    Status = UndiDmaMapMemoryRead (
+               AdapterInfo->PciIo,
+               &TxRing->TxBufferMappings[TxRing->NextToUse]
+               );
+
+    if (EFI_ERROR (Status)) {
+      DEBUGPRINT (CRITICAL, ("Failed to map Tx buffer: %r\n", Status));
+      DEBUGWAIT (CRITICAL);
+      return PXE_STATCODE_DEVICE_FAILURE;
+    }
+
+    TransmitDescriptor->buffer_addr = TxRing->TxBufferMappings[TxRing->NextToUse].PhysicalAddress;
+
     TransmitDescriptor->cmd_type_offset_bsz = I40E_TX_DESC_DTYPE_DATA
                                               | ((UINT64) TdCommand << I40E_TXD_QW1_CMD_SHIFT)
                                               | ((UINT64) TdOffset << I40E_TXD_QW1_OFFSET_SHIFT)
@@ -478,12 +494,10 @@ I40eTransmit (
                                               | ((UINT64) TdTag << I40E_TXD_QW1_L2TAG1_SHIFT);
     TransmitDescriptor->cmd_type_offset_bsz |= (UINT64) I40E_TXD_CMD << I40E_TXD_QW1_CMD_SHIFT;
 
-    AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToUse] = TxBuffer->FrameAddr;
-
     // Move our software counter passed the frame we just used, watching for wrapping
-    AdapterInfo->Vsi.TxRing.NextToUse++;
-    if (AdapterInfo->Vsi.TxRing.NextToUse == AdapterInfo->Vsi.TxRing.Count) {
-      AdapterInfo->Vsi.TxRing.NextToUse = 0;
+    TxRing->NextToUse++;
+    if (TxRing->NextToUse == TxRing->Count) {
+      TxRing->NextToUse = 0;
     }
     DEBUGDUMP (
       TX, ("Length = %d, Buffer addr %x, cmd_type_offset_bsz %x \n",
@@ -504,7 +518,7 @@ I40eTransmit (
   // Turn on the blocking function so we don't get swapped out
   // Then move the Tail pointer so the HW knows to start processing the TX we just setup.
   I40eBlockIt (AdapterInfo, TRUE);
-  I40eWrite32 (AdapterInfo, I40E_QTX_TAIL (0), AdapterInfo->Vsi.TxRing.NextToUse);
+  I40eWrite32 (AdapterInfo, I40E_QTX_TAIL (0), TxRing->NextToUse);
   I40eBlockIt (AdapterInfo, FALSE);
 
   // If the OpFlags tells us to wait for the packet to hit the wire, we will wait.
@@ -547,10 +561,13 @@ I40eFreeTxBuffers (
   OUT UINT64       *TxBuffer
   )
 {
-  struct i40e_tx_desc *TransmitDescriptor;
-  UINT16               i;
+  struct i40e_tx_desc   *TransmitDescriptor;
+  I40E_RING             *TxRing;
+  UINT16                i;
+  EFI_STATUS            Status;
 
   i = 0;
+  TxRing = &AdapterInfo->Vsi.TxRing;
 
   do {
     if (i >= NumEntries) {
@@ -558,37 +575,50 @@ I40eFreeTxBuffers (
       break;
     }
 
-    TransmitDescriptor = I40E_TX_DESC (&AdapterInfo->Vsi.TxRing, AdapterInfo->Vsi.TxRing.NextToClean);
+    TransmitDescriptor = I40E_TX_DESC (TxRing, TxRing->NextToClean);
 
     DEBUGPRINT (
       TX, ("TXDesc:%d Addr:%x, ctob: %x\n",
-      AdapterInfo->Vsi.TxRing.NextToClean,
+      TxRing->NextToClean,
       TransmitDescriptor->buffer_addr,
       TransmitDescriptor->cmd_type_offset_bsz)
     );
 
     if ((TransmitDescriptor->cmd_type_offset_bsz & I40E_TX_DESC_DTYPE_DESC_DONE) != 0) {
-      if (AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToClean] == 0) {
+      if (TxRing->TxBufferMappings[TxRing->NextToClean].PhysicalAddress == 0) {
         DEBUGPRINT (CRITICAL, ("ERROR: TX buffer complete without being marked used!\n"));
         break;
       }
 
       DEBUGPRINT (TX, ("Cleaning buffer address %d, %x\n", i, TxBuffer[i]));
-      TxBuffer[i] = AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToClean];
+
+      Status = UndiDmaUnmapMemory (
+                 AdapterInfo->PciIo,
+                 &TxRing->TxBufferMappings[TxRing->NextToClean]
+                 );
+
+      if (EFI_ERROR (Status)) {
+        DEBUGPRINT (CRITICAL, ("Failed to unmap Tx buffer: %r\n", Status));
+        DEBUGWAIT (CRITICAL);
+        break;
+      }
+
+      TxBuffer[i] = TxRing->TxBufferMappings[TxRing->NextToClean].UnmappedAddress;
       i++;
 
-      AdapterInfo->Vsi.TxRing.TxBufferUsed[AdapterInfo->Vsi.TxRing.NextToClean] = 0;
+      TxRing->TxBufferMappings[TxRing->NextToClean].UnmappedAddress = 0;
+      TxRing->TxBufferMappings[TxRing->NextToClean].Size = 0;
       TransmitDescriptor->cmd_type_offset_bsz &= ~((UINT64)I40E_TXD_QW1_DTYPE_MASK);
 
-      AdapterInfo->Vsi.TxRing.NextToClean++;
-      if (AdapterInfo->Vsi.TxRing.NextToClean >= AdapterInfo->Vsi.TxRing.Count) {
-        AdapterInfo->Vsi.TxRing.NextToClean = 0;
+      TxRing->NextToClean++;
+      if (TxRing->NextToClean >= TxRing->Count) {
+        TxRing->NextToClean = 0;
       }
     } else {
-      DEBUGPRINT (TX, ("TX Descriptor %d not done\n", AdapterInfo->Vsi.TxRing.NextToClean));
+      DEBUGPRINT (TX, ("TX Descriptor %d not done\n", TxRing->NextToClean));
       break;
     }
-  } while (AdapterInfo->Vsi.TxRing.NextToUse != AdapterInfo->Vsi.TxRing.NextToClean);
+  } while (TxRing->NextToUse != TxRing->NextToClean);
   
   return i;
 }
@@ -1106,12 +1136,19 @@ I40eConfigureTxRxQueues (
   UINTN                      i;
   UINT32                     QRxTail;
   EFI_STATUS                 Status;
+  I40E_RING                  *RxRing;
+  I40E_RING                  *TxRing;
+  UNDI_DMA_MAPPING           *RxBufferMapping;
+  EFI_PHYSICAL_ADDRESS       RxBufferPhysicalAddress;
 
   DEBUGPRINT (INIT, ("\n"));
 
-  Hw = &AdapterInfo->Hw;
-  I40eStatus = I40E_SUCCESS;
-  Status = EFI_DEVICE_ERROR;
+  Hw              = &AdapterInfo->Hw;
+  I40eStatus      = I40E_SUCCESS;
+  Status          = EFI_DEVICE_ERROR;
+  RxRing          = &AdapterInfo->Vsi.RxRing;
+  TxRing          = &AdapterInfo->Vsi.TxRing;
+  RxBufferMapping = &RxRing->RxBufferMapping;
 
   // Now associate the queue with the PCI function
   QTxCtrl = I40E_QTX_CTL_PF_QUEUE;
@@ -1124,8 +1161,8 @@ I40eConfigureTxRxQueues (
   ZeroMem (&TxHmcContext, sizeof (struct i40e_hmc_obj_txq));
 
   TxHmcContext.new_context = 1;
-  TxHmcContext.base = (UINT64) AdapterInfo->Vsi.TxRing.Desc / 128;
-  TxHmcContext.qlen = AdapterInfo->Vsi.TxRing.Count;
+  TxHmcContext.base = (UINT64) TxRing->Mapping.PhysicalAddress / 128;
+  TxHmcContext.qlen = TxRing->Count;
   
   // Disable FCoE
   TxHmcContext.fc_ena = 0;
@@ -1170,19 +1207,19 @@ I40eConfigureTxRxQueues (
   // Clear the context structure first
   ZeroMem (&RxHmcContext, sizeof (struct i40e_hmc_obj_rxq));
 
-  AdapterInfo->Vsi.RxRing.RxBufLen = I40E_RXBUFFER_2048;
+  RxRing->RxBufLen = I40E_RXBUFFER_2048;
   
   // No packet split
-  AdapterInfo->Vsi.RxRing.RxHdrLen = 0;
+  RxRing->RxHdrLen = 0;
 
   RxHmcContext.head = 0;
   RxHmcContext.cpuid = 0;
 
-  RxHmcContext.dbuff = (UINT8) (AdapterInfo->Vsi.RxRing.RxBufLen >> I40E_RXQ_CTX_DBUFF_SHIFT);
-  RxHmcContext.hbuff = (UINT8) (AdapterInfo->Vsi.RxRing.RxHdrLen >> I40E_RXQ_CTX_HBUFF_SHIFT);
+  RxHmcContext.dbuff = (UINT8) (RxRing->RxBufLen >> I40E_RXQ_CTX_DBUFF_SHIFT);
+  RxHmcContext.hbuff = (UINT8) (RxRing->RxHdrLen >> I40E_RXQ_CTX_HBUFF_SHIFT);
 
-  RxHmcContext.base = (UINT64) AdapterInfo->Vsi.RxRing.Desc / 128;
-  RxHmcContext.qlen = AdapterInfo->Vsi.RxRing.Count;
+  RxHmcContext.base = (UINT64) RxRing->Mapping.PhysicalAddress / 128;
+  RxHmcContext.qlen = RxRing->Count;
   
   // 16 byte descriptors in use
   RxHmcContext.dsize = 0;
@@ -1233,42 +1270,36 @@ I40eConfigureTxRxQueues (
 
   // Initialize tail register
   I40eWrite32 (AdapterInfo, I40E_QRX_TAIL (0), 0);
-  I40eWrite32 (AdapterInfo, I40E_QRX_TAIL (0), AdapterInfo->Vsi.RxRing.Count - 1);
-  AdapterInfo->Vsi.RxRing.NextToUse = 0;
+  I40eWrite32 (AdapterInfo, I40E_QRX_TAIL (0), RxRing->Count - 1);
+  RxRing->NextToUse = 0;
 
   QRxTail = I40eRead32 (AdapterInfo, I40E_QRX_TAIL (0));
   DEBUGPRINT (INIT, ("QRXTail %d\n", QRxTail));
 
   // Determine the overall size of memory needed for receive buffers and allocate memory
-  AdapterInfo->Vsi.RxRing.RxBuffer.Size = AdapterInfo->Vsi.RxRing.Count * AdapterInfo->Vsi.RxRing.RxBufLen;
+  RxBufferMapping->Size = ALIGN (RxRing->Count * RxRing->RxBufLen, 4096);
 
-  AdapterInfo->Vsi.RxRing.RxBuffer.Size = ALIGN (
-                                            AdapterInfo->Vsi.RxRing.RxBuffer.Size,
-                                            4096
-                                          );
-  Status = AdapterInfo->PciIo->AllocateBuffer (
-                                 AdapterInfo->PciIo,
-                                 AllocateAnyPages,
-                                 EfiBootServicesData,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.RxRing.RxBuffer.Size),
-                                 (VOID **) &AdapterInfo->Vsi.RxRing.RxBuffer.Data,
-                                 0
-                               );
+  //
+  // Allocate a common buffer for Rx buffers
+  //
+  Status = UndiDmaAllocateCommonBuffer (AdapterInfo->PciIo, RxBufferMapping);
+
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (
-      CRITICAL, ("Unable to allocate memory for the Rx buffers, size=%d\n",
-      AdapterInfo->Vsi.RxRing.RxBuffer.Size)
-    );
+    DEBUGPRINT (CRITICAL, ("Failed to allocate memory for Rx buffers: %r\n", Status));
     return Status;
   }
   
   // Link the RX Descriptors to the receive buffers and cleanup descriptors
-  for (i = 0; i < AdapterInfo->Vsi.RxRing.Count; i++) {
-    ReceiveDescriptor = I40E_RX_DESC (&AdapterInfo->Vsi.RxRing, i);
+  for (i = 0; i < RxRing->Count; i++) {
+    ReceiveDescriptor = I40E_RX_DESC (RxRing, i);
 
-    AdapterInfo->Vsi.RxRing.BufferAddresses[i] = AdapterInfo->Vsi.RxRing.RxBuffer.Data +
-                                                 i * AdapterInfo->Vsi.RxRing.RxBufLen;
-    ReceiveDescriptor->read.pkt_addr = (UINT64) (AdapterInfo->Vsi.RxRing.BufferAddresses[i]);
+    RxRing->BufferAddresses[i] = (UINT8*) (RxBufferMapping->UnmappedAddress +
+                                           i * RxRing->RxBufLen);
+
+    RxBufferPhysicalAddress = RxBufferMapping->PhysicalAddress +
+                                        i * RxRing->RxBufLen;
+
+    ReceiveDescriptor->read.pkt_addr = RxBufferPhysicalAddress;
 
     ReceiveDescriptor->read.hdr_addr = 0;
 
@@ -1325,11 +1356,11 @@ I40eFreeTxRxQueues (
     return EFI_DEVICE_ERROR;
   }
 #endif /* DIRECT_QUEUE_CTX_PROGRAMMING */
-  Status = AdapterInfo->PciIo->FreeBuffer (
-                                 AdapterInfo->PciIo,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.RxRing.RxBuffer.Size),
-                                 (VOID *) AdapterInfo->Vsi.RxRing.RxBuffer.Data
-                               );
+  Status = UndiDmaFreeCommonBuffer (
+             AdapterInfo->PciIo,
+             &AdapterInfo->Vsi.RxRing.RxBufferMapping
+             );
+
   return Status;
 }
 
@@ -1347,77 +1378,60 @@ I40eSetupTxRxResources (
   IN  I40E_DRIVER_DATA *AdapterInfo
   )
 {
-  EFI_STATUS Status;
-  UINTN      i;
+  EFI_STATUS          Status;
+  UINTN               i;
+  I40E_RING           *TxRing;
+  I40E_RING           *RxRing;
 
-  AdapterInfo->Vsi.TxRing.Count = AdapterInfo->Vsi.NumDesc;
-  AdapterInfo->Vsi.TxRing.Size = 0;
+  TxRing = &AdapterInfo->Vsi.TxRing;
+  RxRing = &AdapterInfo->Vsi.RxRing;
 
-  AdapterInfo->Vsi.RxRing.Count = AdapterInfo->Vsi.NumDesc;
-  AdapterInfo->Vsi.RxRing.Size = 0;
+  TxRing->Count = AdapterInfo->Vsi.NumDesc;
+  TxRing->Size = 0;
 
+  RxRing->Count = AdapterInfo->Vsi.NumDesc;
+  RxRing->Size = 0;
+
+  //
   // This block is for Tx descriptiors
   // Round up to nearest 4K
-  AdapterInfo->Vsi.TxRing.Size = AdapterInfo->Vsi.TxRing.Count * sizeof (struct i40e_tx_desc);
-  AdapterInfo->Vsi.TxRing.Size = ALIGN (AdapterInfo->Vsi.TxRing.Size, 4096);
+  //
+  TxRing->Size = ALIGN (TxRing->Count * sizeof (struct i40e_tx_desc), 4096);
+  TxRing->Mapping.Size = TxRing->Size;
 
-  // Allocate memory
-  Status = AdapterInfo->PciIo->AllocateBuffer (
-                                 AdapterInfo->PciIo,
-                                 AllocateAnyPages,
-                                 EfiBootServicesData,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.TxRing.Size),
-                                 (VOID**) &AdapterInfo->Vsi.TxRing.Desc,
-                                 0
-                               );
-  DEBUGPRINT (INIT, ("AdapterInfo->Vsi.TxRing.Desc: %X\n", AdapterInfo->Vsi.TxRing.Desc));
+  Status = UndiDmaAllocateCommonBuffer (AdapterInfo->PciIo, &TxRing->Mapping);
 
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (
-      CRITICAL, ("Unable to allocate memory for the Tx descriptor ring, size=%d\n",
-      AdapterInfo->Vsi.TxRing.Size)
-    );
+    DEBUGPRINT (CRITICAL, ("Failed to allocate memory for Tx desc ring: %r\n", Status));
     return Status;
   }
 
-  AdapterInfo->Vsi.TxRing.NextToUse = 0;
-  AdapterInfo->Vsi.TxRing.NextToClean = 0;
+  TxRing->NextToUse = 0;
+  TxRing->NextToClean = 0;
 
-  // All avaliable transmit decriptors are free by default
-  for (i = 0; i < AdapterInfo->Vsi.TxRing.Count; i++) {
-    AdapterInfo->Vsi.TxRing.TxBufferUsed[i] = 0;
+  // All available transmit descriptors are free by default
+  for (i = 0; i < TxRing->Count; i++) {
+    ZeroMem (&TxRing->TxBufferMappings[i], sizeof (UNDI_DMA_MAPPING));
   }
 
-  //  This block is for Rx descriptiors
+  //  This block is for Rx descriptors
   //  Use 16 byte descriptors as we are in PXE MODE.
 
   // Round up to nearest 4K 
-  AdapterInfo->Vsi.RxRing.Size = AdapterInfo->Vsi.RxRing.Count * sizeof (union i40e_16byte_rx_desc);
+  RxRing->Size = ALIGN (RxRing->Count * sizeof (union i40e_16byte_rx_desc), 4096);
+  RxRing->Mapping.Size = RxRing->Size;
 
-  AdapterInfo->Vsi.RxRing.Size = ALIGN (AdapterInfo->Vsi.RxRing.Size, 4096);
-
-  // Allocate memory
-  Status = AdapterInfo->PciIo->AllocateBuffer (
-                                 AdapterInfo->PciIo,
-                                 AllocateAnyPages,
-                                 EfiBootServicesData,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.RxRing.Size),
-                                 (VOID**) &AdapterInfo->Vsi.RxRing.Desc,
-                                 0
-                               );
-
-  DEBUGPRINT (INIT, ("AdapterInfo->Vsi.RxRing.Desc: %X\n", AdapterInfo->Vsi.RxRing.Desc));
+  Status = UndiDmaAllocateCommonBuffer (AdapterInfo->PciIo, &RxRing->Mapping);
 
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (
-      CRITICAL, ("Unable to allocate memory for the Rx descriptor ring, size=%d\n",
-      AdapterInfo->Vsi.RxRing.Size)
-    );
+    DEBUGPRINT (CRITICAL, ("Failed to allocate memory for Rx desc ring: %r\n", Status));
+
+    UndiDmaFreeCommonBuffer (AdapterInfo->PciIo, &TxRing->Mapping);
     return Status;
   }
 
-  AdapterInfo->Vsi.RxRing.NextToClean = 0;
-  AdapterInfo->Vsi.RxRing.NextToUse = 0;
+  RxRing->NextToClean = 0;
+  RxRing->NextToUse = 0;
 
   return EFI_SUCCESS;
 }
@@ -1440,34 +1454,28 @@ I40eFreeTxRxResources (
 {
   EFI_STATUS Status;
 
-  Status = AdapterInfo->PciIo->FreeBuffer (
-                                 AdapterInfo->PciIo,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.TxRing.Size),
-                                 AdapterInfo->Vsi.TxRing.Desc
-                               );
-
-  AdapterInfo->Vsi.TxRing.Desc = NULL;
+  Status = UndiDmaFreeCommonBuffer (
+             AdapterInfo->PciIo,
+             &AdapterInfo->Vsi.TxRing.Mapping
+             );
 
   if (EFI_ERROR (Status)) {
     DEBUGPRINT (
-      CRITICAL, ("Unable to free memory for the Tx descriptor ring %r, size=%d\n",
-      Status, AdapterInfo->Vsi.TxRing.Size)
+      CRITICAL, ("Unable to free memory for the Tx descriptor ring: %r\n",
+      Status)
     );
     return Status;
   }
 
-  Status = AdapterInfo->PciIo->FreeBuffer (
-                                 AdapterInfo->PciIo,
-                                 UNDI_MEM_PAGES (AdapterInfo->Vsi.RxRing.Size),
-                                 AdapterInfo->Vsi.RxRing.Desc
-                               );
-
-  AdapterInfo->Vsi.RxRing.Desc = NULL;
+  Status = UndiDmaFreeCommonBuffer (
+             AdapterInfo->PciIo,
+             &AdapterInfo->Vsi.RxRing.Mapping
+             );
 
   if (EFI_ERROR (Status)) {
     DEBUGPRINT (
-      CRITICAL, ("Unable to free memory for the Rx descriptor ring, size=%d\n",
-      AdapterInfo->Vsi.RxRing.Size)
+      CRITICAL, ("Unable to free memory for the Rx descriptor ring: %r\n",
+      Status)
     );
     return Status;
   }
@@ -1904,9 +1912,7 @@ I40eInitHw (
   enum i40e_status_code I40eStatus;
   EFI_STATUS            Status;
   struct i40e_hw *      Hw;
-  UINT8                 AqFailures = 0;
-  UINT32                TmpReg0;
-  UINT32                TmpReg1;
+  UINT32                TmpReg0 = 0;
 
   Hw = &AdapterInfo->Hw;
 
@@ -1929,42 +1935,7 @@ I40eInitHw (
   }
 #endif /* DIRECT_QUEUE_CTX_PROGRAMMING */
 
-  // Need to enable LFC only for NVM that does not enable internal buffer in PXE mode.
-  // Check I40E_PRTDCB_TC2PFC.TC2PFC fields to determine no drop policy
-  TmpReg0 = I40eRead32(AdapterInfo, I40E_PRTDCB_TC2PFC_RCB) & I40E_PRTDCB_TC2PFC_RCB_TC2PFC_MASK;
-  if (TmpReg0 != I40E_PRTDCB_TC2PFC_RCB_TC2PFC_MASK) {
-    // Enable LFC mode. We only have 16 descriptors in the Rx ring and such configuration
-    // without LFC or PFC enabled cannot handle all boot scenarios due to packet dropping.
-    // Do not enable LFC if Receive Link Flow Control or PFC is already enabled
-    TmpReg0 = I40eRead32 (AdapterInfo, I40E_PRTDCB_MFLCN);
-    TmpReg1 = I40eRead32 (AdapterInfo, I40E_PRTMAC_HSEC_CTL_RX_ENABLE_PPP);
-
-    // I40E_PRTMAC_HSEC_CTL_RX_ENABLE_PPP contents may be invalid in 10G mode
-    if (TmpReg1 == 0xDEADBEEF) {
-      TmpReg1 = 0x0;
-    }
-
-    if (((TmpReg0 & I40E_PRTDCB_MFLCN_RPFCM_MASK) == 0)
-      && ((TmpReg0 & I40E_PRTDCB_MFLCN_RFCE_MASK) == 0)
-      && ((TmpReg1 & I40E_PRTMAC_HSEC_CTL_RX_ENABLE_PPP_HSEC_CTL_RX_ENABLE_PPP_MASK) == 0)
-      && (AdapterInfo->Hw.fc.requested_mode != I40E_FC_FULL))
-    {
-      UINT32 ManagementCtrlReg = 0;
-
-      // We will not check the status here. We need to proceed with initialization
-      // even if FC cannot be turned on.
-      ManagementCtrlReg = rd32 (&AdapterInfo->Hw, I40E_PRT_MNG_MANC);
-
-      if (!((ManagementCtrlReg & I40E_PRT_MNG_MANC_EN_BMC2NET_MASK)
-        && (ManagementCtrlReg & I40E_PRT_MNG_MANC_RCV_TCO_EN_MASK)))
-      {
-        AdapterInfo->Hw.fc.requested_mode = I40E_FC_FULL;
-
-        AdapterInfo->WaitingForLinkUp = IsLinkUp (AdapterInfo);
-        i40e_set_fc (&AdapterInfo->Hw, &AqFailures, TRUE);
-      }
-    }
-  }
+  AdapterInfo->WaitingForLinkUp = IsLinkUp (AdapterInfo);
 
   Status = I40eSetupPFSwitch (AdapterInfo);
   if (EFI_ERROR (Status)) {
@@ -1984,6 +1955,8 @@ I40eInitHw (
     return Status;
   }
 
+  // Enable interrupt causes.
+  I40eConfigureInterrupts (AdapterInfo);
 
   if (AdapterInfo->Hw.mac.type == I40E_MAC_X722) {
     TmpReg0 = I40eRead32 (AdapterInfo, I40E_PRTDCB_TC2PFC_RCB);
@@ -2093,6 +2066,9 @@ I40eShutdown (
   }
 
 #endif  /* DIRECT_QUEUE_CTX_PROGRAMMING */
+  // Disable all interrupt causes.
+  I40eDisableInterrupts (AdapterInfo);
+
   AdapterInfo->HwInitialized = FALSE;
 #endif  /* AVOID_HW_REINITIALIZATION */
   PxeStatcode = PXE_STATCODE_SUCCESS;
@@ -2135,6 +2111,61 @@ I40eReset (
 
   PxeStatcode = PXE_STATCODE_SUCCESS;
   return PxeStatcode;
+}
+
+/** Configures internal interrupt causes on current PF.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @return   Interrupt causes are configured for current PF
+**/
+VOID
+I40eConfigureInterrupts (
+  I40E_DRIVER_DATA *AdapterInfo
+  )
+{
+  UINT32  RegVal = 0;
+
+  I40eWrite32 (AdapterInfo, I40E_PFINT_ITR0(0), 0);
+  I40eWrite32 (AdapterInfo, I40E_PFINT_ITR0(1), 0);
+  I40eWrite32 (AdapterInfo, I40E_PFINT_LNKLST0, 0);
+
+  RegVal = I40E_PFINT_ICR0_ENA_ADMINQ_MASK | I40E_PFINT_ICR0_ENA_LINK_STAT_CHANGE_MASK;
+  I40eWrite32 (AdapterInfo, I40E_PFINT_ICR0_ENA, RegVal);
+
+  // Enable Queue 0 for receive interrupt
+  RegVal = I40E_QINT_RQCTL_CAUSE_ENA_MASK | I40E_QINT_RQCTL_ITR_INDX_MASK |
+    0x1 << I40E_QINT_RQCTL_NEXTQ_INDX_SHIFT |
+    I40E_QUEUE_TYPE_TX << I40E_QINT_RQCTL_NEXTQ_TYPE_SHIFT;
+  I40eWrite32 (AdapterInfo, I40E_QINT_RQCTL(0), RegVal);
+
+  // Enable Queue 1 for transmit interrupt
+  RegVal = I40E_QINT_TQCTL_CAUSE_ENA_MASK | I40E_QINT_TQCTL_ITR_INDX_MASK |
+    0x1 << I40E_QINT_RQCTL_MSIX0_INDX_SHIFT | I40E_QINT_TQCTL_NEXTQ_INDX_MASK;
+  I40eWrite32 (AdapterInfo, I40E_QINT_TQCTL(0), RegVal);
+}
+
+/** Disables internal interrupt causes on current PF.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @return   Interrupt causes are disabled for current PF
+**/
+VOID
+I40eDisableInterrupts (
+  I40E_DRIVER_DATA *AdapterInfo
+  )
+{
+  // Disable all non-queue interrupt causes
+  I40eWrite32 (AdapterInfo, I40E_PFINT_ICR0_ENA, 0);
+
+  // Disable receive queue interrupt causes
+  I40eWrite32 (AdapterInfo, I40E_QINT_RQCTL(0), 0);
+
+  // Disable transmit queue interrupt
+  I40eWrite32 (AdapterInfo, I40E_QINT_TQCTL(0), 0);
 }
 
 /** Read function capabilities using AQ command.
@@ -2474,6 +2505,18 @@ I40eFirstTimeInit (
     goto ErrorReleaseController;
   }
 
+  DEBUGPRINT (INIT, ("Initializing PF %d\n", Hw->bus.func));
+
+  AdapterInfo->FwSupported = TRUE;
+
+  if (IsRecoveryMode (AdapterInfo)) {
+    // Firmware is in recovery mode. Refrain from further initialization
+    // and report error status thru the Driver Health Protocol
+    DEBUGPRINT (CRITICAL, ("FW is in recovery mode, skip further initialization\n"));
+    AdapterInfo->FwSupported = FALSE;
+    return EFI_UNSUPPORTED;
+  }
+
   if (AdapterInfo->UndiEnabled) {
     i40e_clear_hw (Hw);
 
@@ -2494,16 +2537,12 @@ I40eFirstTimeInit (
     }
   }
 
-  DEBUGPRINT (INIT, ("Initializing PF %d\n", Hw->bus.func));
-
-  AdapterInfo->FwVersionSupported = TRUE;
-
   I40eStatus = i40e_init_adminq (Hw);
   if (I40eStatus == I40E_ERR_FIRMWARE_API_VERSION) {
   
     // Firmware version is newer then expected. Refrain from further initialization
     // and report error status thru the Driver Health Protocol
-    AdapterInfo->FwVersionSupported = FALSE;
+    AdapterInfo->FwSupported = FALSE;
     return EFI_UNSUPPORTED;
   }
   if (I40eStatus != I40E_SUCCESS) {
@@ -2546,11 +2585,11 @@ I40eFirstTimeInit (
 
   Status = gBS->AllocatePool (
                   EfiBootServicesData,
-                  sizeof (*AdapterInfo->Vsi.TxRing.TxBufferUsed) * AdapterInfo->TxRxDescriptorCount,
-                  (VOID **) &AdapterInfo->Vsi.TxRing.TxBufferUsed
+                  sizeof (*AdapterInfo->Vsi.TxRing.TxBufferMappings) * AdapterInfo->TxRxDescriptorCount,
+                  (VOID **) &AdapterInfo->Vsi.TxRing.TxBufferMappings
                 );
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("AllocatePool TxBufferUsed returned %r\n", Status));
+    DEBUGPRINT (CRITICAL, ("AllocatePool TxBufferMappings returned %r\n", Status));
     goto ErrorReleaseController;
   }
 
@@ -2586,8 +2625,8 @@ ErrorReleaseController:
   if (AdapterInfo->Vsi.RxRing.BufferAddresses != NULL) {
     gBS->FreePool ((VOID *) AdapterInfo->Vsi.RxRing.BufferAddresses);
   }
-  if (AdapterInfo->Vsi.TxRing.TxBufferUsed != NULL) {
-    gBS->FreePool ((VOID *) AdapterInfo->Vsi.TxRing.TxBufferUsed);
+  if (AdapterInfo->Vsi.TxRing.TxBufferMappings != NULL) {
+    gBS->FreePool ((VOID *) AdapterInfo->Vsi.TxRing.TxBufferMappings);
   }
 
   I40eReleaseControllerHw (AdapterInfo);
@@ -2891,28 +2930,22 @@ I40eAllocateDmaMem (
     return I40E_ERR_PARAM;
   }
 
-  Mem->size = (UINT32) ALIGN (Size, Alignment);
+  Mem->Mapping.Size = (UINT32) ALIGN (Size, Alignment);
 
-  // Allocate memory for transmit and receive resources.
-  Status = AdapterInfo->PciIo->AllocateBuffer (
-                                 AdapterInfo->PciIo,
-                                 AllocateAnyPages,
-                                 EfiBootServicesData,
-                                 UNDI_MEM_PAGES (Mem->size),
-                                 (VOID **) &Mem->va,
-                                 0
-                               );
+  Status = UndiDmaAllocateCommonBuffer (AdapterInfo->PciIo, &Mem->Mapping);
 
-  Mem->pa = (UINT64) Mem->va;
+  Mem->va     = (VOID*) Mem->Mapping.UnmappedAddress;
+  Mem->pa     = Mem->Mapping.PhysicalAddress;
+  Mem->size   = Mem->Mapping.Size;
 
-  if ((Mem->va != NULL) 
+  if ((Mem->va != NULL)
     && (Status == EFI_SUCCESS))
   {
     return I40E_SUCCESS;
   } else {
     DEBUGPRINT (
       CRITICAL, ("Error: Requested: %d, Allocated size: %d\n",
-      Size, Mem->size)
+      Size, Mem->Mapping.Size)
     );
     return I40E_ERR_NO_MEMORY;
   }
@@ -2941,17 +2974,46 @@ I40eFreeDmaMem (
   }
 
   // Free memory allocated for transmit and receive resources.
-  Status = AdapterInfo->PciIo->FreeBuffer (
-                                 AdapterInfo->PciIo,
-                                 UNDI_MEM_PAGES (Mem->size),
-                                 (VOID *) Mem->va
-                               );
+  Status = UndiDmaFreeCommonBuffer (AdapterInfo->PciIo, &Mem->Mapping);
+
   if (EFI_ERROR (Status)) {
+    DEBUGPRINT (CRITICAL, ("Failed to free I40E DMA buffer: %r\n", Status));
     return I40E_ERR_BAD_PTR;
   }
   return I40E_SUCCESS;
 }
 
+/** Checks if Firmware is in recovery mode.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @retval   TRUE   Firmware is in recovery mode
+   @retval   FALSE  Firmware is not in recovery mode
+**/
+BOOLEAN
+IsRecoveryMode (
+  IN  I40E_DRIVER_DATA *AdapterInfo
+  )
+{
+  UINT32  RegVal;
+
+  RegVal = I40eRead32 (AdapterInfo, I40E_GL_FWSTS);
+  RegVal &= I40E_GL_FWSTS_FWS1B_MASK;
+  RegVal >>= I40E_GL_FWSTS_FWS1B_SHIFT;
+
+  if ((RegVal == I40E_FW_RECOVERY_MODE_CORER)
+      || (RegVal == I40E_FW_RECOVERY_MODE_CORER_LEGACY)
+      || (RegVal == I40E_FW_RECOVERY_MODE_GLOBR)
+      || (RegVal == I40E_FW_RECOVERY_MODE_GLOBR_LEGACY)
+      || (RegVal == I40E_FW_RECOVERY_MODE_TRANSITION)
+      || (RegVal == I40E_FW_RECOVERY_MODE_NVM))
+  {
+    return TRUE;
+  }
+
+  return FALSE;
+}
 
 /** Gets link state (up/down)
 
@@ -3051,6 +3113,9 @@ GetLinkSpeed (
   case I40E_LINK_SPEED_20GB:
     LinkSpeed = LINK_SPEED_20000;
     break;
+  case I40E_LINK_SPEED_25GB:
+    LinkSpeed = LINK_SPEED_25000;
+    break;
   case I40E_LINK_SPEED_40GB:
     LinkSpeed = LINK_SPEED_40000;
     break;
@@ -3087,6 +3152,7 @@ I40eGetFortvilleChipType (
     break;
   
   // XL710 40 Gig devices
+  case I40E_DEV_ID_25G_SFP28:
   case I40E_DEV_ID_KX_B:
   case I40E_DEV_ID_QSFP_A:
   case I40E_DEV_ID_QSFP_B:

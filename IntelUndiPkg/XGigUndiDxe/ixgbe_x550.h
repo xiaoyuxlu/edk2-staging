@@ -120,6 +120,7 @@ s32 ixgbe_reset_phy_t_X550em(struct ixgbe_hw *hw);
 s32 ixgbe_identify_sfp_module_X550em(struct ixgbe_hw *hw);
 s32 ixgbe_led_on_t_X550em(struct ixgbe_hw *hw, u32 led_idx);
 s32 ixgbe_led_off_t_X550em(struct ixgbe_hw *hw, u32 led_idx);
+bool ixgbe_fw_recovery_mode_X550(struct ixgbe_hw *hw);
 s32 ixgbe_get_protected_blocks_X550(struct ixgbe_hw *hw,
 				struct ixgbe_eeprom_protected_block *blocks,
 				u16 *blocks_size, u32 block_type_mask,

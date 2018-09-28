@@ -79,7 +79,7 @@ BRAND_STRUCT  mBrandingTable[] = {
 
     {0x8086, 0x103C, 0x10F8, 0x18D0, L"HPE Ethernet 10Gb 2-port 560FLB Adapter"},
     {0x8086, 0x103C, 0x10F8, 0x17D2, L"HPE Ethernet 10Gb 2-port 560M Adapter"},
-    {0x8086, 0x103C, 0x10FB, 0x17D3, L"HP Ethernet 10Gb 2-port 560SFP+ Adapter"},
+    {0x8086, 0x103C, 0x10FB, 0x17D3, L"HPE Ethernet 10Gb 2-port 560SFP+ Adapter"},
     {0x8086, 0x103C, 0x10FB, 0x17D0, L"HPE Ethernet 10Gb 2-port 560FLR-SFP+ Adapter"},
     {0x8086, 0x103C, 0x1528, 0x211A, L"HPE Ethernet 10Gb 2-port 561T Adapter"},
     {0x8086, 0x103C, 0x10FB, 0x211B, L"HPE Ethernet 10Gb 1-port P560FLR-SFP+ Adapter"},
@@ -158,6 +158,8 @@ BRAND_STRUCT  mBrandingTable[] = {
     {0x8086, 0x0000, 0x15C4, 0x0000, L"Intel(R) Ethernet Connection X553 10 GbE SFP+"},
     {0x8086, 0x0000, 0x15CE, 0x0000, L"Intel(R) Ethernet Connection X553 10 GbE SFP+"},
     {0x8086, 0x0000, 0x15C8, 0x0000, L"Intel(R) Ethernet Connection X553/X557-AT 10GBASE-T"},
+    {0x8086, 0x0000, 0x15C6, 0x0000, L"Intel(R) Ethernet Connection X553 1GbE"},
+    {0x8086, 0x0000, 0x15C7, 0x0000, L"Intel(R) Ethernet Connection X553 1GbE"},
     {0x8086, 0x0000, 0x15E4, 0x0000, L"Intel(R) Ethernet Connection X553 1GbE"},
     {0x8086, 0x0000, 0x15E5, 0x0000, L"Intel(R) Ethernet Connection X553 1GbE"},
     {0x8086, 0x0000, 0x15C2, 0x0000, L"Intel(R) Ethernet Connection X553 Backplane"},

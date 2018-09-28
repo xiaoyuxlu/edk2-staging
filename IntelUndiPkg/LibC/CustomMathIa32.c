@@ -16,10 +16,10 @@
 
 UINT64
 EFIAPI
-InternalMathMultU64x64 (
-  IN      UINT64                    Multiplicand,
-  IN      UINT64                    Multiplier
-  )
+CustomMathMultU64x64 (
+    IN UINT64 Multiplicand,
+    IN UINT64 Multiplier
+    )
 {
   _asm {
     mov     ebx, dword ptr [Multiplicand + 0]
@@ -36,26 +36,26 @@ InternalMathMultU64x64 (
 
 UINT64
 EFIAPI
-MultU64x64 (
+CustomMultU64x64 (
   IN      UINT64                    Multiplicand,
   IN      UINT64                    Multiplier
   )
 {
   UINT64                            Result;
 
-  Result = InternalMathMultU64x64 (Multiplicand, Multiplier);
+  Result = CustomMathMultU64x64 (Multiplicand, Multiplier);
 
   return Result;
 }
 
 INT64
 EFIAPI
-MultS64x64 (
+CustomMultS64x64 (
   IN      INT64                     Multiplicand,
   IN      INT64                     Multiplier
   )
 {
-  return (INT64)MultU64x64 ((UINT64) Multiplicand, (UINT64) Multiplier);
+  return (INT64)CustomMultU64x64((UINT64)Multiplicand, (UINT64)Multiplier);
 }
 
 /*
@@ -65,10 +65,10 @@ MultS64x64 (
 __declspec(naked) void __cdecl _allmul (void)
 {
   //
-  // Wrapper Implementation over EDKII MultS64x64() routine
+  // Wrapper Implementation over our CustomMultS64x64() routine
   //    INT64
   //    EFIAPI
-  //    MultS64x64 (
+  //    CustomMultS64x64 (
   //      IN      INT64      Multiplicand,
   //      IN      INT64      Multiplier
   //      )
@@ -109,7 +109,7 @@ __declspec(naked) void __cdecl _allmul (void)
     ;
     ; Call native MulS64x64 of BaseLib
     ;
-    call MultS64x64
+    call CustomMultS64x64
 
     ;
     ; Adjust stack
@@ -118,4 +118,83 @@ __declspec(naked) void __cdecl _allmul (void)
 
     ret  16
   }
-} 
+}
+
+/*
+ * Shifts a 64-bit signed value left by a particular number of bits.
+ */
+__declspec(naked) void __cdecl _allshl(void)
+{
+  _asm {
+    ;
+    ; Handle shifting of 64 or more bits (return 0)
+    ;
+    cmp     cl, 64
+    jae     short ReturnZero
+
+    ;
+    ; Handle shifting of between 0 and 31 bits
+    ;
+    cmp     cl, 32
+    jae     short More32
+    shld    edx, eax, cl
+    shl     eax, cl
+    ret
+
+    ;
+    ; Handle shifting of between 32 and 63 bits
+    ;
+More32:
+    mov     edx, eax
+    xor     eax, eax
+    and     cl, 31
+    shl     edx, cl
+    ret
+
+ReturnZero:
+    xor     eax,eax
+    xor     edx,edx
+    ret
+  }
+}
+
+/*
+ * Shifts a 64-bit unsigned value right by a certain number of bits.
+ */
+__declspec(naked) void __cdecl _aullshr(void)
+{
+  _asm {
+    ;
+    ; Checking: Only handle 64bit shifting or more
+    ;
+    cmp     cl, 64
+    jae     _Exit
+
+    ;
+    ; Handle shifting between 0 and 31 bits
+    ;
+    cmp     cl, 32
+    jae     More32
+    shrd    eax, edx, cl
+    shr     edx, cl
+    ret
+
+    ;
+    ; Handle shifting of 32-63 bits
+    ;
+More32:
+    mov     eax, edx
+    xor     edx, edx
+    and     cl, 31
+    shr     eax, cl
+    ret
+
+    ;
+    ; Invalid number (less then 32bits), return 0
+    ;
+_Exit:
+    xor     eax, eax
+    xor     edx, edx
+    ret
+  }
+}

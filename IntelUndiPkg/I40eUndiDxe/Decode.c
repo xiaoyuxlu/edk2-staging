@@ -1474,9 +1474,11 @@ UndiStatus (
     return;
   }
 
-  // Check whether Link Status Event occured since last call.
+  // Cache interrupt status in driver's private structure.
   RegVal = I40eRead32 (AdapterInfo, I40E_PFINT_ICR0);
+  AdapterInfo->IntStatus |= RegVal;
 
+  // Check whether Link Status Event occurred since last call.
   if ((RegVal & I40E_PFINT_ICR0_ADMINQ_MASK) != 0) {
     AdapterInfo->MediaStatusChecked = FALSE;
   }
@@ -1536,6 +1538,17 @@ UndiStatus (
   }
 
 
+  if ((CdbPtr->OpFlags & PXE_OPFLAGS_GET_INTERRUPT_STATUS) != 0) {
+    if (AdapterInfo->IntStatus & I40E_PFINT_ICR0_QUEUE_0_MASK) {
+      CdbPtr->StatFlags |= PXE_STATFLAGS_GET_STATUS_RECEIVE;
+    }
+    if (AdapterInfo->IntStatus & I40E_PFINT_ICR0_QUEUE_1_MASK) {
+      CdbPtr->StatFlags |= PXE_STATFLAGS_GET_STATUS_TRANSMIT;
+    }
+
+    // Clear interrupt cached status
+    AdapterInfo->IntStatus = 0;
+  }
 
   // Return current media status
   if ((CdbPtr->OpFlags & PXE_OPFLAGS_GET_MEDIA_STATUS) != 0) {
@@ -1775,6 +1788,15 @@ UndiApiEntry (
   }
 
   AdapterInfo               = &(mUndi32DeviceList[CdbPtr->IFnum]->NicInfo);
+
+  // Check if InitUndiNotifyExitBs was called before
+  if (AdapterInfo->ExitBootServicesTriggered) {
+    DEBUGPRINT (CRITICAL, ("Pci Bus Mastering Disabled !\n"));
+    CdbPtr->StatFlags = PXE_STATFLAGS_COMMAND_FAILED;
+    CdbPtr->StatCode  = PXE_STATCODE_NOT_INITIALIZED;
+    return;
+  }
+
   AdapterInfo->VersionFlag  = 0x31; // entering from new entry point
 
   // check the OPCODE range

@@ -1,7 +1,7 @@
 This branch is used to integrate open source UEFI UNDI drivers supporting Intel(R) server network adapters to EDK2.
 
 Branch owner:
-Pawe³ Or³owski < pawel.orlowski@intel.com >
+Pawel Orlowski < pawel.orlowski@intel.com >
 
 ## Feature Introduction
 Drivers being introduced in this branch allow utilizing and controlling Intel(R) server network adapters through UNDI protocol.
@@ -16,7 +16,8 @@ IntelUndiPkg - new package which will contain sources for all Intel(R) server ne
 | Time | Event |
 |:----:|:-----:|
 | WW 36 2017 | Initial commit |
-| ... | Cleaning known issues |
+| WW 39 2018 | Fixed some of the known issues. UDK 2018 spec compliance. |
+|...| Cleaning known issues |
 |...|...|
 
 ## Support scope
@@ -28,14 +29,15 @@ Architecture: IA32, IPF, X64
 ## Known issues
 | Issue | Status |
 |:-----:|:------:|
-| Remove EFI_VLAN_PROTOCOL support | Open |
-| Change intrinsic function calls to library function calls within EDK | Open |
+| Correct comments within UEFI driver code (at least in GigUndiNotifyExitBs function) | Open |
 | Incorrect exit flow in InitChild process | Open |
 | E1000Transmit function flow review for fragmented packets | Open |
-| GigUndiPxeStructInit: fix double assignment of PXE_ROMID_MINORVER_31 | Open |
-| GigUndiPxeUpdate: mActiveChildren bounds verification/review | Open |
-| Add UNLOAD_IMAGE to INF instead of opening EFI_LOADED_IMAGE_PROTOCOL | Open |
-| Correct comments within UEFI driver code (at least in GigUndiNotifyExitBs function) | Open |
+| Remove EFI_VLAN_PROTOCOL support | Closed |
+| Change intrinsic function calls to library function calls within EDK | Closed |
+| GigUndiPxeStructInit: fix double assignment of PXE_ROMID_MINORVER_31 | Closed |
+| GigUndiPxeUpdate: mActiveChildren bounds verification/review | Closed |
+| Add UNLOAD_IMAGE to INF instead of opening EFI_LOADED_IMAGE_PROTOCOL | Closed |
+
 
 ## Related materials
 

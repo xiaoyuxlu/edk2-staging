@@ -78,15 +78,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
   }
 
-#if !defined(UNDI_10G) /* HAF */
-  UINT8 _WolGetFunction(NAL_ADAPTER_HANDLE Handle)
+  UINT8 _WolGetFunction(WOL_ADAPTER_HANDLE_TYPE Handle)
   {
-    UINT32  PfIndex = 0;
-    if (HafGetPfIndex(Handle, &PfIndex) != WOL_SUCCESS) {
-      return -1;
-    }
-    return PfIndex;
+    return Handle->NicInfo.Function;
   }
-#endif
 
 

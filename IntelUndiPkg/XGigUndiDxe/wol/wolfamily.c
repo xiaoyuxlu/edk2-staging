@@ -45,6 +45,15 @@ WOL_MAC_TYPE const _WOL_IXGBE[] = {
 #endif
 
 
+#if defined(WOL_ICE)
+WOL_MAC_TYPE const _WOL_ICE[] = {
+  WOL_MAKE_MACTYPE(WOL_ICE, ICE_MAC_FPGA),
+  WOL_MAKE_MACTYPE(WOL_ICE, ICE_MAC_GENERIC),
+  0
+};
+#endif
+
+
 extern WOL_STATUS _WolGetOffsetBitmask_PRO100(WOL_ADAPTER_HANDLE_TYPE Handle, UINT16 *Offset, UINT16 *Bitmask);
 extern WOL_STATUS _WolGetOffsetBitmask_CORDOVA(WOL_ADAPTER_HANDLE_TYPE Handle, UINT16 *Offset, UINT16 *Bitmask);
 extern WOL_STATUS _WolGetOffsetBitmask_KENAI(WOL_ADAPTER_HANDLE_TYPE Handle, UINT16 *Offset, UINT16 *Bitmask);
@@ -58,6 +67,9 @@ _WOL_FAMILY_INFO_t const WOL_FAMILY_TABLE[] = {
 #if defined(WOL_10G)
   { _WOL_IXGBE,         _WolGetOffsetBitmask_IXGBE          },
 #endif /* WOL_10G */
+#if defined(WOL_ICE)
+  { _WOL_ICE,           _WolGetOffsetBitmask_40GBE          },
+#endif /* WOL_ICE */
   { 0,                  0                                   }
 };
 

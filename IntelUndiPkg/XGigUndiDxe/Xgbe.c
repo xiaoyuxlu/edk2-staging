@@ -56,7 +56,7 @@ _DisplayBuffersAndDescriptors (
   DEBUGPRINT (DIAG, ("RDT0 = %x  ", (UINT16) IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_RDT (0))));
 
   DEBUGPRINT (DIAG, ("Receive Descriptor\n"));
-  ReceiveDesc = XgbeAdapter->RxRing;
+  ReceiveDesc = XGBE_RX_DESC (&XgbeAdapter->RxRing, 0);
   for (j = 0; j < DEFAULT_RX_DESCRIPTORS; j++) {
     Hi = (UINT32 *) &ReceiveDesc->buffer_addr;
     Hi++; // Point to the HI dword of the buffer address
@@ -70,7 +70,7 @@ _DisplayBuffersAndDescriptors (
 
   DEBUGWAIT (DIAG);
   DEBUGPRINT (DIAG, ("Transmit Descriptor\n"));
-  TransmitDesc = XgbeAdapter->TxRing;
+  TransmitDesc = XGBE_TX_DESC (&XgbeAdapter->TxRing, 0);
   for (j = 0; j < DEFAULT_TX_DESCRIPTORS; j++) {
     Hi = (UINT32 *) &TransmitDesc->buffer_addr;
     Hi++; // Point to the HI dword of the buffer address
@@ -311,7 +311,7 @@ XgbeStatistics (
   UPDATE_EFI_STAT (TX_MULTICAST_FRAMES, mptc);
 
   return PXE_STATCODE_SUCCESS;
-};
+}
 
 /** Takes a command Block pointer (cpb) and sends the frame.  Takes either one fragment or many
    and places them onto the wire.  Cleanup of the send happens in the function UNDI_Status in DECODE.C
@@ -338,9 +338,13 @@ XgbeTransmit (
   struct ixgbe_legacy_tx_desc *TransmitDescriptor;
   UINT32                       i;
   INT16                        WaitMsec;
+  EFI_STATUS                   Status;
+  UNDI_DMA_MAPPING             *TxBufMapping;
+
+  TxBufMapping = &XgbeAdapter->TxBufferMappings[XgbeAdapter->CurTxInd];
 
   // Transmit buffers must be freed by the upper layer before we can transmit any more.
-  if (XgbeAdapter->TxBufferUsed[XgbeAdapter->CurTxInd]) {
+  if (TxBufMapping->PhysicalAddress != 0) {
     DEBUGPRINT (CRITICAL, ("TX buffers have all been used!\n"));
     return PXE_STATCODE_QUEUE_FULL;
   }
@@ -352,30 +356,25 @@ XgbeTransmit (
   TxFrags   = (PXE_CPB_TRANSMIT_FRAGMENTS *) (UINTN) Cpb;
 
   // quicker pointer to the next available Tx descriptor to use.
-  TransmitDescriptor = &XgbeAdapter->TxRing[XgbeAdapter->CurTxInd];
+  TransmitDescriptor = XGBE_TX_DESC (&XgbeAdapter->TxRing, XgbeAdapter->CurTxInd);
 
   // Opflags will tell us if this Tx has fragments
   // So far the linear case (the no fragments case, the else on this if) is the majority
   // of all frames sent.
   if (OpFlags & PXE_OPFLAGS_TRANSMIT_FRAGMENTED) {
-  
+
     // this count cannot be more than 8;
     DEBUGPRINT (TX, ("Fragments %x\n", TxFrags->FragCnt));
 
     // for each fragment, give it a descriptor, being sure to keep track of the number used.
     for (i = 0; i < TxFrags->FragCnt; i++) {
-      
+
       // Put the size of the fragment in the descriptor
       TransmitDescriptor->buffer_addr        = TxFrags->FragDesc[i].FragAddr;
       TransmitDescriptor->lower.flags.length = (UINT16) TxFrags->FragDesc[i].FragLen;
       TransmitDescriptor->lower.data         = (IXGBE_TXD_CMD_IFCS | IXGBE_TXD_CMD_RS);
-      if (XgbeAdapter->VlanEnable) {
-        DEBUGPRINT (TX, ("1: Setting VLAN tag = %d\n", XgbeAdapter->VlanTag));
-        TransmitDescriptor->upper.fields.vlan = XgbeAdapter->VlanTag;
-        TransmitDescriptor->lower.data |= IXGBE_TXD_CMD_VLE;
-      }
 
-      XgbeAdapter->TxBufferUsed[XgbeAdapter->CurTxInd]  = TxFrags->FragDesc[i].FragAddr;
+      XgbeAdapter->TxBufferMappings[XgbeAdapter->CurTxInd].PhysicalAddress  = TxFrags->FragDesc[i].FragAddr;
 
       // If this is the last fragment we must also set the EOP bit
       if ((i + 1) == TxFrags->FragCnt) {
@@ -389,10 +388,27 @@ XgbeTransmit (
         XgbeAdapter->CurTxInd = 0;
       }
 
-      TransmitDescriptor = &XgbeAdapter->TxRing[XgbeAdapter->CurTxInd];
+      TransmitDescriptor = XGBE_TX_DESC (&XgbeAdapter->TxRing, XgbeAdapter->CurTxInd);
     }
   } else {
-    TransmitDescriptor->buffer_addr = TxBuffer->FrameAddr;
+    TxBufMapping->UnmappedAddress = TxBuffer->FrameAddr;
+    TxBufMapping->Size = TxBuffer->DataLen + TxBuffer->MediaheaderLen;
+
+    //
+    // Make the Tx buffer accessible for adapter over DMA
+    //
+    Status = UndiDmaMapMemoryRead (
+               XgbeAdapter->PciIo,
+               TxBufMapping
+               );
+
+    if (EFI_ERROR (Status)) {
+      DEBUGPRINT (CRITICAL, ("Failed to map Tx buffer: %r\n", Status));
+      DEBUGWAIT (CRITICAL);
+      return PXE_STATCODE_DEVICE_FAILURE;
+    }
+
+    TransmitDescriptor->buffer_addr = TxBufMapping->PhysicalAddress;
     DEBUGPRINT (TX, ("Packet buffer at %x\n", TransmitDescriptor->buffer_addr));
 
     // Set the proper bits to tell the chip that this is the last descriptor in the send,
@@ -406,11 +422,6 @@ XgbeTransmit (
     TransmitDescriptor->upper.fields.status = 0;
     TransmitDescriptor->lower.flags.length  = (UINT16) ((UINT16) TxBuffer->DataLen +
                                                                  TxBuffer->MediaheaderLen);
-    if (XgbeAdapter->VlanEnable) {
-      DEBUGPRINT (TX, ("1: Setting VLAN tag = %d\n", XgbeAdapter->VlanTag));
-      TransmitDescriptor->upper.fields.vlan = XgbeAdapter->VlanTag;
-      TransmitDescriptor->lower.data |= IXGBE_TXD_CMD_VLE;
-    }
 
     DEBUGPRINT (TX, ("BuffAddr=%x, ", TransmitDescriptor->buffer_addr));
     DEBUGPRINT (TX, ("Cmd=%x,", TransmitDescriptor->lower.flags.cmd));
@@ -418,9 +429,6 @@ XgbeTransmit (
     DEBUGPRINT (TX, ("Len=%x,", TransmitDescriptor->lower.flags.length));
     DEBUGPRINT (TX, ("Status=%x,", TransmitDescriptor->upper.fields.status));
     DEBUGPRINT (TX, ("Css=%x\n", TransmitDescriptor->upper.fields.css));
-    DEBUGPRINT (TX, ("vlan=%x,", TransmitDescriptor->upper.fields.vlan));
-
-    XgbeAdapter->TxBufferUsed[XgbeAdapter->CurTxInd] = TxBuffer->FrameAddr;
 
     // Move our software counter passed the frame we just used, watching for wrapping
     XgbeAdapter->CurTxInd++;
@@ -516,7 +524,7 @@ XgbeReceive (
   DEBUGPRINT (RX, ("RDT0 = %x  ", (UINT16) IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_RDT (0))));
 
   // Get a pointer to the buffer that should have a rx in it, IF one is really there.
-  ReceiveDescriptor = &XgbeAdapter->RxRing[XgbeAdapter->CurRxInd];
+  ReceiveDescriptor = XGBE_RX_DESC (&XgbeAdapter->RxRing, XgbeAdapter->CurRxInd);
 
   if ((ReceiveDescriptor->status & (IXGBE_RXD_STAT_EOP | IXGBE_RXD_STAT_DD)) != 0) {
     DEBUGPRINT (RX, ("XgbeReceive Packet Data at address %0x \n", CpbReceive->BufferAddr));
@@ -675,21 +683,16 @@ XgbeSetInterruptState (
 
   DEBUGPRINT (XGBE, ("XgbeSetInterruptState\n"));
 
-  if (XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_RECEIVE) {
-    SetIntMask |= (IXGBE_EICS_RTX_QUEUE);
+  // Mask the RX interrupts
+  if ((XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_RECEIVE) != 0) {
+    SetIntMask |= IXGBE_EICR_RTX_QUEUE_0_MASK;
     DEBUGPRINT (XGBE, ("Mask the RX interrupts\n"));
   }
 
   // Mask the TX interrupts
-  if (XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_TRANSMIT) {
-    SetIntMask |= (IXGBE_EIMS_RTX_QUEUE);
+  if ((XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_TRANSMIT) != 0) {
+    SetIntMask |= IXGBE_EICR_RTX_QUEUE_1_MASK;
     DEBUGPRINT (XGBE, ("Mask the TX interrupts\n"));
-  }
-
-  // Mask the CMD interrupts
-  if (XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_COMMAND) {
-    SetIntMask |= (IXGBE_EIMS_LSC);
-    DEBUGPRINT (XGBE, ("Mask the CMD interrupts\n"));
   }
 
   // Now we have all the Ints we want, so let the hardware know.
@@ -716,6 +719,8 @@ XgbeShutdown (
   XgbeClearRegBits (XgbeAdapter, IXGBE_TXDCTL (0), IXGBE_TXDCTL_ENABLE);
 
   XgbeAdapter->RxFilter = 0;
+
+  XgbeDisableInterrupts (XgbeAdapter);
 
   return PXE_STATCODE_SUCCESS;
 }
@@ -773,6 +778,71 @@ XgbeReset (
   return PXE_STATCODE_SUCCESS;
 }
 
+/** Configures internal interrupt causes on current PF.
+
+   @param[in]   XgbeAdapter   The pointer to our context data
+
+   @return   Interrupt causes are configured for current PF
+**/
+VOID
+XgbeConfigureInterrupts (
+  XGBE_DRIVER_DATA *XgbeAdapter
+  )
+{
+  UINT32  RegVal = 0;
+
+  // Map Rx queue 0 interrupt to EICR bit0 and Tx queue 0interrupt to EICR bit1
+  switch (XgbeAdapter->Hw.mac.type) {
+  case ixgbe_mac_82598EB:
+    RegVal = IXGBE_IVAR_ALLOC_VAL;
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (0), RegVal);
+    RegVal = IXGBE_IVAR_ALLOC_VAL | 0x01;
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (16), RegVal);
+    break;
+  case ixgbe_mac_82599EB:
+  case ixgbe_mac_X540:
+  case ixgbe_mac_X550:
+  case ixgbe_mac_X550EM_x:
+  case ixgbe_mac_X550EM_a:
+    RegVal = ((IXGBE_IVAR_ALLOC_VAL | 0x01) << 8) | IXGBE_IVAR_ALLOC_VAL;
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (0), RegVal);
+    break;
+  default:
+    break;
+  }
+
+}
+
+/** Disables internal interrupt causes on current PF.
+
+   @param[in]   XgbeAdapter   The pointer to our context data
+
+   @return   Interrupt causes are disabled for current PF
+**/
+VOID
+XgbeDisableInterrupts (
+  XGBE_DRIVER_DATA *XgbeAdapter
+  )
+{
+
+  // Deconfigure Interrupt Vector Allocation Register
+  switch (XgbeAdapter->Hw.mac.type) {
+  case ixgbe_mac_82598EB:
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (0), 0);
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (16), 0);
+    break;
+  case ixgbe_mac_82599EB:
+  case ixgbe_mac_X540:
+  case ixgbe_mac_X550:
+  case ixgbe_mac_X550EM_x:
+  case ixgbe_mac_X550EM_a:
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_IVAR (0), 0);
+    break;
+  default:
+    break;
+  }
+}
+
 /** PCIe function to LAN port mapping.
 
    @param[in,out]   XgbeAdapter   Pointer to adapter structure
@@ -806,12 +876,24 @@ XgbePciInit (
   )
 {
   EFI_STATUS Status;
-  UINT64     NewCommand;
   UINTN      Seg;
   UINT64     Result;
+  BOOLEAN    PciAttributesSaved = FALSE;
 
-  NewCommand = 0;
   Result = 0;
+
+  // Save original PCI attributes
+  Status = XgbeAdapter->PciIo->Attributes (
+                                 XgbeAdapter->PciIo,
+                                 EfiPciIoAttributeOperationGet,
+                                 0,
+                                 &XgbeAdapter->OriginalPciAttributes
+                               );
+
+  if (EFI_ERROR (Status)) {
+    goto PciIoError;
+  }
+  PciAttributesSaved = TRUE;
 
   // Get the PCI Command options that are supported by this controller.
   Status = XgbeAdapter->PciIo->Attributes (
@@ -823,25 +905,22 @@ XgbePciInit (
 
   DEBUGPRINT (XGBE, ("Attributes supported %x\n", Result));
 
-  if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("Attributes returns %X\n", NewCommand));
-    return Status;
+  if (!EFI_ERROR (Status)) {
+
+    // Set the PCI Command options to enable device memory mapped IO,
+    // port IO, and bus mastering.
+    Status = XgbeAdapter->PciIo->Attributes (
+                                   XgbeAdapter->PciIo,
+                                   EfiPciIoAttributeOperationEnable,
+                                   Result & (EFI_PCI_DEVICE_ENABLE |
+                                             EFI_PCI_IO_ATTRIBUTE_DUAL_ADDRESS_CYCLE),
+                                   NULL
+                                 );
   }
 
-  // Set the PCI Command options to enable device memory mapped IO,
-  // port IO, and bus mastering.
-  Status = XgbeAdapter->PciIo->Attributes (
-                                 XgbeAdapter->PciIo,
-                                 EfiPciIoAttributeOperationEnable,
-                                 Result & (EFI_PCI_DEVICE_ENABLE |
-                                           EFI_PCI_IO_ATTRIBUTE_DUAL_ADDRESS_CYCLE),
-                                 &NewCommand
-                               );
-
-  DEBUGPRINT (XGBE, ("Attributes enabled %x\n", Result));
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("Attributes returns %X\n", NewCommand));
-    return Status;
+    DEBUGPRINT (CRITICAL, ("Attributes returns %r\n", Status));
+    goto PciIoError;
   }
 
   XgbeAdapter->PciIo->GetLocation (
@@ -861,20 +940,73 @@ XgbePciInit (
                             XgbeAdapter->PciConfig
                           );
 
-  // Allocate memory for transmit and receive resources.
-  Status = XgbeAdapter->PciIo->AllocateBuffer (
-                                 XgbeAdapter->PciIo,
-                                 AllocateAnyPages,
-                                 EfiBootServicesData,
-                                 UNDI_MEM_PAGES (MEMORY_NEEDED),
-                                 (VOID * *) &XgbeAdapter->MemoryPtr,
-                                 0
-                               );
+  //
+  // Allocate common DMA buffer for Tx descriptors
+  //
+  XgbeAdapter->TxRing.Size = TX_RING_SIZE;
+
+  Status = UndiDmaAllocateCommonBuffer (
+             XgbeAdapter->PciIo,
+             &XgbeAdapter->TxRing
+             );
 
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (INIT, ("PCI IO AllocateBuffer returns %X\n", Status));
-    DEBUGWAIT (INIT);
-    return Status;
+    goto OnAllocError;
+  }
+
+  //
+  // Allocate common DMA buffer for Rx descriptors
+  //
+  XgbeAdapter->RxRing.Size = RX_RING_SIZE;
+
+  Status = UndiDmaAllocateCommonBuffer (
+             XgbeAdapter->PciIo,
+             &XgbeAdapter->RxRing
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto OnAllocError;
+  }
+
+  //
+  // Allocate common DMA buffer for Rx buffers
+  //
+  XgbeAdapter->RxBufferMapping.Size = RX_BUFFERS_SIZE;
+
+  Status = UndiDmaAllocateCommonBuffer (
+             XgbeAdapter->PciIo,
+             &XgbeAdapter->RxBufferMapping
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto OnAllocError;
+  }
+
+  return EFI_SUCCESS;
+
+OnAllocError:
+  if (XgbeAdapter->TxRing.Mapping != NULL) {
+    UndiDmaFreeCommonBuffer (XgbeAdapter->PciIo, &XgbeAdapter->TxRing);
+  }
+
+  if (XgbeAdapter->RxRing.Mapping != NULL) {
+    UndiDmaFreeCommonBuffer (XgbeAdapter->PciIo, &XgbeAdapter->RxRing);
+  }
+
+  if (XgbeAdapter->RxBufferMapping.Mapping != NULL) {
+    UndiDmaFreeCommonBuffer (XgbeAdapter->PciIo, &XgbeAdapter->RxBufferMapping);
+  }
+
+PciIoError:
+  if (PciAttributesSaved) {
+
+      // Restore original PCI attributes
+    XgbeAdapter->PciIo->Attributes (
+                          XgbeAdapter->PciIo,
+                          EfiPciIoAttributeOperationSet,
+                          XgbeAdapter->OriginalPciAttributes,
+                          NULL
+                        );
   }
 
   return Status;
@@ -962,9 +1094,20 @@ XgbeFirstTimeInit (
   }
   DEBUGPRINT (INIT, ("\n"));
 
+  if (ixgbe_fw_recovery_mode (&XgbeAdapter->Hw)) {
+    // Firmware is in recovery mode - we CANNOT touch the NIC a lot from now on.
+    // Report this via the Driver Health Protocol.
+
+    DEBUGPRINT (CRITICAL, ("NIC firmware is in Recovery Mode, skip further initialization.\n"));
+    XgbeAdapter->FwSupported = FALSE;
+    return EFI_UNSUPPORTED;
+  } else {
+    XgbeAdapter->FwSupported = TRUE;
+  }
+
   Reg = IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_CTRL_EXT);
   if ((Reg & IXGBE_CTRL_EXT_DRV_LOAD) != 0) {
-    DEBUGPRINT (CRITICAL, ("iSCSI Boot detected on port!\n"));
+    DEBUGPRINT (CRITICAL, ("XgbeFirstTimeInit: iSCSI Boot detected on port!\n"));
     return EFI_ACCESS_DENIED;
   }
 
@@ -981,7 +1124,7 @@ XgbeFirstTimeInit (
   XgbeSetRegBits (XgbeAdapter, IXGBE_CTRL_EXT, IXGBE_CTRL_EXT_DRV_LOAD);
 
   return EFI_SUCCESS;
-};
+}
 
 /** Initializes the hardware and sets up link.
 
@@ -1036,6 +1179,15 @@ XgbeInitHw (
     Speed = IXGBE_LINK_SPEED_82598_AUTONEG;
   } else if (XgbeAdapter->Hw.device_id == IXGBE_DEV_ID_X550EM_X_KX4) {
     Speed = IXGBE_LINK_SPEED_1GB_FULL;
+  } else if ((XgbeAdapter->Hw.device_id == IXGBE_DEV_ID_X550EM_A_KR_L ||
+    XgbeAdapter->Hw.device_id == IXGBE_DEV_ID_X550EM_A_KR) &&
+    XgbeAdapter->Hw.phy.nw_mng_if_sel & IXGBE_NW_MNG_IF_SEL_PHY_SPEED_2_5G) {
+    Speed = IXGBE_LINK_SPEED_2_5GB_FULL;
+  } else if (XgbeAdapter->Hw.device_id == IXGBE_DEV_ID_X550EM_A_SGMII ||
+             XgbeAdapter->Hw.device_id == IXGBE_DEV_ID_X550EM_A_SGMII_L) {
+    Speed = IXGBE_LINK_SPEED_1GB_FULL |
+            IXGBE_LINK_SPEED_100_FULL |
+            IXGBE_LINK_SPEED_10_FULL;
   } else {
     Speed = IXGBE_LINK_SPEED_82599_AUTONEG;
   }
@@ -1047,6 +1199,10 @@ XgbeInitHw (
     DEBUGPRINT (CRITICAL, ("ixgbe_setup_link fails\n"));
     return EFI_DEVICE_ERROR;
   }
+
+  // Enable interrupt causes.
+  XgbeConfigureInterrupts (XgbeAdapter);
+
   return EFI_SUCCESS;
 }
 
@@ -1065,63 +1221,55 @@ XgbeTxRxConfigure (
   UINT64  MemAddr;
   UINT32 *MemPtr;
   UINT16  i;
+  struct ixgbe_legacy_rx_desc   *RxDesc;
+  LOCAL_RX_BUFFER *             RxBuffer;
 
   DEBUGPRINT (XGBE, ("XgbeTxRxConfigure\n"));
 
   XgbeReceiveStop (XgbeAdapter);
 
-  // Setup the receive ring
-  XgbeAdapter->RxRing = (struct ixgbe_legacy_rx_desc *) (UINTN)
-                         ((XgbeAdapter->MemoryPtr + BYTE_ALIGN_64) & 0xFFFFFFFFFFFFFF80);
-
-  // Setup TX ring
-  XgbeAdapter->TxRing = (struct ixgbe_legacy_tx_desc *) ((UINT8 *)
-                         XgbeAdapter->RxRing +
-                         (sizeof (struct ixgbe_legacy_rx_desc) * DEFAULT_RX_DESCRIPTORS));
   DEBUGPRINT (
     XGBE, ("Rx Ring %x Tx Ring %X  RX size %X \n",
-    XgbeAdapter->RxRing,
-    XgbeAdapter->TxRing,
+    XGBE_RX_DESC (&XgbeAdapter->RxRing, 0),
+    XGBE_TX_DESC (&XgbeAdapter->TxRing, 0),
     (sizeof (struct ixgbe_legacy_rx_desc) * DEFAULT_RX_DESCRIPTORS))
   );
 
-  for (i = 0; i < DEFAULT_TX_DESCRIPTORS; i++) {
-    XgbeAdapter->TxBufferUsed[i] = FALSE;
-  }
+  ZeroMem (XgbeAdapter->TxBufferMappings, sizeof (XgbeAdapter->TxBufferMappings));
 
-  // Since we already have the size of the TX Ring, use it to setup the local receive buffers
-  XgbeAdapter->LocalRxBuffer = (LOCAL_RX_BUFFER *) ((UINT8 *)
-                                 XgbeAdapter->TxRing +
-                                 (sizeof (struct ixgbe_legacy_tx_desc) * DEFAULT_TX_DESCRIPTORS));
-  DEBUGPRINT (
-    XGBE, ("Tx Ring %x Added %x\n",
-    XgbeAdapter->TxRing,
-    ((UINT8 *) XgbeAdapter->TxRing + (sizeof (struct ixgbe_legacy_tx_desc) * DEFAULT_TX_DESCRIPTORS)))
-  );
+  RxBuffer = (LOCAL_RX_BUFFER *) XgbeAdapter->RxBufferMapping.PhysicalAddress;
+
   DEBUGPRINT (
     XGBE, ("Local Rx Buffer %X size %X\n",
-    XgbeAdapter->LocalRxBuffer,
+    RxBuffer,
     (sizeof (struct ixgbe_legacy_tx_desc) * DEFAULT_TX_DESCRIPTORS))
   );
 
-  // now to link the RX Ring to the local buffers
+  //
+  // Now to link the RX Ring to the local buffers
+  // Write physical addresses of Rx buffers to Rx descriptors
+  //
   for (i = 0; i < DEFAULT_RX_DESCRIPTORS; i++) {
-    XgbeAdapter->RxRing[i].buffer_addr = (UINT64) ((UINTN) XgbeAdapter->LocalRxBuffer[i].RxBuffer);
-    DEBUGPRINT (XGBE, ("Rx Local Buffer %X\n", (XgbeAdapter->RxRing[i]).buffer_addr));
+    RxDesc = XGBE_RX_DESC (&XgbeAdapter->RxRing, i);
+    RxDesc->buffer_addr = (UINT64) ((UINTN) RxBuffer[i].RxBuffer);
+    DEBUGPRINT (XGBE, ("Rx Local Buffer %X\n", RxDesc->buffer_addr));
   }
 
   _DisplayBuffersAndDescriptors (XgbeAdapter);
 
+  //
   // Setup the RDBA, RDLEN
-  IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_RDBAL (0), (UINT32) (UINTN) (XgbeAdapter->RxRing));
+  // Write physical address of Rx descriptor buffer for HW to use
+  //
+  IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_RDBAL (0), (UINT32) (UINTN) (XgbeAdapter->RxRing.PhysicalAddress));
 
-  MemAddr = (UINT64) (UINTN) XgbeAdapter->RxRing;
+  MemAddr = (UINT64) (UINTN) XgbeAdapter->RxRing.PhysicalAddress;
   MemPtr  = &((UINT32) MemAddr);
   MemPtr++;
   IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_RDBAH (0), *MemPtr);
   DEBUGPRINT (XGBE, ("Rdbal0 %X\n", (UINT32) IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_RDBAL (0))));
   DEBUGPRINT (XGBE, ("RdBah0 %X\n", (UINT32) IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_RDBAH (0))));
-  DEBUGPRINT (XGBE, ("Rx Ring %X\n", XgbeAdapter->RxRing));
+  DEBUGPRINT (XGBE, ("Rx Ring %X\n", XgbeAdapter->RxRing.PhysicalAddress));
 
   IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_RDH (0), 0);
   IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_TDH (0), 0);
@@ -1136,14 +1284,6 @@ XgbeTxRxConfigure (
     IXGBE_RDLEN (0),
     (sizeof (struct ixgbe_legacy_rx_desc) * DEFAULT_RX_DESCRIPTORS)
   );
-
-  if (XgbeAdapter->VlanEnable) {
-    DEBUGPRINT (CRITICAL, ("1: Setting VLAN tag = %d\n", XgbeAdapter->VlanTag));
-    ixgbe_clear_vfta (&XgbeAdapter->Hw);
-    ixgbe_set_vfta (&XgbeAdapter->Hw, XgbeAdapter->VlanTag, 0, TRUE, FALSE);
-    XgbeSetRegBits (XgbeAdapter, IXGBE_VLNCTRL, IXGBE_VLNCTRL_VFE);
-    XgbeSetRegBits (XgbeAdapter, IXGBE_RXDCTL (0), IXGBE_RXDCTL_VME);
-  }
 
   if ((XgbeAdapter->Hw.mac.type == ixgbe_mac_82599EB)
     || (XgbeAdapter->Hw.mac.type == ixgbe_mac_X540)
@@ -1195,8 +1335,8 @@ XgbeTxRxConfigure (
   XgbeAdapter->CurRxInd     = 0;
   XgbeAdapter->CurTxInd     = 0;  // currently usable buffer
   XgbeAdapter->XmitDoneHead = 0;  // the last cleaned buffer
-  IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_TDBAL (0), (UINT32) (UINTN) (XgbeAdapter->TxRing));
-  MemAddr = (UINT64) (UINTN) XgbeAdapter->TxRing;
+  IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_TDBAL (0), (UINT32) (XgbeAdapter->TxRing.PhysicalAddress));
+  MemAddr = (UINT64) XgbeAdapter->TxRing.PhysicalAddress;
   MemPtr  = &((UINT32) MemAddr);
   MemPtr++;
   IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_TDBAH (0), *MemPtr);
@@ -1266,7 +1406,20 @@ XgbeInitialize (
   PxeStatcode = PXE_STATCODE_SUCCESS;
   TempBar     = NULL;
 
-  ZeroMem ((VOID *) ((UINTN) XgbeAdapter->MemoryPtr), MEMORY_NEEDED);
+  ZeroMem (
+    (VOID *) XgbeAdapter->RxRing.UnmappedAddress,
+    RX_RING_SIZE
+    );
+
+  ZeroMem (
+    (VOID *) XgbeAdapter->TxRing.UnmappedAddress,
+    TX_RING_SIZE
+    );
+
+  ZeroMem (
+    (VOID *) XgbeAdapter->RxBufferMapping.UnmappedAddress,
+    RX_BUFFERS_SIZE
+    );
 
   // If the hardware has already been started then don't bother with a reset
   // We want to make sure we do not have to restart link negotiation.
@@ -1284,8 +1437,10 @@ XgbeInitialize (
   }
 
   // If we reset the adapter then reinitialize the TX and RX rings
+  // and reconfigure interrupt causes.
   if (PxeStatcode == PXE_STATCODE_SUCCESS) {
     XgbeTxRxConfigure (XgbeAdapter);
+    XgbeConfigureInterrupts (XgbeAdapter);
   }
 
   return PxeStatcode;
@@ -1585,7 +1740,7 @@ XgbeReceiveStop (
   XgbeAdapter->CurRxInd = 0;
 
   // Clean up any left over packets
-  ReceiveDesc = XgbeAdapter->RxRing;
+  ReceiveDesc = XGBE_RX_DESC (&XgbeAdapter->RxRing, 0);
   for (i = 0; i < DEFAULT_RX_DESCRIPTORS; i++) {
     ReceiveDesc->length = 0;
     ReceiveDesc->status = 0;
@@ -1616,11 +1771,7 @@ XgbeReceiveStart (
     DEBUGPRINT (CRITICAL, ("Receive unit already started!\n"));
     return;
   }
-  XgbeAdapter->IntStatus = 0;
 
-  if (XgbeAdapter->VlanEnable) {
-    XgbeSetRegBits (XgbeAdapter, IXGBE_RXDCTL (0), IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME);
-  }
   XgbeSetRegBits (XgbeAdapter, IXGBE_RXDCTL (0), IXGBE_RXDCTL_ENABLE);
   if ((XgbeAdapter->Hw.mac.type == ixgbe_mac_82599EB)
     || (XgbeAdapter->Hw.mac.type == ixgbe_mac_X540)
@@ -1930,6 +2081,7 @@ XgbeFreeTxBuffers (
   struct ixgbe_legacy_tx_desc *TransmitDescriptor;
   UINT32                       Tdh;
   UINT16                       i;
+  UNDI_DMA_MAPPING             *TxBufMapping;
 
   //  Read the TX head posistion so we can see which packets have been sent out on the wire.
   Tdh = IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_TDH (0));
@@ -1944,19 +2096,23 @@ XgbeFreeTxBuffers (
       break;
     }
 
-    TransmitDescriptor = &XgbeAdapter->TxRing[XgbeAdapter->XmitDoneHead];
+    TransmitDescriptor = XGBE_TX_DESC (&XgbeAdapter->TxRing, XgbeAdapter->XmitDoneHead);
+    TxBufMapping = &XgbeAdapter->TxBufferMappings[XgbeAdapter->XmitDoneHead];
+
     if ((TransmitDescriptor->upper.fields.status & IXGBE_TXD_STAT_DD) != 0) {
 
-      if (XgbeAdapter->TxBufferUsed[XgbeAdapter->XmitDoneHead] == 0) {
+      if (TxBufMapping->UnmappedAddress == 0) {
         DEBUGPRINT (CRITICAL, ("ERROR: TX buffer complete without being marked used!\n"));
         break;
       }
 
       DEBUGPRINT (XGBE, ("Writing buffer address %d, %x\n", i, TxBuffer[i]));
-      TxBuffer[i] = XgbeAdapter->TxBufferUsed[XgbeAdapter->XmitDoneHead];
+      UndiDmaUnmapMemory (XgbeAdapter->PciIo, TxBufMapping);
+
+      TxBuffer[i] = TxBufMapping->UnmappedAddress;
       i++;
 
-      XgbeAdapter->TxBufferUsed[XgbeAdapter->XmitDoneHead]  = 0;
+      ZeroMem (TxBufMapping, sizeof (UNDI_DMA_MAPPING));
       TransmitDescriptor->upper.fields.status                 = 0;
 
       XgbeAdapter->XmitDoneHead++;
@@ -2021,6 +2177,9 @@ GetLinkSpeed (
 
   ixgbe_check_link (&XgbeAdapter->Hw, &Speed, &LinkUp, FALSE);
   switch (Speed) {
+  case IXGBE_LINK_SPEED_10_FULL:
+    LinkSpeed = LINK_SPEED_10FULL;
+    break;
   case IXGBE_LINK_SPEED_100_FULL:
     LinkSpeed = LINK_SPEED_100FULL;
     break;
@@ -2216,6 +2375,7 @@ GetModuleQualificationResult (
   // Module is qualified or qualification process is not enabled
   return MODULE_SUPPORTED;
 }
+
 
 
 /** This is only for debugging, it will pause and wait for the user to press <ENTER>.

@@ -691,8 +691,21 @@ I40eUndiRunPhyLoopback (
     FreeTxBuffer
   );
 
+  Status = gBS->AllocatePool (
+                  EfiBootServicesData,
+                  I40E_RXBUFFER_2048,
+                  (VOID * *) &CpbReceive.BufferAddr
+                );
+  if (EFI_ERROR (Status)) {
+    DEBUGPRINT (CRITICAL, ("AllocatePool returned %X\n", Status));
+    DEBUGWAIT (CRITICAL);
+    return EFI_DEVICE_ERROR;
+  }
+
   j = 0;
   while (j < PHY_LOOPBACK_ITERATIONS) {
+    ZeroMem ((VOID *) CpbReceive.BufferAddr, I40E_RXBUFFER_2048);
+
     PxeStatCode = I40eTransmit (
                     AdapterInfo,
                     (UINT64) &PxeCpbTransmit,
@@ -707,57 +720,45 @@ I40eUndiRunPhyLoopback (
     }
 
     // Wait a little, then check to see if the packet has arrived
-    Status = gBS->AllocatePool (
-                    EfiBootServicesData,
-                    I40E_RXBUFFER_2048,
-                    (VOID * *) &CpbReceive.BufferAddr
-                  );
-    if (EFI_ERROR (Status)) {
-      DEBUGPRINT (CRITICAL, ("AllocatePool returned %X\n", Status));
-      DEBUGWAIT (CRITICAL);
-      break;
-    }
 
     DEBUGPRINT (DIAG, ("CpbReceive.BufferAddr allocated at %x\n", (UINTN) CpbReceive.BufferAddr));
     DEBUGWAIT (DIAG);
     CpbReceive.BufferLen = I40E_RXBUFFER_2048;
 
-    i = 0;
-    do {
-      PxeStatCode = I40eReceive (
-                      AdapterInfo,
-                      &CpbReceive,
-                      &DbReceive
-                    );
-      gBS->Stall (1);
-      i++;
-      if (i > 100000) {
+    for (i = 0; i <= 100000; i++) {
+      Status = I40eReceive (
+                 AdapterInfo,
+                 &CpbReceive,
+                 &DbReceive
+               );
+      gBS->Stall (10);
+      if (Status == PXE_STATCODE_NO_DATA) {
+        continue;
+      } else if (Status != PXE_STATCODE_SUCCESS) {
         break;
       }
-    } while (PxeStatCode == PXE_STATCODE_NO_DATA);
+
+      // Packets from NCSI may be received even though internal PHY loopback
+      // is set.
+      // Test for packet we have just sent. If received something else, ignore
+      // and continue polling for packets.
+      if (CompareMem ((VOID *) (UINTN) CpbReceive.BufferAddr, (VOID *) (UINTN) mPacket, TEST_PACKET_SIZE) == 0) {
+
+        // Coming out with PXE_STATCODE_SUCCESS
+        break;
+      }
+    }
 
 #if (DBG_LVL & DIAG)
     _DisplayBuffersAndDescriptors (AdapterInfo);
 #endif /* (DBG_LVL & DIAG) */
 
-    if (PxeStatCode != PXE_STATCODE_SUCCESS) {
-      DEBUGPRINT (CRITICAL, ("I40eReceive returned error code %X\n", PxeStatCode));
-      DEBUGWAIT (CRITICAL);
+    if (i > 100000) {
+      DEBUGPRINT (CRITICAL, ("ERROR: Receive timeout on iteration %d\n", i));
       Status = EFI_DEVICE_ERROR;
       break;
-    }
-
-    if (CompareMem (
-          (VOID *) (UINTN) CpbReceive.BufferAddr, 
-          (VOID *) (UINTN) mPacket, TEST_PACKET_SIZE
-        ) == 0)
-    {
-      DEBUGPRINT (DIAG, ("receive packet verified\n"));
-      DEBUGWAIT (DIAG);
-      Status = EFI_SUCCESS;
-    } else {
-      DEBUGPRINT (CRITICAL, ("Lopback test failed - transmited and received packets don't match\n"));
-      DEBUGWAIT (CRITICAL);
+    } else if (Status != PXE_STATCODE_SUCCESS) {
+      DEBUGPRINT (CRITICAL, ("ERROR: Receive failed with status %X\n", Status));
       Status = EFI_DEVICE_ERROR;
       break;
     }
@@ -767,13 +768,12 @@ I40eUndiRunPhyLoopback (
       AdapterInfo->TxRxDescriptorCount,
       FreeTxBuffer
     );
-
     j++;
-    gBS->FreePool ((VOID *) ((UINTN) CpbReceive.BufferAddr));
+
   }
 
+  gBS->FreePool ((VOID *) ((UINTN) CpbReceive.BufferAddr));
   gBS->FreePool ((VOID *) FreeTxBuffer);
-
   return Status;
 }
 
@@ -1080,7 +1080,7 @@ I40eUndiDriverDiagnosticsRunDiagnostics (
     }
   }
 
-  if (!UndiPrivateData->NicInfo.FwVersionSupported) {
+  if (!UndiPrivateData->NicInfo.FwSupported) {
     return EFI_UNSUPPORTED;
   }
 

@@ -64,7 +64,7 @@ BOOLEAN _WolGetInfoFromEeprom_10G(WOL_ADAPTER_HANDLE_TYPE Handle)
     case 0x0004:                /* WOL supported on both ports      */
       return TRUE;
     case 0x0008:                /* WOL supported on the first port  */
-      return _WolGetLanPort(Handle) == 0;
+      return _WolGetFunction(Handle) == 0;
   }
   return FALSE;
 }

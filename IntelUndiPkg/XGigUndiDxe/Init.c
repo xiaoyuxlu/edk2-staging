@@ -43,7 +43,7 @@ PXE_SW_UNDI *      mIxgbePxe31     = NULL;  // 3.1 entry
 UNDI_PRIVATE_DATA *mXgbeDeviceList[MAX_NIC_INTERFACES];
 NII_TABLE          mIxgbeUndiData;
 UINT8              mActiveControllers = 0;
-UINT8              mActiveChildren    = 0;
+UINT16             mActiveChildren    = 0;
 EFI_EVENT          gEventNotifyExitBs;
 EFI_EVENT          gEventNotifyVirtual;
 
@@ -68,6 +68,7 @@ InitUndiNotifyExitBs (
   )
 {
   UINT32 i;
+  UINT64 Result = 0;
 
   // Divide Active interfaces by two because it tracks both the controller and
   // child handle, then shutdown the receive unit in case it did not get done
@@ -75,12 +76,31 @@ InitUndiNotifyExitBs (
   for (i = 0; i < mActiveControllers; i++) {
     if (mXgbeDeviceList[i]->NicInfo.Hw.device_id != 0) {
       if (mXgbeDeviceList[i]->IsChildInitialized) {
-        IXGBE_WRITE_REG (&mXgbeDeviceList[i]->NicInfo.Hw, IXGBE_RXDCTL (0), 0);
+        XgbeShutdown (&mXgbeDeviceList[i]->NicInfo);
         XgbePciFlush (&mXgbeDeviceList[i]->NicInfo);
       }
+
       if (mXgbeDeviceList[i]->NicInfo.Hw.mac.type == ixgbe_mac_X550EM_a) {
         XgbeClearRegBits (&mXgbeDeviceList[i]->NicInfo, IXGBE_CTRL_EXT, IXGBE_CTRL_EXT_DRV_LOAD);
       }
+
+      // Get the PCI Command options that are supported by this controller.
+      mXgbeDeviceList[i]->NicInfo.PciIo->Attributes (
+                                           mXgbeDeviceList[i]->NicInfo.PciIo,
+                                           EfiPciIoAttributeOperationSupported,
+                                           0,
+                                           &Result
+                                           );
+
+      mXgbeDeviceList[i]->NicInfo.PciIo->Attributes (
+                                           mXgbeDeviceList[i]->NicInfo.PciIo,
+                                           EfiPciIoAttributeOperationDisable,
+                                           Result & EFI_PCI_IO_ATTRIBUTE_BUS_MASTER,
+                                           NULL
+                                           );
+
+      // Set the indicator to block DMA access in UNDI functions
+      mXgbeDeviceList[i]->NicInfo.ExitBootServicesTriggered = TRUE;
     }
   }
 }
@@ -238,7 +258,7 @@ InitUndiPxeStructInit (
                            PXE_ROMID_IMP_PROMISCUOUS_RX_SUPPORTED |
                            PXE_ROMID_IMP_BROADCAST_RX_SUPPORTED |
                            PXE_ROMID_IMP_FILTERED_MULTICAST_RX_SUPPORTED |
-                           PXE_ROMID_IMP_SOFTWARE_INT_SUPPORTED |
+                           PXE_ROMID_IMP_TX_COMPLETE_INT_SUPPORTED |
                            PXE_ROMID_IMP_PACKET_RX_INT_SUPPORTED;
 
   PxePtr->EntryPoint    = (UINT64) UndiApiEntry;
@@ -264,12 +284,13 @@ InitUndiPxeStructInit (
                          UNDI driver is layering on..
    @param[in]   PxePtr   Pointer to the PXE structure
 
-   @return   None
+   @retval   EFI_SUCCESS          PxeStruct updated successful.
+   @retval   EFI_OUT_OF_RESOURCES Too many NIC (child) interfaces.
 **/
-VOID
+EFI_STATUS
 InitUndiPxeUpdate (
   IN XGBE_DRIVER_DATA *NicPtr,
-  IN PXE_SW_UNDI *     PxePtr
+  IN PXE_SW_UNDI      *PxePtr
   )
 {
   if (NicPtr == NULL) {
@@ -279,7 +300,11 @@ InitUndiPxeUpdate (
       mActiveChildren--;
     }
   } else {
-    mActiveChildren++;
+    if (mActiveChildren < MAX_NIC_INTERFACES) {
+      mActiveChildren++;
+    } else {
+      return EFI_OUT_OF_RESOURCES;
+    }
   }
 
   // number of NICs this undi supports
@@ -287,6 +312,7 @@ InitUndiPxeUpdate (
   PxePtr->Fudge = (UINT8) (PxePtr->Fudge - CheckSum ((VOID *) PxePtr, PxePtr->Len));
   DEBUGPRINT (INIT, ("XgbeUndiPxeUpdate: ActiveChildren = %d\n", mActiveChildren));
   DEBUGPRINT (INIT, ("XgbeUndiPxeUpdate: PxePtr->IFcnt = %d\n", PxePtr->IFcnt));
+  return EFI_SUCCESS;
 }
 
 
@@ -474,7 +500,6 @@ InitializeXGigUndiDriver (
   IN EFI_SYSTEM_TABLE *SystemTable
   )
 {
-  EFI_LOADED_IMAGE_PROTOCOL *LoadedImageInterface;
   EFI_STATUS                 Status;
 
   gImageHandle  = ImageHandle;
@@ -518,23 +543,6 @@ InitializeXGigUndiDriver (
     DEBUGPRINT (CRITICAL, ("InstallMultipleProtocolInterfaces returns %x\n", Status));
     return Status;
   }
-
-  // This protocol does not need to be closed because it uses the GET_PROTOCOL attribute
-  Status = gBS->OpenProtocol (
-                  ImageHandle,
-                  &gEfiLoadedImageProtocolGuid,
-                  (VOID *) &LoadedImageInterface,
-                  ImageHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                );
-
-  if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("%X: OpenProtocol returns %r\n", __LINE__, Status));
-    return Status;
-  }
-
-  LoadedImageInterface->Unload = UnloadXGigUndiDriver;
 
   Status = gBS->CreateEvent (
                   EVT_SIGNAL_EXIT_BOOT_SERVICES,
@@ -773,8 +781,14 @@ InitUndiDriverSupported (
     if (PciIo == NULL) {
       return EFI_DEVICE_ERROR;
     }
-  }
+    if (ixgbe_fw_recovery_mode (&UndiPrivateData->NicInfo.Hw)) {
 
+      // Controller is already partially initialized due to FW incompatibility,
+      // report EFI_ALREADY_STARTED to prevent another DriverBinding->Start call.
+
+      return EFI_ALREADY_STARTED;
+    }
+  }
   Status = PciIo->Pci.Read (
                         PciIo,
                         EfiPciIoWidthUint8,
@@ -952,6 +966,7 @@ InitController (
   }
 
   if (Status == EFI_ACCESS_DENIED) {
+    DEBUGPRINT(INIT, ("InitController: Status is EFI_ACCESS_DENIED -> UndiEnabled is FALSE.\n"));
     UndiPrivateData->NicInfo.UndiEnabled = FALSE;
   } else {
     UndiPrivateData->NicInfo.UndiEnabled = TRUE;
@@ -1094,18 +1109,24 @@ InitUndiCallbackFunctions (
 
    @param[in]       UndiPrivateData        Private data structure
 
-   @retval          None
+   @retval          EFI_SUCCESS          Undi structure initialized correctly.
+   @retval          EFI_OUT_OF_RESOURCES Too many NIC (child) interfaces.
 **/
-VOID
+EFI_STATUS
 InitUndiStructures (
   IN UNDI_PRIVATE_DATA *UndiPrivateData
   )
 {
-
+  EFI_STATUS Status;
   // the IfNum index for the current interface will be the total number
   // of interfaces initialized so far
-  InitUndiPxeUpdate (&UndiPrivateData->NicInfo, mIxgbePxe31);
+  Status = InitUndiPxeUpdate (&UndiPrivateData->NicInfo, mIxgbePxe31);
+  if (EFI_ERROR (Status)) {
+    DEBUGPRINT (CRITICAL, ("InitUndiPxeUpdate returns %r\n", Status));
+    return Status;
+  }
   InitUndiCallbackFunctions (&UndiPrivateData->NicInfo);
+  return EFI_SUCCESS;
 }
 
 /** Initializes Device Path Protocol
@@ -1185,6 +1206,66 @@ InitDriverStopProtocol (
     return Status;
   }
   return EFI_SUCCESS;
+}
+
+/** Partially initializes controller
+
+  Perform partial initialization required when FW version is not supported and we don't want
+  to initialize HW. Still we need to perform some steps to be able to report out health status
+  correctly
+
+  @param[in]  This                    Protocol instance pointer
+  @param[in]  UndiPrivateData         Pointer to the driver data
+  @param[in]  Controller              Handle of device to work with.
+  
+  @retval   EFI_SUCCESS            Controller partially initialized
+  @retval   EFI_OUT_OF_RESOURCES   Failed to add HII packages
+  @retval   !EFI_SUCCESS           Failed to install NII protocols or to open PciIo
+**/
+EFI_STATUS
+InitControllerPartial (
+  IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+  IN  UNDI_PRIVATE_DATA *          UndiPrivateData,
+  IN  EFI_HANDLE                   Controller
+  )
+{
+  EFI_GUID             mHiiFormGuid = XGBE_HII_FORM_GUID;
+  EFI_STATUS           Status;
+
+
+  DEBUGPRINT (INIT, ("InitControllerPartial\n"));
+
+  UndiPrivateData->Signature = XGBE_UNDI_DEV_SIGNATURE;
+  UndiPrivateData->ControllerHandle = Controller;
+  UndiPrivateData->NIIPointerProtocol.NiiProtocol31 = &UndiPrivateData->NiiProtocol31;
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &Controller,
+                  &gEfiNiiPointerGuid, 
+                  &UndiPrivateData->NIIPointerProtocol,
+                  NULL
+                );
+  if (EFI_ERROR (Status)) {
+    DEBUGPRINT (CRITICAL, ("InstallMultipleProtocolInterfaces returns Error = %d %r\n", Status, Status));
+    return Status;
+  }
+
+  UndiPrivateData->HiiInstallHandle = Controller;
+
+  UndiPrivateData->HiiHandle = HiiAddPackages (
+                                 &mHiiFormGuid,
+                                 UndiPrivateData->HiiInstallHandle,
+                                 XGigUndiDxeStrings,
+                                 NULL
+                               );
+  if (UndiPrivateData->HiiHandle == NULL) {
+    DEBUGPRINT (CRITICAL, ("PreparePackageList, out of resource.\n"));
+    DEBUGWAIT (CRITICAL);
+    AsciiPrint ("\nInitControllerPartial out of resources\n");
+
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  return Status;
 }
 
 /** Initializes Network Interface Identifier Protocol
@@ -1473,8 +1554,28 @@ InitUndiDriverStart (
     }
 
     Status = InitController (XgbePrivate);
-    if (EFI_ERROR (Status)) {
-      DEBUGPRINT (CRITICAL, ("InitController fails: %r\n", Status));
+    if (Status == EFI_UNSUPPORTED
+      && !XgbePrivate->NicInfo.FwSupported)
+    {
+
+      // Current FW version is not supported. Perform only part of initialization needed
+      // to report our health status correctly thru the DriverHealthProtocol
+      Status = InitControllerPartial (
+                 This,
+                 XgbePrivate,
+                 Controller
+               );
+      if (EFI_ERROR (Status)) {
+        DEBUGPRINT (CRITICAL, ("InitControllerPartial failed: %r\n", Status));
+        goto UndiError;
+      }
+      return Status;
+    }
+    if (EFI_ERROR (Status) 
+      && (Status != EFI_ACCESS_DENIED))
+    {
+
+      DEBUGPRINT (CRITICAL, ("InitController fails: %r", Status));
       goto UndiError;
     }
 
@@ -1497,11 +1598,16 @@ InitUndiDriverStart (
       goto UndiError;
     }
   }
-  
+
   // CHILD INIT
-  
-  if (InitializeChild) {
-    InitUndiStructures (XgbePrivate);
+  if (InitializeChild && XgbePrivate->NicInfo.FwSupported) {
+    DEBUGPRINT (INIT, ("InitUndiDriverStart: Entered child handle initialization.\n"));
+
+    Status = InitUndiStructures (XgbePrivate);
+    if (EFI_ERROR (Status)) {
+      DEBUGPRINT (CRITICAL, ("InitUndiStructures failed with %r\n", Status));
+      goto UndiErrorDeleteDevicePath;
+    }
 
     Status = InitChildProtocols (
                XgbePrivate
@@ -1521,9 +1627,11 @@ InitUndiDriverStart (
     }
 
     XgbePrivate->IsChildInitialized = TRUE;
+  } else {
+    DEBUGPRINT (CRITICAL, ("InitUndiDriverStart: Did not enter child handle init.\n"));
   }
-  DEBUGPRINT (INIT, ("XgbeUndiDriverStart - success\n"));
 
+  DEBUGPRINT (INIT, ("XgbeUndiDriverStart - success\n"));
   return EFI_SUCCESS;
 
 UndiErrorDeleteDevicePath:
@@ -1538,7 +1646,6 @@ UndiError:
     Controller,
     This
   );
-
   gBS->FreePool ((VOID *) XgbePrivate);
 
   DEBUGPRINT (INIT, ("XgbeUndiDriverStart - error %x\n", Status));
@@ -1585,27 +1692,43 @@ StopController (
     // This one should be always installed so there is real issue if we cannot uninstall
     return Status;
   }
+  if (!UndiPrivateData->NicInfo.FwSupported) {
+
+    // Remove packages added in partial init flow
+    if (UndiPrivateData->HiiHandle != NULL) {
+      DEBUGPRINT (CRITICAL, ("Removing Hii Packages \n"));
+      HiiRemovePackages (UndiPrivateData->HiiHandle);
+      UndiPrivateData->HiiHandle = NULL;
+    }
+  }
+
 
   DEBUGPRINT (INIT, ("EfiLibFreeUnicodeStringTable"));
   FreeUnicodeStringTable (UndiPrivateData->ControllerNameTable);
 
-  Status = UndiPrivateData->NicInfo.PciIo->FreeBuffer (
-                                             UndiPrivateData->NicInfo.PciIo,
-                                             UNDI_MEM_PAGES (MEMORY_NEEDED),
-                                             (VOID *) (UINTN) UndiPrivateData->NicInfo.MemoryPtr
-                                           );
+  //
+  // Free DMA resources: Tx & Rx descriptors, Rx buffers
+  //
+  UndiDmaFreeCommonBuffer (
+    UndiPrivateData->NicInfo.PciIo,
+    &UndiPrivateData->NicInfo.TxRing
+    );
 
-  if (EFI_ERROR (Status)) {
-    DEBUGPRINT (INIT, ("PCI IO FreeBuffer returns %X\n", Status));
-    DEBUGWAIT (INIT);
-    return Status;
-  }
+  UndiDmaFreeCommonBuffer (
+    UndiPrivateData->NicInfo.PciIo,
+    &UndiPrivateData->NicInfo.RxRing
+    );
 
-  DEBUGPRINT (INIT, ("Attributes"));
+  UndiDmaFreeCommonBuffer (
+    UndiPrivateData->NicInfo.PciIo,
+    &UndiPrivateData->NicInfo.RxBufferMapping
+    );
+
+  // Restore original PCI attributes
   Status = UndiPrivateData->NicInfo.PciIo->Attributes (
                                              UndiPrivateData->NicInfo.PciIo,
-                                             EfiPciIoAttributeOperationDisable,
-                                             EFI_PCI_DEVICE_ENABLE | EFI_PCI_IO_ATTRIBUTE_DUAL_ADDRESS_CYCLE,
+                                             EfiPciIoAttributeOperationSet,
+                                             UndiPrivateData->NicInfo.OriginalPciAttributes,
                                              NULL
                                            );
   if (EFI_ERROR (Status)) {
@@ -1886,6 +2009,7 @@ UndiGetControllerHealthStatus (
   EFI_STRING_ID                  StringId;
   CHAR16                         ErrorString[MAX_DRIVER_HEALTH_ERROR_STRING];
   UINT32                      ErrorCount;
+  BOOLEAN                     FirmwareCompatible = TRUE;
 
   if ((UndiPrivateData == NULL)
     || (DriverHealthStatus == NULL))
@@ -1902,14 +2026,23 @@ UndiGetControllerHealthStatus (
   *DriverHealthStatus = EfiDriverHealthStatusHealthy;
   ErrorCount = 0;
   
+  if (ixgbe_fw_recovery_mode (&UndiPrivateData->NicInfo.Hw)) {
+    *DriverHealthStatus = EfiDriverHealthStatusFailed;
+    FirmwareCompatible = FALSE;
+    ErrorCount++;
+  }
+  if (*DriverHealthStatus == EfiDriverHealthStatusHealthy) {
+
   // Check if module is supported/qualified for media types fiber and unknown.
-  if (UndiPrivateData->NicInfo.Hw.phy.media_type == ixgbe_media_type_fiber ||
-    UndiPrivateData->NicInfo.Hw.phy.media_type == ixgbe_media_type_unknown) {
-    UndiPrivateData->NicInfo.QualificationResult = GetModuleQualificationResult (&UndiPrivateData->NicInfo);
-    if (UndiPrivateData->NicInfo.QualificationResult != MODULE_SUPPORTED) {
-      DEBUGPRINT (HEALTH, ("*DriverHealthStatus = EfiDriverHealthStatusFailed\n"));
-      *DriverHealthStatus = EfiDriverHealthStatusFailed;
-      ErrorCount++;
+    if (UndiPrivateData->NicInfo.Hw.phy.media_type == ixgbe_media_type_fiber ||
+      UndiPrivateData->NicInfo.Hw.phy.media_type == ixgbe_media_type_unknown)
+    {
+      UndiPrivateData->NicInfo.QualificationResult = GetModuleQualificationResult (&UndiPrivateData->NicInfo);
+      if (UndiPrivateData->NicInfo.QualificationResult != MODULE_SUPPORTED) {
+        DEBUGPRINT (HEALTH, ("*DriverHealthStatus = EfiDriverHealthStatusFailed\n"));
+        *DriverHealthStatus = EfiDriverHealthStatusFailed;
+        ErrorCount++;
+      }
     }
   }
 
@@ -1941,6 +2074,23 @@ UndiGetControllerHealthStatus (
 
   ErrorCount = 0;
   ErrorMessage = *MessageList;
+
+  if (FirmwareCompatible == FALSE) {
+    StrCpyS (ErrorString, MAX_DRIVER_HEALTH_ERROR_STRING, L"Firmware recovery mode detected. Initialization failed.");
+    StringId = HiiSetString (
+                 UndiPrivateData->HiiHandle,
+                 STRING_TOKEN (STR_DRIVER_HEALTH_MESSAGE),
+                 ErrorString,
+                 NULL  // All languages will be updated
+               );
+    if (StringId == 0) {
+      *MessageList = NULL;
+      return EFI_OUT_OF_RESOURCES;
+    }
+    ErrorMessage[ErrorCount].HiiHandle = UndiPrivateData->HiiHandle;
+    ErrorMessage[ErrorCount].StringId = STRING_TOKEN (STR_DRIVER_HEALTH_MESSAGE);
+    ErrorCount++;
+  }
 
   if (UndiPrivateData->NicInfo.QualificationResult != MODULE_SUPPORTED) {
     StrCpyS (

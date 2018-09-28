@@ -203,7 +203,7 @@ EFI_STATUS
 ReadDataFromNvmModule (
   I40E_DRIVER_DATA *AdapterInfo,
   UINT8             ModulePtr,
-  UINT16            Offset,
+  UINT32            Offset,
   UINT16            DataSizeInWords,
   UINT16           *DataPointer
   )

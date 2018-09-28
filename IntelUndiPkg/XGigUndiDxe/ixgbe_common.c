@@ -170,9 +170,6 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_device_supports_autoneg_fc");
 
 	switch (hw->phy.media_type) {
-#ifdef BANDON_BEACH_HW
-	case ixgbe_media_type_fiber_fixed:
-#endif
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		/* flow control autoneg black list */
@@ -206,6 +203,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_82599_T3_LOM:
 #ifndef NO_X540_SUPPORT
 		case IXGBE_DEV_ID_X540T:
+		case IXGBE_DEV_ID_X540T1:
 #endif /* NO_X540_SUPPORT */
 		case IXGBE_DEV_ID_X550T:
 		case IXGBE_DEV_ID_X550T1:
@@ -272,9 +270,6 @@ s32 ixgbe_setup_fc_generic(struct ixgbe_hw *hw)
 			goto out;
 
 		/* fall through - only backplane uses autoc */
-#ifdef BANDON_BEACH_HW
-	case ixgbe_media_type_fiber_fixed:
-#endif /* BANDON_BEACH_HW */
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		reg = IXGBE_READ_REG(hw, IXGBE_PCS1GANA);
@@ -2128,6 +2123,7 @@ STATIC void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
 /**
  *  ixgbe_shift_in_eeprom_bits - Shift data bits in from the EEPROM
  *  @hw: pointer to hardware structure
+ *  @count: number of bits to shift
  **/
 STATIC u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count)
 {
@@ -2186,7 +2182,7 @@ STATIC void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
 /**
  *  ixgbe_lower_eeprom_clk - Lowers the EEPROM's clock input.
  *  @hw: pointer to hardware structure
- *  @eecd: EECD's current value
+ *  @eec: EEC's current value
  **/
 STATIC void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
 {
@@ -2571,6 +2567,7 @@ s32 ixgbe_init_rx_addrs_generic(struct ixgbe_hw *hw)
  *  ixgbe_add_uc_addr - Adds a secondary unicast address.
  *  @hw: pointer to hardware structure
  *  @addr: new address
+ *  @vmdq: VMDq "set" or "pool" index
  *
  *  Adds it to unused receive address register or goes into promiscuous mode.
  **/
@@ -2715,7 +2712,7 @@ STATIC s32 ixgbe_mta_vector(struct ixgbe_hw *hw, u8 *mc_addr)
 /**
  *  ixgbe_set_mta - Set bit-vector in multicast table
  *  @hw: pointer to hardware structure
- *  @hash_value: Multicast address hash value
+ *  @mc_addr: Multicast address
  *
  *  Sets the bit-vector in the multicast table.
  **/
@@ -3166,9 +3163,6 @@ void ixgbe_fc_autoneg(struct ixgbe_hw *hw)
 
 	switch (hw->phy.media_type) {
 	/* Autoneg flow control on fiber adapters */
-#ifdef BANDON_BEACH_HW
-	case ixgbe_media_type_fiber_fixed:
-#endif /* BANDON_BEACH_HW */
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		if (speed == IXGBE_LINK_SPEED_1GB_FULL)
@@ -3425,6 +3419,7 @@ s32 ixgbe_disable_sec_rx_path_generic(struct ixgbe_hw *hw)
 /**
  *  prot_autoc_read_generic - Hides MAC differences needed for AUTOC read
  *  @hw: pointer to hardware structure
+ *  @locked: bool to indicate whether the SW/FW lock was taken
  *  @reg_val: Value we read from AUTOC
  *
  *  The default case requires no protection so just to the register read.
@@ -3952,6 +3947,9 @@ s32 ixgbe_init_uta_tables_generic(struct ixgbe_hw *hw)
  *  ixgbe_find_vlvf_slot - find the vlanid or the first empty slot
  *  @hw: pointer to hardware structure
  *  @vlan: VLAN id to write to VLAN filter
+ *  @vlvf_bypass: true to find vlanid only, false returns first empty slot if
+ *		  vlanid not found
+ *
  *
  *  return the VLVF index where this VLAN id should be placed
  *
@@ -4297,10 +4295,17 @@ s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 		break;
 	case IXGBE_LINKS_SPEED_10_X550EM_A:
 		*speed = IXGBE_LINK_SPEED_UNKNOWN;
+#ifdef PREBOOT_SUPPORT
 		if (hw->device_id == IXGBE_DEV_ID_X550EM_A_1G_T ||
-		    hw->device_id == IXGBE_DEV_ID_X550EM_A_1G_T_L) {
+		    hw->device_id == IXGBE_DEV_ID_X550EM_A_1G_T_L ||
+		    hw->device_id == IXGBE_DEV_ID_X550EM_A_SGMII ||
+		    hw->device_id == IXGBE_DEV_ID_X550EM_A_SGMII_L)
 			*speed = IXGBE_LINK_SPEED_10_FULL;
-		}
+#else
+		if (hw->device_id == IXGBE_DEV_ID_X550EM_A_1G_T ||
+		    hw->device_id == IXGBE_DEV_ID_X550EM_A_1G_T_L)
+			*speed = IXGBE_LINK_SPEED_10_FULL;
+#endif /* PREBOOT_SUPPORT */
 		break;
 	default:
 		*speed = IXGBE_LINK_SPEED_UNKNOWN;
@@ -4631,10 +4636,11 @@ s32 ixgbe_host_interface_command(struct ixgbe_hw *hw, u32 *buffer,
 				 u32 length, u32 timeout, bool return_data)
 {
 	u32 hdr_size = sizeof(struct ixgbe_hic_hdr);
-	u16 dword_len;
+	struct ixgbe_hic_hdr *resp = (struct ixgbe_hic_hdr *)buffer;
 	u16 buf_len;
 	s32 status;
 	u32 bi;
+	u32 dword_len;
 
 	DEBUGFUNC("ixgbe_host_interface_command");
 
@@ -4664,8 +4670,23 @@ s32 ixgbe_host_interface_command(struct ixgbe_hw *hw, u32 *buffer,
 		IXGBE_LE32_TO_CPUS(&buffer[bi]);
 	}
 
-	/* If there is any thing in data position pull it in */
-	buf_len = ((struct ixgbe_hic_hdr *)buffer)->buf_len;
+	/*
+	 * If there is any thing in data position pull it in
+	 * Read Flash command requires reading buffer length from
+	 * two byes instead of one byte
+	 */
+	if (resp->cmd == 0x30) {
+		for (; bi < dword_len + 2; bi++) {
+			buffer[bi] = IXGBE_READ_REG_ARRAY(hw, IXGBE_FLEX_MNG,
+							  bi);
+			IXGBE_LE32_TO_CPUS(&buffer[bi]);
+		}
+		buf_len = (((u16)(resp->cmd_or_resp.ret_status) << 3)
+				  & 0xF00) | resp->buf_len;
+		hdr_size += (2 << 2);
+	} else {
+		buf_len = resp->buf_len;
+	}
 	if (!buf_len)
 		goto rel_out;
 
@@ -4697,6 +4718,8 @@ rel_out:
  *  @min: driver version minor number
  *  @build: driver version build number
  *  @sub: driver version sub build number
+ *  @len: unused
+ *  @driver_ver: unused
  *
  *  Sends driver version number to firmware through the manageability
  *  block.  On success return IXGBE_SUCCESS
@@ -4723,10 +4746,10 @@ s32 ixgbe_set_fw_drv_ver_generic(struct ixgbe_hw *hw, u8 maj, u8 min,
 	fw_cmd.ver_build = build;
 	fw_cmd.ver_sub = sub;
 	fw_cmd.hdr.checksum = 0;
-	fw_cmd.hdr.checksum = ixgbe_calculate_checksum((u8 *)&fw_cmd,
-				(FW_CEM_HDR_LEN + fw_cmd.hdr.buf_len));
 	fw_cmd.pad = 0;
 	fw_cmd.pad2 = 0;
+	fw_cmd.hdr.checksum = ixgbe_calculate_checksum((u8 *)&fw_cmd,
+				(FW_CEM_HDR_LEN + fw_cmd.hdr.buf_len));
 
 	for (i = 0; i <= FW_CEM_MAX_RETRIES; i++) {
 		ret_val = ixgbe_host_interface_command(hw, (u32 *)&fw_cmd,
@@ -4885,7 +4908,6 @@ STATIC const u8 ixgbe_emc_therm_limit[4] = {
 /**
  *  ixgbe_get_thermal_sensor_data - Gathers thermal sensor data
  *  @hw: pointer to hardware structure
- *  @data: pointer to the thermal sensor data structure
  *
  *  Returns the thermal sensor data structure
  **/
@@ -5868,9 +5890,6 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		/* Set the module link speed */
 		switch (hw->phy.media_type) {
-#ifdef BANDON_BEACH_HW
-		case ixgbe_media_type_fiber_fixed:
-#endif /* BANDON_BEACH_HW */
 		case ixgbe_media_type_fiber:
 			ixgbe_set_rate_select_speed(hw,
 						    IXGBE_LINK_SPEED_10GB_FULL);
@@ -5921,9 +5940,6 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		/* Set the module link speed */
 		switch (hw->phy.media_type) {
-#ifdef BANDON_BEACH_HW
-		case ixgbe_media_type_fiber_fixed:
-#endif /* BANDON_BEACH_HW */
 		case ixgbe_media_type_fiber:
 			ixgbe_set_rate_select_speed(hw,
 						    IXGBE_LINK_SPEED_1GB_FULL);

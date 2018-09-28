@@ -127,7 +127,7 @@ XgbeUndiRunPhyLoopback (
                PXE_OPFLAGS_TRANSMIT_WHOLE
              );
 
-    if (EFI_ERROR (Status)) {
+    if (Status != PXE_STATCODE_SUCCESS) {
       DEBUGPRINT (DIAG, ("ixgbe_Transmit Status %X\n", Status));
       DEBUGWAIT (DIAG);
       DEBUGPRINT (DIAG, ("Transmit error\n"));
@@ -475,6 +475,10 @@ XgbeUndiDriverDiagnosticsRunDiagnostics (
       DEBUGPRINT (CRITICAL, ("XgbePrivate->DeviceHandle: %x\n", XgbePrivate->DeviceHandle));
       return EFI_UNSUPPORTED;
     }
+  }
+  
+  if (!XgbePrivate->NicInfo.FwSupported) {
+    return EFI_UNSUPPORTED;
   }
 
   switch (DiagnosticType) {

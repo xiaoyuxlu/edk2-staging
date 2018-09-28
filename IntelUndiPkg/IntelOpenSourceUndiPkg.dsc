@@ -43,7 +43,7 @@
   0|DEFAULT              # The entry: 0|DEFAULT is reserved and always required.
 
 [LibraryClasses]
-  StdLibC|IntelUndiPkg/Library/BaseStdLibC/BaseStdLibC.inf
+  StdLibC|IntelUndiPkg/LibC/LibC.inf
   DebugLib|MdePkg/Library/UefiDebugLibStdErr/UefiDebugLibStdErr.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf

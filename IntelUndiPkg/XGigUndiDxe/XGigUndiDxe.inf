@@ -70,6 +70,8 @@ UNLOAD_IMAGE         = UnloadXGigUndiDriver
  DeviceSupport.h
  Decode.c
  Decode.h
+ Dma.c
+ Dma.h
  DriverDiagnostics.c
  DriverDiagnostics.h
  Init.c

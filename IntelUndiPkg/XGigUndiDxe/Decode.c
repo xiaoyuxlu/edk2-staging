@@ -994,9 +994,7 @@ UndiInterrupt (
   DEBUGPRINT (DECODE, ("UndiInterrupt\n"));
   IntMask = (UINT8) (UINTN) (CdbPtr->OpFlags &
                             (PXE_OPFLAGS_INTERRUPT_RECEIVE |
-                             PXE_OPFLAGS_INTERRUPT_TRANSMIT |
-                             PXE_OPFLAGS_INTERRUPT_COMMAND |
-                             PXE_OPFLAGS_INTERRUPT_SOFTWARE));
+                             PXE_OPFLAGS_INTERRUPT_TRANSMIT));
 
   switch (CdbPtr->OpFlags & PXE_OPFLAGS_INTERRUPT_OPMASK) {
   case PXE_OPFLAGS_INTERRUPT_READ:
@@ -1037,9 +1035,6 @@ UndiInterrupt (
     CdbPtr->StatFlags |= PXE_STATFLAGS_INTERRUPT_TRANSMIT;
   }
 
-  if ((XgbeAdapter->IntMask & PXE_OPFLAGS_INTERRUPT_COMMAND) != 0) {
-    CdbPtr->StatFlags |= PXE_STATFLAGS_INTERRUPT_COMMAND;
-  }
 }
 
 /** Debug function to read receive filter flags and multicast addresses.
@@ -1460,7 +1455,7 @@ UndiStatus (
 {
   PXE_DB_GET_STATUS *          DbPtr;
   UINT16                       i;
-  UINT32                       Status;
+  UINT32                       IntStatus;
   UINT16                       NumEntries;
   struct ixgbe_legacy_rx_desc *RxPtr;
   bool                         LinkUp;
@@ -1494,7 +1489,7 @@ UndiStatus (
 
   // Fill in size of next available receive packet and
   // reserved field in caller's DB storage.
-  RxPtr = &XgbeAdapter->RxRing[XgbeAdapter->CurRxInd];
+  RxPtr = XGBE_RX_DESC (&XgbeAdapter->RxRing, XgbeAdapter->CurRxInd);
 
   // _DisplayBuffersAndDescriptors (XgbeAdapter);
   if ((RxPtr->status & (IXGBE_RXD_STAT_EOP | IXGBE_RXD_STAT_DD)) != 0) {
@@ -1528,29 +1523,19 @@ UndiStatus (
   }
 
   if ((CdbPtr->OpFlags & PXE_OPFLAGS_GET_INTERRUPT_STATUS) != 0) {
-    Status = IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_EICR);
-    XgbeAdapter->IntStatus |= Status;
-
-    // acknowledge the interrupts
-    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
+    IntStatus = IXGBE_READ_REG (&XgbeAdapter->Hw, IXGBE_EICR);
 
     // report all the outstanding interrupts
-    if (XgbeAdapter->IntStatus & IXGBE_EICR_RTX_QUEUE) {
-
+    if ((IntStatus & IXGBE_EICR_RTX_QUEUE_0_MASK) != 0) {
       CdbPtr->StatFlags |= PXE_STATFLAGS_GET_STATUS_RECEIVE;
     }
 
-    if (XgbeAdapter->IntMask & IXGBE_EICR_RTX_QUEUE) {
-
+    if ((IntStatus & IXGBE_EICR_RTX_QUEUE_1_MASK) != 0) {
       CdbPtr->StatFlags |= PXE_STATFLAGS_GET_STATUS_TRANSMIT;
     }
 
-    if (XgbeAdapter->IntMask &
-      (IXGBE_EICR_MNG | IXGBE_EICR_PBUR | IXGBE_EICR_DHER |
-       IXGBE_EICR_TCP_TIMER | IXGBE_EICR_OTHER | IXGBE_EICR_LSC))
-    {
-      CdbPtr->StatFlags |= PXE_STATFLAGS_GET_STATUS_SOFTWARE;
-    }
+    // acknowledge the interrupts
+    IXGBE_WRITE_REG (&XgbeAdapter->Hw, IXGBE_EICR, IntStatus);
   }
 
   // Return current media status
@@ -1774,6 +1759,15 @@ UndiApiEntry (
   }
 
   XgbeAdapter               = &(mXgbeDeviceList[CdbPtr->IFnum]->NicInfo);
+
+  // Check if InitUndiNotifyExitBs was called before
+  if (XgbeAdapter->ExitBootServicesTriggered) {
+    DEBUGPRINT (CRITICAL, ("Pci Bus Mastering Disabled !\n"));
+    CdbPtr->StatFlags = PXE_STATFLAGS_COMMAND_FAILED;
+    CdbPtr->StatCode  = PXE_STATCODE_NOT_INITIALIZED;
+    return;
+  }
+
   XgbeAdapter->VersionFlag  = 0x31; // entering from new entry point
 
   // check the OPCODE range

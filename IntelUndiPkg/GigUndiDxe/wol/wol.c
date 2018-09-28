@@ -77,7 +77,7 @@ static BOOLEAN _WolGetInfo(WOL_ADAPTER_HANDLE_TYPE Handle, _WOL_DEVICE_INFO_t co
        * equipped with two port controllers we have to account for that.
        */
       if (_WolIsFirstController(Handle)) {
-        return _WolGetLanPort(Handle) == 0;
+        return _WolGetFunction(Handle) == 0;
       } else {
         return FALSE;
       }

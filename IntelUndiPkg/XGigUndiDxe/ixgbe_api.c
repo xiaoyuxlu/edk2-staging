@@ -166,18 +166,17 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_82599_SFP_FCOE:
 	case IXGBE_DEV_ID_82599_SFP_EM:
 	case IXGBE_DEV_ID_82599_SFP_SF2:
+	case IXGBE_DEV_ID_82599_SFP_SF_QP:
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 	case IXGBE_DEV_ID_82599EN_SFP:
 	case IXGBE_DEV_ID_82599_CX4:
-#ifdef BANDON_BEACH_HW
-	case IXGBE_DEV_ID_82599_BYPASS:
-#endif /* BANDON_BEACH_HW */
 	case IXGBE_DEV_ID_82599_T3_LOM:
 		hw->mac.type = ixgbe_mac_82599EB;
 		break;
 #ifndef NO_X540_SUPPORT
 	case IXGBE_DEV_ID_X540_FPGA:
 	case IXGBE_DEV_ID_X540T:
+	case IXGBE_DEV_ID_X540T1:
 		hw->mac.type = ixgbe_mac_X540;
 		hw->mvals = ixgbe_mvals_X540;
 		break;
@@ -528,6 +527,7 @@ s32 ixgbe_get_phy_firmware_version(struct ixgbe_hw *hw, u16 *firmware_version)
  *  ixgbe_read_phy_reg - Read PHY register
  *  @hw: pointer to hardware structure
  *  @reg_addr: 32 bit address of PHY register to read
+ *  @device_type: type of device you want to communicate with
  *  @phy_data: Pointer to read data from PHY register
  *
  *  Reads a value from a specified PHY register
@@ -546,6 +546,7 @@ s32 ixgbe_read_phy_reg(struct ixgbe_hw *hw, u32 reg_addr, u32 device_type,
  *  ixgbe_write_phy_reg - Write PHY register
  *  @hw: pointer to hardware structure
  *  @reg_addr: 32 bit PHY register to write
+ *  @device_type: type of device you want to communicate with
  *  @phy_data: Data to write to the PHY register
  *
  *  Writes a value to specified PHY register
@@ -589,6 +590,8 @@ s32 ixgbe_setup_internal_phy(struct ixgbe_hw *hw)
 /**
  *  ixgbe_check_phy_link - Determine link and speed status
  *  @hw: pointer to hardware structure
+ *  @speed: link speed
+ *  @link_up: true when link is up
  *
  *  Reads a PHY register to determine if link is up and the current speed for
  *  the PHY.
@@ -604,6 +607,7 @@ s32 ixgbe_check_phy_link(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
  *  ixgbe_setup_phy_link_speed - Set auto advertise
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
+ *  @autoneg_wait_to_complete: true when waiting for completion is needed
  *
  *  Sets the auto advertised capabilities
  **/
@@ -629,6 +633,9 @@ s32 ixgbe_set_phy_power(struct ixgbe_hw *hw, bool on)
 /**
  *  ixgbe_check_link - Get link and speed status
  *  @hw: pointer to hardware structure
+ *  @speed: pointer to link speed
+ *  @link_up: true when link is up
+ *  @link_up_wait_to_complete: bool used to wait for link up or not
  *
  *  Reads the links register to determine if link is up and the current speed
  **/
@@ -682,6 +689,7 @@ void ixgbe_flap_tx_laser(struct ixgbe_hw *hw)
  *  ixgbe_setup_link - Set link speed
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
+ *  @autoneg_wait_to_complete: true when waiting for completion is needed
  *
  *  Configures link settings.  Restarts the link.
  *  Performs autonegotiation if needed.
@@ -698,6 +706,7 @@ s32 ixgbe_setup_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
  *  ixgbe_setup_mac_link - Set link speed
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
+ *  @autoneg_wait_to_complete: true when waiting for completion is needed
  *
  *  Configures link settings.  Restarts the link.
  *  Performs autonegotiation if needed.
@@ -713,6 +722,8 @@ s32 ixgbe_setup_mac_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
 /**
  *  ixgbe_get_link_capabilities - Returns link capabilities
  *  @hw: pointer to hardware structure
+ *  @speed: link speed capabilities
+ *  @autoneg: true when autoneg or autotry is enabled
  *
  *  Determines the link capabilities of the current configuration.
  **/
@@ -765,6 +776,7 @@ s32 ixgbe_blink_led_start(struct ixgbe_hw *hw, u32 index)
 /**
  *  ixgbe_blink_led_stop - Stop blinking LEDs
  *  @hw: pointer to hardware structure
+ *  @index: led number to stop
  *
  *  Stop blinking LED based on index.
  **/
@@ -1007,6 +1019,7 @@ s32 ixgbe_update_uc_addr_list(struct ixgbe_hw *hw, u8 *addr_list,
  *  @mc_addr_list: the list of new multicast addresses
  *  @mc_addr_count: number of addresses
  *  @func: iterator function to walk the multicast address list
+ *  @clear: flag, when set clears the table beforehand
  *
  *  The given list replaces any existing list. Clears the MC addrs from receive
  *  address registers and the multicast table. Uses unused receive address
@@ -1222,7 +1235,7 @@ s32 ixgbe_setup_eee(struct ixgbe_hw *hw, bool enable_eee)
 /**
  * ixgbe_set_source_address_pruning - Enable/Disable source address pruning
  * @hw: pointer to hardware structure
- * @enbale: enable or disable source address pruning
+ * @enable: enable or disable source address pruning
  * @pool: Rx pool - Rx pool to toggle source address pruning
  **/
 void ixgbe_set_source_address_pruning(struct ixgbe_hw *hw, bool enable,
@@ -1322,6 +1335,18 @@ void ixgbe_restore_mdd_vf(struct ixgbe_hw *hw, u32 vf)
 {
 	if (hw->mac.ops.restore_mdd_vf)
 		hw->mac.ops.restore_mdd_vf(hw, vf);
+}
+
+/**
+ *  ixgbe_fw_recovery_mode - Check if in FW NVM recovery mode
+ *  @hw: pointer to hardware structure
+ *
+ **/
+bool ixgbe_fw_recovery_mode(struct ixgbe_hw *hw)
+{
+	if (hw->mac.ops.fw_recovery_mode)
+		return hw->mac.ops.fw_recovery_mode(hw);
+	return false;
 }
 
 /**

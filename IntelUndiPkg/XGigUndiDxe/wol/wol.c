@@ -77,7 +77,7 @@ static BOOLEAN _WolGetInfo(WOL_ADAPTER_HANDLE_TYPE Handle, _WOL_DEVICE_INFO_t co
        * equipped with two port controllers we have to account for that.
        */
       if (_WolIsFirstController(Handle)) {
-        return _WolGetLanPort(Handle) == 0;
+        return _WolGetFunction(Handle) == 0;
       } else {
         return FALSE;
       }
@@ -119,6 +119,17 @@ WOL_MAC_TYPE _WolFindMacType(WOL_MAC_TYPE MacType, WOL_MAC_TYPE *MacTypes)
 
 BOOLEAN WolIsWakeOnLanSupported(WOL_ADAPTER_HANDLE_TYPE Handle)
 {
+#if defined(WOL_ICE)
+{
+  DEBUGPRINT (WOL, ("--> WolIsWakeOnLanSupported"));
+  /* In case of FVL read WOL configuration from EEPROM */
+  extern WOL_MAC_TYPE const _WOL_ICE[];
+  if (_WolFindMacType(_WolGetMacType(Handle), (WOL_MAC_TYPE *)_WOL_ICE)) {
+    DEBUGPRINT (WOL, ("- found MAC type\n"));
+    return _WolGetInfoFromEeprom_40G(Handle);
+  }
+}
+#endif
 #if defined(WOL_10G)
 {
     /* In case of post TVL 10G devices read WOL configuration from EEPROM */
@@ -160,8 +171,10 @@ _WolGetOffsetBitmask(
   extern _WOL_FAMILY_INFO_t const WOL_FAMILY_TABLE[];
   _WOL_FAMILY_INFO_t const *FamilyTable;
 
+  DEBUGPRINT (WOL, ("-->_WolGetOffsetBitmask\n"));
   for (FamilyTable = WOL_FAMILY_TABLE; FamilyTable->Family; ++FamilyTable) {
     if (_WolFindMacType(_WolGetMacType(Handle), (WOL_MAC_TYPE *)FamilyTable->Family)) {
+      DEBUGPRINT (WOL, ("Found FamilyTable\n"));
       return FamilyTable->WolGetOffsetBitmask(Handle, Offset, Bitmask);
     }
   }
@@ -180,6 +193,8 @@ WolGetWakeOnLanStatus(
   UINT16      Value  = 0;
   UINT16      Mask   = 0;
 
+  DEBUGPRINT (WOL, ("--> WolGetWakeOnLanStatus\n"));
+
   if (!WolIsWakeOnLanSupported(Handle)) {
     return WOL_FEATURE_NOT_SUPPORTED;
   }
@@ -195,6 +210,11 @@ WolGetWakeOnLanStatus(
   }
 
   *WolStatus = (Value & Mask) != 0;
+  
+//  DEBUGPRINT (WOL, ("WolGetWakeOnLanStatus: %d\n", *WolStatus));
+//  DEBUGPRINT (WOL, ("Press enter to cont....\n"));
+//  WaitForEnter ();
+  
   return WOL_SUCCESS;
 }
 
@@ -203,7 +223,7 @@ WolGetWakeOnLanStatusEx(
   IN WOL_ADAPTER_HANDLE_TYPE Handle
 ) {
   BOOLEAN WolEnabled;
-
+  DEBUGPRINT (WOL, ("--> WolGetWakeOnLanStatusEx\n"));
   if (WolIsWakeOnLanSupported(Handle) &&
       (WOL_SUCCESS == WolGetWakeOnLanStatus(Handle, &WolEnabled))) {
     return WolEnabled ? WOL_ENABLE : WOL_DISABLE;
@@ -223,6 +243,7 @@ WolEnableApm(
   UINT16      Value  = 0;
   UINT16      Mask   = 0;
 
+  DEBUGPRINT (WOL, ("--> WolEnableApm\n"));
   Status = _WolGetOffsetBitmask(Handle, &Offset, &Mask);
   if (Status != WOL_SUCCESS) {
     return Status;
@@ -232,7 +253,7 @@ WolEnableApm(
   if (Status != WOL_SUCCESS) {
     return Status;
   }
-
+  DEBUGPRINT (WOL, ("Before enable Value: %x Offset: %x\n", Value, Offset));
   if (Enable) {
     Value |= Mask;
   } else {
@@ -241,8 +262,11 @@ WolEnableApm(
 
   Status = _WolEepromWrite16(Handle, Offset, Value);
   if (Status != WOL_SUCCESS) {
+    DEBUGPRINT (WOL, ("WolEnableApm failed\n"));
     return Status;
   }
+
+  DEBUGPRINT (WOL, ("WolEnableApm success !\n"));
 
   return _WolEepromUpdateChecksum(Handle);
 }
@@ -263,9 +287,10 @@ WolEnableWakeOnLan (
   IN    BOOLEAN                     Enable
   )
 {
+  DEBUGPRINT (WOL, ("--> WolEnableWakeOnLan\n"));
   if (WolIsWakeOnLanSupported(Handle)) {
     WOL_STATUS Status;
-
+    DEBUGPRINT (WOL, ("WolEnableWakeOnLan - Supported\n"));
 
     /* Enable/Disable Apm to enable/disable Wol */
     Status = WolEnableApm(Handle, Enable);

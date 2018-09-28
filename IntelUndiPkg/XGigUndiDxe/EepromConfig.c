@@ -229,10 +229,18 @@ EepromMacAddressSet (
   FactoryMacOffset += 1;
   DEBUGPRINT (CLP, ("Factory MAC address at offset %X\n", FactoryMacOffset));
 
+
+  if ((UndiPrivateData->NicInfo.Hw.mac.type != ixgbe_mac_X550)
+    && (UndiPrivateData->NicInfo.Hw.mac.type != ixgbe_mac_X550EM_x)
+    && (UndiPrivateData->NicInfo.Hw.mac.type != ixgbe_mac_X550EM_a)
+    )
+  {
+
   // Check if MAC address is backed up
+
   ixgbe_read_eeprom (&XgbeAdapter->Hw, BackupMacOffset, &BackupMacAddress[0]);
   if (BackupMacAddress[0] == 0xFFFF) {
-  
+
     // Read in the factory MAC address
     ixgbe_read_eeprom (&XgbeAdapter->Hw, FactoryMacOffset, &BackupMacAddress[0]);
     ixgbe_read_eeprom (&XgbeAdapter->Hw, FactoryMacOffset + 1, &BackupMacAddress[1]);
@@ -242,6 +250,7 @@ EepromMacAddressSet (
     ixgbe_write_eeprom (&XgbeAdapter->Hw, BackupMacOffset, BackupMacAddress[0]);
     ixgbe_write_eeprom (&XgbeAdapter->Hw, BackupMacOffset + 1, BackupMacAddress[1]);
     ixgbe_write_eeprom (&XgbeAdapter->Hw, BackupMacOffset + 2, BackupMacAddress[2]);
+  }
   }
 
   // At this point the factory MAC address should be in the backup location.  Now

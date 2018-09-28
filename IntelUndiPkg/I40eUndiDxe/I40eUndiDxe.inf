@@ -28,38 +28,36 @@
 # ***************************************************************************/
 
 
-[defines]
+[Defines]
 INF_VERSION          = 0x00010005
 BASE_NAME            = I40eUndiDxe
-FILE_GUID              = 708C91EA-0394-4610-9EB3-A30AB99015AF
+FILE_GUID            = 708C91EA-0394-4610-9EB3-A30AB99015AF
 
 # UEFI_DRIVER is compliant with EFI1.10 or UEFI 2.3 specification
-
 MODULE_TYPE          = UEFI_DRIVER
 
 VERSION_STRING       = 1.0
-ENTRY_POINT             = InitializeUNDIDriver
+ENTRY_POINT          = InitializeUNDIDriver
 UNLOAD_IMAGE         = I40eGigUndiUnload
 
 [BuildOptions.common]
+*_*_*_CC_FLAGS = -D UNDI_40G -D PREBOOT_SUPPORT -D I40E_NDIS_SUPPORT
+*_*_*_CC_FLAGS = -D MDEPKG_NDEBUG -D UNDI_40G -D PF_DRIVER -D X722_SUPPORT
+#*_*_*_CC_FLAGS = -D CONFIG_ACCESS_TO_CSRS
 
-*_*_*_CC_FLAGS = /D UNDI_40G /D PREBOOT_SUPPORT /D I40E_NDIS_SUPPORT
-*_*_*_CC_FLAGS = /FAcs /D MDEPKG_NDEBUG /D UNDI_40G /D PF_DRIVER /D X722_SUPPORT
-#*_*_*_CC_FLAGS = /D CONFIG_ACCESS_TO_CSRS
+# Generates extra debug info when building with Microsoft compilers.
+MSFT:*_*_*_CC_FLAGS = /FAcs
 
-*_*_*_VFRPP_FLAGS = /D UNDI_40G
+*_*_*_VFRPP_FLAGS = -D UNDI_40G
 
 [BuildOptions.X64]
-
-*_*_*_CC_FLAGS = /D EFIX64 
+*_*_*_CC_FLAGS = -D EFIX64
 
 [BuildOptions.IPF]
-
-*_*_*_CC_FLAGS = /D EFI64
+*_*_*_CC_FLAGS = -D EFI64
 
 [BuildOptions.IA32]
-
-*_*_*_CC_FLAGS = /D EFI32
+*_*_*_CC_FLAGS = -D EFI32
 
 [sources.common]
   InventoryStrings.uni
@@ -69,12 +67,16 @@ UNLOAD_IMAGE         = I40eGigUndiUnload
   Brand.c
   DeviceSupport.c
   DeviceSupport.h
+  Dma.c
+  Dma.h
   ComponentName.c
   ComponentName.h
   Decode.c
   Decode.h
   DriverDiagnostics.c
   DriverDiagnostics.h
+  Dma.c
+  Dma.h
   Init.c
   Init.h
   I40e_osdep.h
@@ -86,6 +88,12 @@ UNLOAD_IMAGE         = I40eGigUndiUnload
   StartStop.h
   EepromConfig.c
   EepromConfig.c
+  Hii.c
+  Hii.h
+  Version.h
+  HiiInternalLib.c
+  HiiInternalLib.h
+
   i40e_devids.h
   i40e_diag.c
   i40e_diag.h
@@ -104,11 +112,8 @@ UNLOAD_IMAGE         = I40eGigUndiUnload
   i40e_adminq_cmd.h
   i40e_alloc.h
   i40e_common.c
-  Hii.c
-  Hii.h
-  Version.h
-  HiiInternalLib.c
-  HiiInternalLib.h
+
+
   wol\wol.c
   wol\wol.h
   wol\wolfamily.c
@@ -129,33 +134,27 @@ UNLOAD_IMAGE         = I40eGigUndiUnload
   UefiDriverEntryPoint
   UefiRuntimeServicesTableLib
   BaseMemoryLib
-  SynchronizationLib
   PrintLib
   UefiLib
   HiiLib
+  SynchronizationLib
   StdLibC
-
-[LibraryClasses.X64]
-  
-[LibraryClasses.IPF]
 
 [Protocols.common]
   gEfiNetworkInterfaceIdentifierProtocolGuid_31
   gEfiPciIoProtocolGuid
   gEfiDevicePathProtocolGuid
-  gEfiFormBrowser2ProtocolGuid                  ## CONSUMES
-  gEfiHiiStringProtocolGuid                     ## CONSUMES
-  gEfiHiiConfigRoutingProtocolGuid              ## CONSUMES
-  gEfiHiiConfigAccessProtocolGuid               ## PRODUCES
-  gEfiFormBrowser2ProtocolGuid                  ## CONSUMES
-  gEfiHiiDatabaseProtocolGuid                   ## CONSUMES
-  gEfiHiiPackageListProtocolGuid    			## CONSUMES  
-  gEfiDriverSupportedEfiVersionProtocolGuid
   gEfiDriverHealthProtocolGuid
-  
+  gEfiDriverSupportedEfiVersionProtocolGuid  ## PROTOCOL ALWAYS_PRODUCED
+  gEfiHiiConfigAccessProtocolGuid            ## PRODUCES
+  gEfiHiiConfigRoutingProtocolGuid           ## CONSUMES
+  gEfiHiiStringProtocolGuid                  ## CONSUMES
+  gEfiFormBrowser2ProtocolGuid               ## CONSUMES
+  gEfiHiiDatabaseProtocolGuid                ## CONSUMES
+  gEfiHiiPackageListProtocolGuid             ## CONSUMES
 
 [Guids]
-  gEfiIfrTianoGuid                              ## CONSUMES ## Guid
-  gEfiEventExitBootServicesGuid        			## PRODUCES ## Event
-  gEfiEventVirtualAddressChangeGuid    			## PRODUCES ## Event
+  gEfiIfrTianoGuid                   ## CONSUMES ## Guid
+  gEfiEventExitBootServicesGuid      ## PRODUCES ## Event
+  gEfiEventVirtualAddressChangeGuid  ## PRODUCES ## Event
 

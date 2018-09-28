@@ -74,6 +74,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "NVDataStruc.h"
 #include "AdapterInformation.h"
 #include "DriverHealthCommon.h"
+#include "Dma.h"
 
 
 /* Defines & Macros */
@@ -104,6 +105,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HEALTH    (1 << 16)
 #define ADAPTERINFO (1 << 17)
 
+#define DMA       (1 << 22)
+#define WOL       (1 << 23)
 // DEBUG Defines are located here
 #define DBG_LVL (NONE)
 
@@ -264,7 +267,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    @return   Descriptor retrieved
 **/
 #define I40E_RX_DESC(R, i)          \
-          (&(((union i40e_16byte_rx_desc *) ((R)->Desc))[i]))
+          (&(((union i40e_16byte_rx_desc *) ((R)->Mapping.UnmappedAddress))[i]))
 
 /** Retrieves TX descriptor from TX ring structure
 
@@ -274,7 +277,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    @return   Descriptor retrieved
 **/
 #define I40E_TX_DESC(R, i)          \
-          (&(((struct i40e_tx_desc *) ((R)->Desc))[i]))
+          (&(((struct i40e_tx_desc *) ((R)->Mapping.UnmappedAddress))[i]))
 
 #define I40E_MAX_PF_NUMBER   16
 
@@ -363,6 +366,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define I40E_ALT_RAM_SIZE_IN_BYTES        8192
 #define I40E_ALT_RAM_SIZE_IN_DW           (I40E_ALT_RAM_SIZE_IN_BYTES / 4)
 #define I40E_AQ_ALTERNATE_ADDRESS_IGNORE  0xFFFFFFFF
+
+/* Recovery mode defines */
+#define I40E_FW_RECOVERY_MODE_CORER         0x30
+#define I40E_FW_RECOVERY_MODE_CORER_LEGACY  0x0B
+#define I40E_FW_RECOVERY_MODE_GLOBR         0x31
+#define I40E_FW_RECOVERY_MODE_GLOBR_LEGACY  0x0C
+#define I40E_FW_RECOVERY_MODE_TRANSITION    0x32
+#define I40E_FW_RECOVERY_MODE_NVM           0x33
 
 #if (1)
 #define I40E_ALT_RAM_LAN_MAC_ADDRESS_LOW(_PF)   (0 + 64 * (_PF))
@@ -707,9 +718,6 @@ typedef struct {
 } PCI_CONFIG_HEADER;
 #pragma pack()
 
-typedef struct {
-  UINT8 *Data;
-
 // Supported Rx Buffer Sizes
 #define I40E_RXBUFFER_512   512    /* Used for packet split */
 #define I40E_RXBUFFER_2048  2048
@@ -717,8 +725,6 @@ typedef struct {
 #define I40E_RXBUFFER_4096  4096
 #define I40E_RXBUFFER_8192  8192
 #define I40E_MAX_RXBUFFER   16384  /* largest size for single descriptor */
-  UINTN Size;
-} I40E_RX_BUFFER;
 
 typedef struct {
   UINT64 Packets;
@@ -739,14 +745,13 @@ typedef struct {
 
 /* struct that defines a descriptor ring, associated with a VSI */
 typedef struct {
-  VOID          *Desc;                      /* Descriptor ring memory address */
-  I40E_RX_BUFFER RxBuffer;
-  UINT8        **BufferAddresses;
+  UNDI_DMA_MAPPING  RxBufferMapping;
+  UINT8             **BufferAddresses;
 
-  UINT16         Count;                 /* Number of descriptors */
-  UINT16         RegIdx;                /* HW register index of the ring */
-  UINT16         RxHdrLen;
-  UINT16         RxBufLen;
+  UINT16            Count;                 /* Number of descriptors */
+  UINT16            RegIdx;                /* HW register index of the ring */
+  UINT16            RxHdrLen;
+  UINT16            RxBufLen;
 #define I40E_RX_DTYPE_NO_SPLIT      0
 #define I40E_RX_DTYPE_SPLIT_ALWAYS  1
 #define I40E_RX_DTYPE_HEADER_SPLIT  2
@@ -760,7 +765,7 @@ typedef struct {
   UINT16 NextToUse;
   UINT16 NextToClean;
 
-  UINT64 *TxBufferUsed;
+  UNDI_DMA_MAPPING    *TxBufferMappings;
 
   /* stats structs */
   union {
@@ -768,7 +773,8 @@ typedef struct {
     I40E_RX_QUEUE_STATS RxStats;
   } TxRxQueues;
 
-  UINTN Size;                   /* length of descriptor ring in bytes */
+  UINTN               Size;       /* Length of descriptor ring in bytes */
+  UNDI_DMA_MAPPING    Mapping;    /* DMA mapping for descriptors area */
 
 } I40E_RING;
 
@@ -842,15 +848,13 @@ typedef struct DRIVER_DATA_S {
 
   UINT8                     UndiEnabled;        // When false only configuration protocols are avaliable 
                                                 // (e.g. iSCSI driver loaded on port)
-  UINT8                       FwVersionSupported; // FW is not supported, AQ operations are prohibited
+  UINT8                     FwSupported; // FW is not supported, AQ operations are prohibited
   MODULE_QUALIFICATION_STATUS QualificationResult;
 
   BOOLEAN                   MediaStatusChecked;
   BOOLEAN                   LastMediaStatus;
   BOOLEAN                   WaitingForLinkUp;
 
-  BOOLEAN                   VlanEnable;
-  UINT16                    VlanTag;
 
   UINT64                    UniqueId;
   EFI_PCI_IO_PROTOCOL      *PciIo;
@@ -878,7 +882,7 @@ typedef struct DRIVER_DATA_S {
 
   UINT16 RxFilter;
   UINT16 IntMask;
-  UINT16 IntStatus;
+  UINT32 IntStatus;
 
   UINT16 CurRxInd;
   UINT16 CurTxInd;
@@ -894,6 +898,7 @@ typedef struct DRIVER_DATA_S {
 
   UINT16             XmitDoneHead;
   BOOLEAN            MacAddrOverride;
+  BOOLEAN            ExitBootServicesTriggered;
   UINTN              VersionFlag; // Indicates UNDI version 3.0 or 3.1
   UINT16 TxRxDescriptorCount;
 
@@ -906,6 +911,7 @@ typedef struct UNDI_PRIVATE_DATA_S {
   EFI_HANDLE                                ControllerHandle;
   EFI_HANDLE                                DeviceHandle;
   EFI_HANDLE                                HiiInstallHandle;
+  EFI_HANDLE                                FmpInstallHandle;
   EFI_DEVICE_PATH_PROTOCOL                 *Undi32BaseDevPath;
   EFI_DEVICE_PATH_PROTOCOL                 *Undi32DevPath;
   I40E_DRIVER_DATA                          NicInfo;
@@ -1033,6 +1039,30 @@ I40eShutdown (
 **/
 PXE_STATCODE
 I40eReset (
+  I40E_DRIVER_DATA *AdapterInfo
+  );
+
+/** Configures internal interrupt causes on current PF.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @return   Interrupt causes are configured for current PF
+**/
+VOID
+I40eConfigureInterrupts (
+  I40E_DRIVER_DATA *AdapterInfo
+  );
+
+/** Disables internal interrupt causes on current PF.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @return   Interrupt causes are disabled for current PF
+**/
+VOID
+I40eDisableInterrupts (
   I40E_DRIVER_DATA *AdapterInfo
   );
 
@@ -1208,6 +1238,19 @@ I40eClearFilter (
 VOID
 I40eSetMcastList (
   I40E_DRIVER_DATA *AdapterInfo
+  );
+
+/** Checks if Firmware is in recovery mode.
+
+   @param[in]   AdapterInfo  Pointer to the NIC data structure information which
+                             the UNDI driver is layering on
+
+   @retval   TRUE   Firmware is in recovery mode
+   @retval   FALSE  Firmware is not in recovery mode
+**/
+BOOLEAN
+IsRecoveryMode (
+  IN  I40E_DRIVER_DATA *AdapterInfo
   );
 
 /** Gets link state (up/down)

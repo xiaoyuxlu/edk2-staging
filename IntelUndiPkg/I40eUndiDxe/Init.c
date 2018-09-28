@@ -46,7 +46,7 @@ VOID *             mPxeMemptr = NULL;
 PXE_SW_UNDI *      mPxe31     = NULL;       // 3.1 entry
 UNDI_PRIVATE_DATA *mUndi32DeviceList[MAX_NIC_INTERFACES];
 UINT8              mActiveControllers = 0;
-UINT8              mActiveChildren    = 0;
+UINT16             mActiveChildren    = 0;
 EFI_EVENT          gEventNotifyExitBs;
 
 /** This does an 8 bit check sum of the passed in buffer for Len bytes.
@@ -88,12 +88,13 @@ ChkSum (
                          UNDI driver is layering on..
    @param[in]   PxePtr   Pointer to the PXE structure
 
-   @return   None
+   @retval   EFI_SUCCESS          PxeStruct updated successful.
+   @retval   EFI_OUT_OF_RESOURCES Too many NIC (child) interfaces.
 **/
-VOID
+EFI_STATUS
 UndiPxeUpdate (
   IN I40E_DRIVER_DATA *NicPtr,
-  IN PXE_SW_UNDI *     PxePtr
+  IN PXE_SW_UNDI      *PxePtr
   )
 {
   if (NicPtr == NULL) {
@@ -103,7 +104,11 @@ UndiPxeUpdate (
     }
   }
   else {
-    mActiveChildren++;
+    if (mActiveChildren < MAX_NIC_INTERFACES) {
+      mActiveChildren++;
+    } else {
+      return EFI_OUT_OF_RESOURCES;
+    }
   }
 
   // IFcnt is equal to the number of NICs this undi supports - 1
@@ -111,6 +116,7 @@ UndiPxeUpdate (
   PxePtr->Fudge = (UINT8) (PxePtr->Fudge - ChkSum ((VOID *) PxePtr, PxePtr->Len));
   DEBUGPRINT (INIT, ("PxeUpdate: ActiveChildren = %d\n", mActiveChildren));
   DEBUGPRINT (INIT, ("PxeUpdate: PxePtr->IFcnt = %d\n", PxePtr->IFcnt));
+  return EFI_SUCCESS;
 }
 
 
@@ -145,7 +151,7 @@ InitPxeStructInit (
                            PXE_ROMID_IMP_PROMISCUOUS_RX_SUPPORTED |
                            PXE_ROMID_IMP_BROADCAST_RX_SUPPORTED |
                            PXE_ROMID_IMP_FILTERED_MULTICAST_RX_SUPPORTED |
-                           PXE_ROMID_IMP_SOFTWARE_INT_SUPPORTED |
+                           PXE_ROMID_IMP_TX_COMPLETE_INT_SUPPORTED |
                            PXE_ROMID_IMP_PACKET_RX_INT_SUPPORTED;
 
   PxePtr->EntryPoint    = (UINT64) UndiApiEntry;
@@ -319,13 +325,36 @@ UndiNotifyExitBs (
   )
 {
   UINT32 i;
+  UINT64 Result = 0;
 
   for (i = 0; i < mActiveControllers; i++) {
-    if (mUndi32DeviceList[i]->NicInfo.Hw.device_id != 0)
+    if (mUndi32DeviceList[i]->NicInfo.Hw.device_id != 0) {
       if (mUndi32DeviceList[i]->IsChildInitialized) {
-        I40eReceiveStop (&mUndi32DeviceList[i]->NicInfo);
+        I40eShutdown (&mUndi32DeviceList[i]->NicInfo);
+        if (!IsRecoveryMode (&mUndi32DeviceList[i]->NicInfo)) {
+          i40e_shutdown_adminq (&mUndi32DeviceList[i]->NicInfo.Hw);
+        }
         gBS->Stall (10000);
       }
+
+      // Get the PCI Command options that are supported by this controller.
+      mUndi32DeviceList[i]->NicInfo.PciIo->Attributes (
+                                             mUndi32DeviceList[i]->NicInfo.PciIo,
+                                             EfiPciIoAttributeOperationSupported,
+                                             0,
+                                             &Result
+                                             );
+
+      mUndi32DeviceList[i]->NicInfo.PciIo->Attributes (
+                                             mUndi32DeviceList[i]->NicInfo.PciIo,
+                                             EfiPciIoAttributeOperationDisable,
+                                             Result & EFI_PCI_IO_ATTRIBUTE_BUS_MASTER,
+                                             NULL
+                                             );
+
+      // Set the indicator to block DMA access in UNDI functions
+      mUndi32DeviceList[i]->NicInfo.ExitBootServicesTriggered = TRUE;
+    }
   }
 }
 
@@ -769,6 +798,12 @@ I40eUndiDriverSupported (
     if (PciIo == NULL) {
       return EFI_DEVICE_ERROR;
     }
+    if (!UndiPrivateData->NicInfo.FwSupported) {
+
+      // Controller is already partially initialized due to FW incompatibility,
+      // report EFI_ALREADY_STARTED to prevent another DriverBinding->Start call.
+      return EFI_ALREADY_STARTED;
+    }
   }
   Status = PciIo->Pci.Read (
                         PciIo,
@@ -831,7 +866,6 @@ InitControllerPartial (
 {
   EFI_GUID             mHiiFormGuid = I40E_HII_FORM_GUID;
   EFI_STATUS           Status;
-  EFI_PCI_IO_PROTOCOL *PciIoFncs;
 
   DEBUGPRINT (INIT, ("InitControllerPartial\n"));
 
@@ -849,16 +883,7 @@ InitControllerPartial (
     return Status;
   }
 
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &UndiPrivateData->DeviceHandle,
-                  &gEfiNiiPointerGuid,
-                  &UndiPrivateData->NiiPointerProtocol,
-                  NULL
-                );
-  if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("OpenProtocol returns %r\n", Status));
-    return Status;
-  }
+  UndiPrivateData->HiiInstallHandle = Controller;
 
   UndiPrivateData->HiiHandle = HiiAddPackages (
                                  &mHiiFormGuid,
@@ -870,19 +895,6 @@ InitControllerPartial (
     DEBUGPRINT (CRITICAL, ("PreparePackageList, out of resource.\n"));
     DEBUGWAIT (CRITICAL);
     return EFI_OUT_OF_RESOURCES;
-  }
-  
-  // Open For Child Device
-  Status = gBS->OpenProtocol (
-                  Controller,
-                  &gEfiPciIoProtocolGuid,
-                  (VOID **) &PciIoFncs,
-                  This->DriverBindingHandle,
-                  UndiPrivateData->DeviceHandle,
-                  EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER
-                );
-  if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("OpenProtocol returns %r\n", Status));
   }
 
   return Status;
@@ -1190,20 +1202,26 @@ OpenContollerProtocols (
 
 /** Initializes UNDI (PXE) structures
 
-   @param[in]       UndiPrivateData        Private data structure
+   @param[in]       UndiPrivateData      Private data structure
 
-   @retval          None
+   @retval          EFI_SUCCESS          Undi structure initialized correctly.
+   @retval          EFI_OUT_OF_RESOURCES Too many NIC (child) interfaces.
 **/
-VOID
+EFI_STATUS
 InitUndiStructures (
   IN UNDI_PRIVATE_DATA *UndiPrivateData
   )
 {
-
+  EFI_STATUS Status;
   // the IfNum index for the current interface will be the total number
   // of interfaces initialized so far
-  UndiPxeUpdate (&UndiPrivateData->NicInfo, mPxe31);
+  Status = UndiPxeUpdate (&UndiPrivateData->NicInfo, mPxe31);
+  if (EFI_ERROR (Status)) {
+    DEBUGPRINT (CRITICAL, ("UndiPxeUpdate returns %r\n", Status));
+    return Status;
+  }
   InitUndiCallbackFunctions (&UndiPrivateData->NicInfo);
+  return EFI_SUCCESS;
 }
 
 /** Initializes controller
@@ -1569,7 +1587,7 @@ I40eUndiDriverStart (
 
     Status = InitController (UndiPrivateData);
     if (Status == EFI_UNSUPPORTED
-      && !UndiPrivateData->NicInfo.FwVersionSupported)
+      && !UndiPrivateData->NicInfo.FwSupported)
     {
     
       // Current FW version is not supported. Perform only part of initialization needed
@@ -1611,8 +1629,12 @@ I40eUndiDriverStart (
     }
   }
 
-  if (InitializeChild) {
-    InitUndiStructures (UndiPrivateData);
+  if (InitializeChild && UndiPrivateData->NicInfo.FwSupported) {
+    Status = InitUndiStructures (UndiPrivateData);
+    if (EFI_ERROR (Status)) {
+      DEBUGPRINT (CRITICAL, ("InitUndiStructures failed with %r\n", Status));
+      goto UndiErrorDeleteDevicePath;
+    }
 
     Status = InitChild (UndiPrivateData);
     if (EFI_ERROR (Status)) {
@@ -1712,37 +1734,28 @@ StopChild (
     DEBUGPRINT (CRITICAL, ("UninstallAdapterInformationProtocol returned %r\n", Status));
   }
   DEBUGPRINT (INIT, ("Unistall protocols installed on the DeveiceHandle\n"));
-  if (UndiPrivateData->NicInfo.FwVersionSupported) {
-    if (UndiPrivateData->NicInfo.UndiEnabled) {
-      Status = gBS->UninstallMultipleProtocolInterfaces (
-                      UndiPrivateData->DeviceHandle,
-                      &gEfiStartStopProtocolGuid,
-                      &UndiPrivateData->DriverStop,
-                      &gEfiNetworkInterfaceIdentifierProtocolGuid_31,
-                      &UndiPrivateData->NiiProtocol31,
-                      &gEfiNiiPointerGuid,
-                      &UndiPrivateData->NiiPointerProtocol,
-                      &gEfiDevicePathProtocolGuid,
-                      UndiPrivateData->Undi32DevPath,
-                      NULL
-                    );
-    } else {
-      Status = gBS->UninstallMultipleProtocolInterfaces (
-                      UndiPrivateData->DeviceHandle,
-                      &gEfiStartStopProtocolGuid,
-                      &UndiPrivateData->DriverStop,
-                      &gEfiNiiPointerGuid,
-                      &UndiPrivateData->NiiPointerProtocol,
-                      &gEfiDevicePathProtocolGuid,
-                      UndiPrivateData->Undi32DevPath,
-                      NULL
-                    );
-    }
+  if (UndiPrivateData->NicInfo.UndiEnabled) {
+    Status = gBS->UninstallMultipleProtocolInterfaces (
+                    UndiPrivateData->DeviceHandle,
+                    &gEfiStartStopProtocolGuid,
+                    &UndiPrivateData->DriverStop,
+                    &gEfiNetworkInterfaceIdentifierProtocolGuid_31,
+                    &UndiPrivateData->NiiProtocol31,
+                    &gEfiNiiPointerGuid,
+                    &UndiPrivateData->NiiPointerProtocol,
+                    &gEfiDevicePathProtocolGuid,
+                    UndiPrivateData->Undi32DevPath,
+                    NULL
+                  );
   } else {
     Status = gBS->UninstallMultipleProtocolInterfaces (
                     UndiPrivateData->DeviceHandle,
+                    &gEfiStartStopProtocolGuid,
+                    &UndiPrivateData->DriverStop,
                     &gEfiNiiPointerGuid,
                     &UndiPrivateData->NiiPointerProtocol,
+                    &gEfiDevicePathProtocolGuid,
+                    UndiPrivateData->Undi32DevPath,
                     NULL
                   );
   }
@@ -1750,7 +1763,6 @@ StopChild (
     DEBUGPRINT (CRITICAL, ("UninstallMultipleProtocolInterfaces returns %r\n", Status));
     DEBUGWAIT (CRITICAL);
   }
-
 
   Status = gBS->FreePool (UndiPrivateData->Undi32DevPath);
   if (EFI_ERROR (Status)) {
@@ -1760,9 +1772,7 @@ StopChild (
   // The shutdown should have already been done the the stack
   // In any case do it again. Will not be executed if HwInitialized flag is FALSE.
   if (UndiPrivateData->NicInfo.UndiEnabled) {
-    if (UndiPrivateData->NicInfo.FwVersionSupported) {
-      I40eShutdown (&UndiPrivateData->NicInfo);
-    }
+    I40eShutdown (&UndiPrivateData->NicInfo);
   }
   return EFI_SUCCESS;
 }
@@ -1793,6 +1803,15 @@ StopController (
   }
   DEBUGPRINT (CRITICAL, ("Entering Stop Controller"));
 
+  if (!UndiPrivateData->NicInfo.FwSupported) {
+
+    // Remove packages added in partial init flow
+    if (UndiPrivateData->HiiHandle != NULL) {
+      DEBUGPRINT (CRITICAL, ("Removing Hii Packages \n"));
+      HiiRemovePackages (UndiPrivateData->HiiHandle);
+      UndiPrivateData->HiiHandle = NULL;
+    }
+  }
 
   DEBUGPRINT (INIT, ("UninstallMultipleProtocolInterfaces: NiiPointerProtocol\n"));
   Status = gBS->UninstallMultipleProtocolInterfaces (
@@ -1817,11 +1836,13 @@ StopController (
     I40eReleaseControllerHw (&UndiPrivateData->NicInfo);
   }
   
-  DEBUGPRINT (INIT, ("Shutting down AdminQ\n"));
-  
   // This is the right moment for AQ shutdown as we no longer need it after
-  // shutting down UNDI interface
-  i40e_shutdown_adminq (&UndiPrivateData->NicInfo.Hw);
+  // shutting down UNDI interface. In recovery mode AQ is not started, so do not perform shutdown.
+
+  if (!IsRecoveryMode (&UndiPrivateData->NicInfo)) {
+    DEBUGPRINT (INIT, ("Shutting down AdminQ\n"));
+    i40e_shutdown_adminq (&UndiPrivateData->NicInfo.Hw);
+  }
 
   // Restore original PCI attributes
   Status = UndiPrivateData->NicInfo.PciIo->Attributes (
@@ -1864,9 +1885,9 @@ StopController (
     DEBUGPRINT (CRITICAL, ("FreePool(AdapterInfo->Vsi.RxRing.BufferAddresses) returns %r\n", Status));
   }
 
-  Status = gBS->FreePool (UndiPrivateData->NicInfo.Vsi.TxRing.TxBufferUsed);
+  Status = gBS->FreePool (UndiPrivateData->NicInfo.Vsi.TxRing.TxBufferMappings);
   if (EFI_ERROR (Status)) {
-    DEBUGPRINT (CRITICAL, ("FreePool(AdapterInfo->Vsi.TxRing.TxBufferUsed) returns %r\n", Status));
+    DEBUGPRINT (CRITICAL, ("FreePool(AdapterInfo->Vsi.TxRing.TxBufferMappings) returns %r\n", Status));
   }
 
   Status = gBS->FreePool (UndiPrivateData);
@@ -2025,10 +2046,18 @@ IsFirmwareCompatible (
 
   DEBUGPRINT (HEALTH, ("\n"));
 
+  if (IsRecoveryMode (AdapterInfo)) {
+    StrCpyS (
+      FirmwareCompatibilityString,
+      MAX_FIRMWARE_COMPATIBILITY_STRING,
+      L"Firmware recovery mode detected. Initialization failed."
+    );
+    *FwCompatibilityLevel = FW_RECOVERY_MODE;
+    return FALSE;
+  }
   i40e_get_supported_aq_api_version (&AdapterInfo->Hw, &ApiMajor, &ApiMinor);
 
-  if ((AdapterInfo->Hw.aq.api_maj_ver > ApiMajor) &&
-    (AdapterInfo->Hw.aq.api_min_ver == ApiMinor))
+  if (AdapterInfo->Hw.aq.api_maj_ver > ApiMajor)
   {
     StrCpyS (
       FirmwareCompatibilityString,
@@ -2118,12 +2147,6 @@ UndiGetControllerHealthStatus (
   FirmwareCompatible  = TRUE;
   ErrorCount          = 0;
   
-  UndiPrivateData->NicInfo.QualificationResult = GetModuleQualificationResult (&UndiPrivateData->NicInfo);
-  if (UndiPrivateData->NicInfo.QualificationResult != MODULE_SUPPORTED) {
-    DEBUGPRINT (HEALTH, ("*DriverHealthStatus = EfiDriverHealthStatusFailed\n"));
-    *DriverHealthStatus = EfiDriverHealthStatusFailed;
-    ErrorCount++;
-  }
   if (!IsFirmwareCompatible (
          &UndiPrivateData->NicInfo,
          sizeof (FirmwareCompatibilityString),
@@ -2136,6 +2159,19 @@ UndiGetControllerHealthStatus (
     *DriverHealthStatus = EfiDriverHealthStatusFailed;
     FirmwareCompatible = FALSE;
     ErrorCount++;
+  }
+
+  if (FwCompatibilityLevel != FW_RECOVERY_MODE &&
+    FwCompatibilityLevel != FW_INCOMPATIBLE)
+  {
+
+    // Check module qualification only when FW is in good state
+    UndiPrivateData->NicInfo.QualificationResult = GetModuleQualificationResult (&UndiPrivateData->NicInfo);
+    if (UndiPrivateData->NicInfo.QualificationResult != MODULE_SUPPORTED) {
+      DEBUGPRINT (HEALTH, ("*DriverHealthStatus = EfiDriverHealthStatusFailed\n"));
+      *DriverHealthStatus = EfiDriverHealthStatusFailed;
+      ErrorCount++;
+    }
   }
 
   if (*DriverHealthStatus == EfiDriverHealthStatusHealthy) {

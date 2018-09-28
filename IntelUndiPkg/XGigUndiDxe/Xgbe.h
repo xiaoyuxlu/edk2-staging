@@ -45,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/NetworkInterfaceIdentifier.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/ComponentName2.h>
-#include <Protocol/LoadedImage.h>
 #include <Protocol/DriverDiagnostics.h>
 #include <Protocol/DriverBinding.h>
 #include <Protocol/DriverSupportedEfiVersion.h>
@@ -82,6 +81,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Version.h"
 #include "AdapterInformation.h"
 #include "DriverHealthCommon.h"
+#include "Dma.h"
 
 
 
@@ -114,6 +114,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HEALTH    (1 << 20)
 #define ADAPTERINFO (1 << 21)
 #define HOSTIF    (1 << 22)
+#define DMA       (1 << 23)
+#define WOL       (1 << 24)
 
 // DEBUG Defines are located here
 #define DBG_LVL (NONE)
@@ -206,6 +208,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BLINK_INTERVAL                      200
 
 #define XGBE_UNDI_DEV_SIGNATURE             SIGNATURE_32 ('P', 'R', '0', 'x')
+
+// Interrupt related defines:
+#define IXGBE_EICR_RTX_QUEUE_0_MASK 0x01
+#define IXGBE_EICR_RTX_QUEUE_1_MASK 0x02
+
+/** Retrieves RX descriptor from RX ring structure
+
+   @param[in]   R   RX ring
+   @param[in]   i   Number of descriptor
+
+   @return   Descriptor retrieved
+**/
+#define XGBE_RX_DESC(R, i)          \
+          (&(((struct ixgbe_legacy_rx_desc *) ((R)->UnmappedAddress))[i]))
+
+/** Retrieves TX descriptor from TX ring structure
+
+   @param[in]   R   TX ring
+   @param[in]   i   Number of descriptor
+
+   @return   Descriptor retrieved
+**/
+#define XGBE_TX_DESC(R, i)          \
+          (&(((struct ixgbe_legacy_tx_desc *) ((R)->UnmappedAddress))[i]))
 
 /** Retrieves UNDI_PRIVATE_DATA structure using NII Protocol 3.1 instance
 
@@ -337,14 +363,6 @@ typedef struct {
 
 #define DEFAULT_RX_DESCRIPTORS  8
 #define DEFAULT_TX_DESCRIPTORS  8
-
-/** Macro to convert byte memory requirement into pages
-
-   @param[in]    Bytes of memory required
-
-   @return   Pages required
-**/
-#define UNDI_MEM_PAGES(x) (((x) - 1) / 4096 + 1)
 
 #pragma pack(1)
 typedef struct {
@@ -490,11 +508,10 @@ typedef struct DRIVER_DATA_S {
                                      // is not installed on ControllerHandle
                                      // (e.g. in case iSCSI driver loaded on port)
 
-  BOOLEAN              VlanEnable;
-  UINT16               VlanTag;
-
+  UINT8                FwSupported;
   UINT64               UniqueId;
   EFI_PCI_IO_PROTOCOL *PciIo;
+  UINT64               OriginalPciAttributes;
 
   // UNDI callbacks
   BS_PTR_30            Delay30;
@@ -510,24 +527,22 @@ typedef struct DRIVER_DATA_S {
   UNMAP_MEM            UnMapMem;
   SYNC_MEM             SyncMem;
 
-  UINT64 MemoryPtr;
-  UINT32 MemoryLength;
+  UNDI_DMA_MAPPING      TxRing;
+  UNDI_DMA_MAPPING      RxRing;
+  UNDI_DMA_MAPPING      RxBufferMapping;
 
   UINT16 RxFilter;
-  UINT32 IntMask;
-  UINT16 IntStatus;
+  UINT8  IntMask;
 
   MCAST_LIST McastList;
 
   UINT16                       CurRxInd;
   UINT16                       CurTxInd;
   UINT8                        ReceiveStarted;
-  struct ixgbe_legacy_rx_desc *RxRing;
-  struct ixgbe_legacy_tx_desc *TxRing;
-  LOCAL_RX_BUFFER *            LocalRxBuffer;
   UINT16                       XmitDoneHead;
-  UINT64                       TxBufferUsed[DEFAULT_TX_DESCRIPTORS];
+  UNDI_DMA_MAPPING             TxBufferMappings[DEFAULT_TX_DESCRIPTORS];
   BOOLEAN                      MacAddrOverride;
+  BOOLEAN                      ExitBootServicesTriggered;
   UINTN                        VersionFlag;  // Indicates UNDI version 3.0 or 3.1
 } XGBE_DRIVER_DATA, *PADAPTER_STRUCT;
 
@@ -539,6 +554,7 @@ typedef struct UNDI_PRIVATE_DATA_S {
   EFI_HANDLE                                ControllerHandle;
   EFI_HANDLE                                DeviceHandle;
   EFI_HANDLE                                HiiInstallHandle;
+  EFI_HANDLE                                FmpInstallHandle;
   EFI_DEVICE_PATH_PROTOCOL *                Undi32BaseDevPath;
   EFI_DEVICE_PATH_PROTOCOL *                Undi32DevPath;
   XGBE_DRIVER_DATA                          NicInfo;
@@ -579,7 +595,9 @@ typedef struct {
 
 /* We need enough space to store TX descriptors, RX descriptors,
  RX buffers, and enough left over to do a 64 byte alignment. */
-#define MEMORY_NEEDED   (sizeof (XGBE_UNDI_DMA_RESOURCES) + BYTE_ALIGN_64)
+#define RX_RING_SIZE    sizeof (((XGBE_UNDI_DMA_RESOURCES*) 0)->RxRing)
+#define TX_RING_SIZE    sizeof (((XGBE_UNDI_DMA_RESOURCES*) 0)->TxRing)
+#define RX_BUFFERS_SIZE sizeof (((XGBE_UNDI_DMA_RESOURCES*) 0)->Rxbuffer)
 
 #define FOUR_XGBEABYTE  (UINT64) 0x100000000
 
@@ -750,6 +768,28 @@ UINTN
 XgbeReset (
   XGBE_DRIVER_DATA *XgbeAdapter,
   UINT16            OpFlags
+  );
+
+/** Configures internal interrupt causes on current PF.
+
+   @param[in]   XgbeAdapter   The pointer to our context data
+
+   @return   Interrupt causes are configured for current PF
+**/
+VOID
+XgbeConfigureInterrupts (
+  XGBE_DRIVER_DATA *XgbeAdapter
+  );
+
+/** Disables internal interrupt causes on current PF.
+
+   @param[in]   XgbeAdapter   The pointer to our context data
+
+   @return   Interrupt causes are disabled for current PF
+**/
+VOID
+XgbeDisableInterrupts (
+  XGBE_DRIVER_DATA *XgbeAdapter
   );
 
 /** Changes filter settings
@@ -998,6 +1038,7 @@ UINT8
 GetLinkSpeed (
   IN XGBE_DRIVER_DATA *XgbeAdapter
   );
+
 
 /** Blinks LED on a port for time given in seconds
 
