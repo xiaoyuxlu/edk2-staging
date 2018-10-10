@@ -15,6 +15,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "PlatformBootManager.h"
 #include "PlatformConsole.h"
 
+#define CLASS_HID           3
+#define SUBCLASS_BOOT       1
+#define PROTOCOL_KEYBOARD   1
+
 #define PCI_DEVICE_PATH_NODE(Func, Dev) \
   { \
     { \
@@ -94,6 +98,38 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define gPnpPs2Keyboard \
   PNPID_DEVICE_PATH_NODE(0x0303)
+
+typedef struct {
+  USB_CLASS_DEVICE_PATH           UsbClass;
+  EFI_DEVICE_PATH_PROTOCOL        End;
+} USB_CLASS_FORMAT_DEVICE_PATH;  
+
+USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath = {
+  {
+    {
+      MESSAGING_DEVICE_PATH,
+      MSG_USB_CLASS_DP,
+      {
+        (UINT8) (sizeof (USB_CLASS_DEVICE_PATH)),
+        (UINT8) ((sizeof (USB_CLASS_DEVICE_PATH)) >> 8)
+      }
+    },
+    0xffff,           // VendorId 
+    0xffff,           // ProductId 
+    CLASS_HID,        // DeviceClass 
+    SUBCLASS_BOOT,    // DeviceSubClass
+    PROTOCOL_KEYBOARD // DeviceProtocol
+  },
+
+  { 
+    END_DEVICE_PATH_TYPE, 
+    END_ENTIRE_DEVICE_PATH_SUBTYPE, 
+    {
+      END_DEVICE_PATH_LENGTH, 
+      0
+    }
+  }
+};
   
 ACPI_HID_DEVICE_PATH       gPnp16550ComPortDeviceNode = gPnp16550ComPort;
 UART_DEVICE_PATH           gUartDeviceNode            = gUart;
@@ -626,4 +662,8 @@ PlatformConsoleInit (
   // Do platform specific PCI Device check and add them to ConOut, ConIn, ErrOut
   //
   DetectAndPreparePlatformPciDevicePaths (FALSE);
+  //
+  // Add short-form USB device path to ConIn, to match all USB keyboards
+  //
+  EfiBootManagerUpdateConsoleVariable (ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&gUsbClassKeyboardDevicePath, NULL);
 }
