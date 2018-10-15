@@ -33,5 +33,4 @@ if __name__ == '__main__':
     gitDownload('../WorkSpace', 'https://github.com/slimbootloader/slimbootloader', 'SlimBootloader')
     PayloadBins = '../WorkSpace/SlimBootloader/PayloadPkg/PayloadBins'
     os.makedirs(PayloadBins)
-    shutil.copy('SlimBootloaderIntegration.py', '../WorkSpace/SlimBootloader')
 

@@ -12,7 +12,7 @@
   4). Rename the binary "base.bin".
 
 5. Build Slim Bootloader
-  Run SlimBootloaderIntegration.bat or SlimBootloaderIntegration.sh in UefiPayloadPkg\Tools depending on your os.
+  Run SlimBootloaderIntegration.py.
   The parameters should match the ones used in building payload.
   For example:
     If you built payload with command "BuildPayload.bat Qemu X64 DEBUG", you should use "SlimBootloaderIntegration.bat Qemu X64 DEBUG" to build Slim Bootloader
