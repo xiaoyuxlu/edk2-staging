@@ -28,7 +28,7 @@ The platform supporting codes in `CustomizationSample/Boards` are for illustrati
 1. Setup a build host 
   - In addition to typical EDKII build tools, please install [PyYAML](https://pyyaml.org/)
   - If you want to integrate with [Slim Bootloader](https://github.com/slimbootloader/slimbootloader), refer to [Slim Bootloader Host Setup](https://slimbootloader.github.io/getting-started/build-host-setup.html)
-2. In folder `UEFIPayload/UefiPayloadPkg`, run `BuildPayload.sh` (Linux) or `BuildPayload.bat` (Windows)
+2. In folder `UEFIPayload/UefiPayloadPkg`, run `BuildPayload.py` 
 3. Refer to `CorebootIntergration.txt` or `SlimBootloaderIntegration.txt` for instructions on integration with [Coreboot](https://www.coreboot.org/) or [Slim Bootloader](https://github.com/slimbootloader/slimbootloader)
 
 ### To test UEFI Payload on [Qemu](https://www.qemu.org/)'s q35 platform:
