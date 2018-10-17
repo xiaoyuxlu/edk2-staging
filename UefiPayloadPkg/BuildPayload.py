@@ -32,7 +32,7 @@ def prep_env():
       if subprocess.call(['make', '-C', 'BaseTools']):
         print('Build BaseTools failed!')
         sys.exit(1)
-        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.abspath('BaseTools/BinWrappers/PosixLike')
+    os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.abspath('BaseTools/BinWrappers/PosixLike')
   elif os.name == 'nt':
     toolchain = ''
     vs_ver_list = {('2015', 'VS140COMNTOOLS'),
@@ -59,7 +59,7 @@ def prep_env():
           os.environ['PYTHON_HOME'] = 'C:\\Python27'
       if subprocess.call([os.path.abspath('BaseTools/toolsetup.bat'), 'rebuild']):
         print 'Build BaseTools failed!'
-        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.abspath('BaseTools/BinWrappers/WindowsLike')
+    os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.abspath('BaseTools/BinWrappers/WindowsLike')
   else:
     print('Unsupported operating system !')
     sys.exit(1)
