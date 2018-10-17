@@ -122,8 +122,8 @@ def build(platform, architectrue, target, threadnum):
 
 if __name__ == '__main__':
 
-  os.environ['WORKSPACE'] = os.path.abspath(os.path.join(os.getcwd(),'../../edk2'))
-  os.environ['PACKAGES_PATH'] = '%s;%s/..' % (os.environ['WORKSPACE'], os.getcwd())
+  os.environ['WORKSPACE'] = os.path.abspath('../../edk2')
+  os.environ['PACKAGES_PATH'] = '%s%s%s/..' % (os.environ['WORKSPACE'], ';' if os.name == 'nt' else ':', os.getcwd())
   os.chdir(os.environ['WORKSPACE'])
 
   parser = argparse.ArgumentParser(prog='python %s' % sys.argv[0])
