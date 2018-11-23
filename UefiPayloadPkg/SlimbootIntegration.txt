@@ -5,13 +5,18 @@
 3. Download Slim Bootloader:
   Run DownloadSlimBootloader.py in folder UefiPayloadPkg\Tools.
 
-4. Download stitching base binary (Optional, only needed for minnowboard3)
-  1). Go to https://firmware.intel.com/projects/minnowboard3.
-  2). Choose the latest version of MinnowBoard Firmware Images to download.
-  3). Pick one image from the downloaded zip and put it into folder UefiPayloadPkg\WorkSpace\SlimBootloader\.
-  4). Rename the binary "base.bin".
-
-5. Build Slim Bootloader
+4. Configure Slim Bootloader(Optional, only needed for ApolloLake platforms):
+  1). If you are using Minnowboard3 or Up2, just use the corrsponding patch file. For example, for Minnowboard3, run command "patch -p0 < Minnowboard3.patch" 
+      in UEFIPayload\UefiPayloadPkg\CustomizationSample\Platforms\ApolloLake. If not, you should add "GEN_CFG_DATA.PayloadId | 0x49464555" 
+      to the corresponding dlt file in UEFIPayload\UefiPayloadPkg\WorkSpace\SlimBootloader\Platform\ApollolakeBoardPkg\CfgData.
+  2). If you want to apply settings to Slim Bootloader with boards other than Minnowboard3 and Up2, you can reference the patches we provided.
+  
+5. Download stitching base binary (Optional, only needed for ApolloLake platforms):
+  1). If you are using Minnowboard3 or Up2 or Leafhill, you can get a corresponding image from https://firmware.intel.com/projects/IntelAtomProcessorE3900.
+      If not, you should find a corresponding image by yourself. 
+  2). Put the image you donwload into folder UefiPayloadPkg\WorkSpace\SlimBootloader\ and rename it "base.bin".
+  
+6. Build Slim Bootloader
   Run SlimBootloaderIntegration.py.
   The parameters should match the ones used in building payload.
   For example:
