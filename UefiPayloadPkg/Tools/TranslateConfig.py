@@ -25,10 +25,11 @@ import yaml
 import ConfigParser
 
 RULES_FILE = "Rules.json"
-CONFIG_FILE_BASE = r"../CustomizationSample/Boards/"
+CONFIG_FILE_BASE = r"../CustomizationSample/Platforms/"
 SLIM_BOOT_DSC_FILE_BASE = r"../WorkSpace/SlimBootloader/Platform/"
 UEFI_PAYLOAD_DSC_FILE_BASE = r".."
 Arch = "IA32X64"
+Board = ""
 
 def load_rules_from_json(file):
     fd = open(file)
@@ -134,20 +135,24 @@ def translate(item, rule, SecMatches, ValueMatches, SlimBootDscFileBase):
         # print ("  Sec group: %s" % SecGroup)
     # for ValueGroup in ValueMatches:
         # print ("  Value group: %s" % ValueGroup)
-
+    global Board
     if rule["DestFile"] == "UefiPayloadPkgIA32X64.dsc":
         if Arch == 'IA32':
             rule["DestFile"] = "UefiPayloadPkgIA32.dsc"
         DestPath = UEFI_PAYLOAD_DSC_FILE_BASE
     else:
         DestPath = SlimBootDscFileBase
+        if rule["DestFile"] == "CfgData_Ext_MB3.dlt":
+            Board = "AA00020C"
+        elif rule["DestFile"] == "CfgData_Ext_Up2.dlt":
+            Board = "AA00000E"
 
     #
     # Open target file
     #
     target_file = os.path.join(DestPath, rule["DestFile"])
     #print target_file
-    if not os.path.exists(target_file):
+    if not os.path.isfile(target_file):
         return  
     fd = open(target_file)
     Lines = fd.readlines()
@@ -400,7 +405,10 @@ def main(args=sys.argv[1:]):
     #    if GenCfgData.ParseDscFile(DSC_FILE, 'SiliconTest1', "0x33") != 0:
     #      print "ERROR: %s !" % GenCfgData.Error
     #      return 5
-
+    
+    with open("../WorkSpace/SlimBootloader/board.info", "w") as bd:
+        bd.write(Board)
+    
     sys.exit(rc)
 
 

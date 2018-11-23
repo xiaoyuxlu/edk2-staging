@@ -83,11 +83,11 @@ def copytree(src, dst):
 def build(platform, architectrue, target, threadnum):
     toolchain = prep_env()
     print('start building payload ...')
-    UserExtension = '../UEFIPayload/UefiPayloadPkg/CustomizationSample/Boards/%s/SourceCodes/UserExtension' % platform
+    UserExtension = '../UEFIPayload/UefiPayloadPkg/CustomizationSample/Platforms/%s/SourceCodes/UserExtension' % platform
     if os.path.exists(os.path.join(UserExtension, 'Custom.c')):
       copytree(UserExtension, '../UEFIPayload/UefiPayloadPkg/Library/UserExtensionLib')
 
-    PlatformLib = '../UEFIPayload/UefiPayloadPkg/CustomizationSample/Boards/%s/SourceCodes/PlatformLib' % platform
+    PlatformLib = '../UEFIPayload/UefiPayloadPkg/CustomizationSample/Platforms/%s/SourceCodes/PlatformLib' % platform
     if os.path.exists(PlatformLib):
       copytree(PlatformLib, '../UEFIPayload/UefiPayloadPkg/Library/CustomPlatformLib')
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
   os.chdir(os.environ['WORKSPACE'])
 
   parser = argparse.ArgumentParser(prog='python %s' % sys.argv[0])
-  parser.add_argument('p', help='platform', choices=['MinnowBoard3', 'Qemu'])
+  parser.add_argument('p', help='platform', choices=['ApolloLake', 'Qemu'])
   parser.add_argument('a', help='architecture', choices=['IA32', 'X64'])
   parser.add_argument('t', help='target', choices=['RELEASE', 'DEBUG'])
   parser.add_argument('-n', help='thread number for building', type=int, default=multiprocessing.cpu_count())

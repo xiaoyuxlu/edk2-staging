@@ -54,31 +54,34 @@ def build(platform, architectrue, target):
   os.chdir('../../Tools')
   ret = subprocess.call(['python', 'TranslateConfig.py', '-b', platform, '-a', architectrue])
   os.chdir('../WorkSpace/SlimBootloader')
+  if ret:
+    print('translating configuration failed!')
+    sys.exit(1)
   print('start building Slim Bootloader ...')
   cmd = 'python BuildLoader.py build -p OsLoader.efi:LLDR:Lz4;UefiPld.fd:UEFI:Lzma %s %s' % \
-    ('apl' if platform == 'MinnowBoard3' else 'qemu', '' if target == 'DEBUG' else '-r')
+    ('apl' if platform == 'ApolloLake' else 'qemu', '' if target == 'DEBUG' else '-r')
   ret = subprocess.call(cmd.split())
   if ret:
     print('building Slim Bootloader failed')
     exit(1)
-  if platform == 'MinnowBoard3':
-    ret = subprocess.call(['python', 'Platform/ApollolakeBoardPkg/Script/StitchLoader.py',
-                           '-i', 'base.bin',
-                           '-s', 'Outputs/apl/Stitch_Components.zip',
-                           '-o', 'APL/Output/APL_BX_SPI_IFWI.bin',
-                           '-p', 'AA00020C'])
+  if platform == 'ApolloLake':
+    with open('board.info') as bd:
+      Board = bd.read().strip()
+    if Board:
+      Board = ' -p ' + Board
+    cmd = 'python Platform/ApollolakeBoardPkg/Script/StitchLoader.py -i base.bin -s Outputs/apl/Stitch_Components.zip -o APL/Output/APL_BX_SPI_IFWI.bin%s' % Board 
+    ret = subprocess.call(cmd.split())
     if ret:
-        print('stitching failed')
-        exit(1)
+      print('stitching failed')
+      exit(1)
     shutil.copy('APL/Output/APL_BX_SPI_IFWI.bin', '../../firmware.bin')
   else:
     shutil.copy('Outputs/qemu/SlimBootloader.bin', '../../firmware.bin')
 
-
 if __name__ == '__main__':
   os.chdir('../WorkSpace/SlimBootloader')
   parser = argparse.ArgumentParser(prog='python %s' % sys.argv[0])
-  parser.add_argument('p', help='platform', choices=['MinnowBoard3', 'Qemu'])
+  parser.add_argument('p', help='platform', choices=['ApolloLake', 'Qemu'])
   parser.add_argument('a', help='architecture', choices=['IA32', 'X64'])
   parser.add_argument('t', help='payload\'s target', choices=['RELEASE', 'DEBUG'])
   parser.add_argument('-c', help='clean', action='store_true')
