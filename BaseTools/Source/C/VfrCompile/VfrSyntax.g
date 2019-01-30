@@ -1,7 +1,7 @@
 /*++ @file
 Vfr Syntax
 
-Copyright (c) 2004 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2019, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -199,6 +199,7 @@ VfrParserStart (
 #token LateCheckFlag("LATE_CHECK")              "LATE_CHECK"
 #token ReadOnlyFlag("READ_ONLY")                "READ_ONLY"
 #token OptionOnlyFlag("OPTIONS_ONLY")           "OPTIONS_ONLY"
+#token RestStyleFlag("REST_STYLE")              "REST_STYLE"
 #token Class("class")                           "class"
 #token Subclass("subclass")                     "subclass"
 #token ClassGuid("classguid")                   "classguid"
@@ -591,7 +592,7 @@ vfrFormSetDefinition :
   <<
      EFI_GUID    Guid;
      EFI_GUID    DefaultClassGuid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID;
-     EFI_GUID    ClassGuid1, ClassGuid2, ClassGuid3;
+     EFI_GUID    ClassGuid1, ClassGuid2, ClassGuid3, ClassGuid4;
      UINT8       ClassGuidNum = 0;
      CIfrFormSet *FSObj = NULL;
      UINT16      C, SC;
@@ -607,13 +608,16 @@ vfrFormSetDefinition :
                      "\|" guidDefinition[ClassGuid2]  << ++ClassGuidNum; >>
                      {
                       "\|" guidDefinition[ClassGuid3]  << ++ClassGuidNum; >>
+                       {
+                         "\|" guidDefinition[ClassGuid4]  << ++ClassGuidNum; >>
+                       }
                      }
                   }
                   ","
   }
                                                     <<
-                                                      if (mOverrideClassGuid != NULL && ClassGuidNum >= 3) {
-                                                        _PCATCH (VFR_RETURN_INVALID_PARAMETER, L->getLine(), "Already has 3 class guids, can't add extra class guid!");
+                                                      if (mOverrideClassGuid != NULL && ClassGuidNum >= 4) {
+                                                        _PCATCH (VFR_RETURN_INVALID_PARAMETER, L->getLine(), "Already has 4 class guids, can't add extra class guid!");
                                                       }
                                                       switch (ClassGuidNum) {
                                                       case 0:
@@ -650,10 +654,23 @@ vfrFormSetDefinition :
                                                         }
                                                         break;
                                                       case 3:
+                                                        if (mOverrideClassGuid != NULL) {
+                                                          ClassGuidNum ++;
+                                                        }
                                                         FSObj = new CIfrFormSet(sizeof(EFI_IFR_FORM_SET) + ClassGuidNum * sizeof(EFI_GUID));
                                                         FSObj->SetClassGuid(&ClassGuid1);
                                                         FSObj->SetClassGuid(&ClassGuid2);
                                                         FSObj->SetClassGuid(&ClassGuid3);
+                                                        if (mOverrideClassGuid != NULL) {
+                                                          FSObj->SetClassGuid(mOverrideClassGuid);
+                                                        }
+                                                        break;
+                                                      case 4:
+                                                        FSObj = new CIfrFormSet(sizeof(EFI_IFR_FORM_SET) + ClassGuidNum * sizeof(EFI_GUID));
+                                                        FSObj->SetClassGuid(&ClassGuid1);
+                                                        FSObj->SetClassGuid(&ClassGuid2);
+                                                        FSObj->SetClassGuid(&ClassGuid3);
+                                                        FSObj->SetClassGuid(&ClassGuid4);
                                                         break;
                                                       default:
                                                         break;
@@ -1353,6 +1370,7 @@ questionheaderFlagsField[UINT8 & Flags] :
     ReadOnlyFlag                                    << $Flags |= 0x01; >>
   | InteractiveFlag                                 << $Flags |= 0x04; >>
   | ResetRequiredFlag                               << $Flags |= 0x10; >>
+  | RestStyleFlag                                   << $Flags |= 0x20; >>
   | ReconnectRequiredFlag                           << $Flags |= 0x40; >>
   | O:OptionOnlyFlag                                << 
                                                        if (mCompatibleMode) {
@@ -3911,6 +3929,7 @@ oneofoptionFlagsField [UINT8 & HFlags, UINT8 & LFlags] :
   | "OPTION_DEFAULT_MFG"                               << $LFlags |= 0x20; >>
   | InteractiveFlag                                    << $HFlags |= 0x04; >>
   | ResetRequiredFlag                                  << $HFlags |= 0x10; >>
+  | RestStyleFlag                                      << $HFlags |= 0x20; >>
   | ReconnectRequiredFlag                              << $HFlags |= 0x40; >>
   | ManufacturingFlag                                  << $LFlags |= 0x20; >>
   | DefaultFlag                                        << $LFlags |= 0x10; >>
