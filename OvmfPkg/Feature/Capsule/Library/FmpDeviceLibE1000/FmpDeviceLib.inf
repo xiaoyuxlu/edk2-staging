@@ -1,0 +1,44 @@
+##
+# Copyright (c) 2016, Microsoft Corporation. All rights reserved.<BR>
+# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# 
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FmpDeviceLibE1000
+  FILE_GUID                      = 2864A4F1-7328-4AC9-8820-DF60742C4BDB
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FmpDeviceLib|DXE_DRIVER UEFI_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  FmpDeviceLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  FmpDevicePkg/FmpDevicePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  UefiBootServicesTableLib   #for stall...remove later as stall is only needed to show progress
+  UefiRuntimeServicesTableLib
+  DevicePathLib
+  UefiLib
+  FmpPayloadHeaderLib
+
+[Protocols]
+  gEfiDevicePathProtocolGuid
+  gEfiPciIoProtocolGuid
