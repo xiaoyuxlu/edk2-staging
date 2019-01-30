@@ -23,6 +23,7 @@
   BUILD_TARGETS                  = NOOPT|DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = OvmfPkg/OvmfPkgIa32.fdf
+  POSTBUILD                      = python OvmfPkg/PostBuild.py
 
   #
   # Defines for default states.  These can be changed on the command line.
@@ -44,6 +45,13 @@
 
 !include NetworkPkg/NetworkDefines.dsc.inc
 
+  DEFINE CAPSULE_ENABLE          = TRUE
+  DEFINE CAPSULE_RESET_ENABLE    = TRUE
+  #
+  # Set to BEEP, TEXT, or GRAPHICS
+  #
+  DEFINE CAPSULE_PROGRESS        = GRAPHICS
+
   #
   # Flash size selection. Setting FD_SIZE_IN_KB on the command line directly to
   # one of the supported values, in place of any of the convenience macros, is
@@ -62,6 +70,14 @@
 !endif
 !endif
 !endif
+
+  #
+  # Define ESRT GUIDs for Firmware Management Protocol instances
+  #
+  DEFINE FMP_OVMF_SYSTEM         = B8CB9859-447E-4738-9C48-8885A643AB2B
+  DEFINE FMP_RED_SAMPLE_DEVICE   = 72E2945A-00DA-448E-9AA7-075AD840F9D4
+  DEFINE FMP_BLUE_SAMPLE_DEVICE  = 149DA854-7D19-4FAA-A91E-862EA1324BE6
+  DEFINE FMP_GREEN_SAMPLE_DEVICE = 79179BFD-704D-4C90-9E02-0AB8D968C18A
 
 [BuildOptions]
   GCC:RELEASE_*_*_CC_FLAGS             = -DMDEPKG_NDEBUG
@@ -121,7 +137,20 @@
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   BootLogoLib|MdeModulePkg/Library/BootLogoLib/BootLogoLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
+!if $(CAPSULE_ENABLE) == TRUE
+  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibFmp/DxeCapsuleLib.inf
+!if $(CAPSULE_PROGRESS) == GRAPHICS
+  DisplayUpdateProgressLib|MdeModulePkg/Library/DisplayUpdateProgressLibGraphics/DisplayUpdateProgressLibGraphics.inf
+!endif
+!if $(CAPSULE_PROGRESS) == TEXT
+  DisplayUpdateProgressLib|MdeModulePkg/Library/DisplayUpdateProgressLibText/DisplayUpdateProgressLibText.inf
+!endif
+!if $(CAPSULE_PROGRESS) == BEEP
+  DisplayUpdateProgressLib|OvmfPkg/Feature/Capsule/Library/DisplayUpdateProgressLibBeep/DisplayUpdateProgressLibBeep.inf
+!endif
+!else
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+!endif
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
@@ -315,6 +344,10 @@
   PciLib|OvmfPkg/Library/DxePciLibI440FxQ35/DxePciLibI440FxQ35.inf
   QemuFwCfgS3Lib|OvmfPkg/Library/QemuFwCfgS3Lib/DxeQemuFwCfgS3LibFwCfg.inf
 
+!if $(CAPSULE_ENABLE) == TRUE
+  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibFmp/DxeRuntimeCapsuleLib.inf
+!endif
+
 [LibraryClasses.common.UEFI_DRIVER]
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   TimerLib|OvmfPkg/Library/AcpiTimerLib/DxeAcpiTimerLib.inf
@@ -428,6 +461,11 @@
 !if $(SMM_REQUIRE) == TRUE
   gUefiOvmfPkgTokenSpaceGuid.PcdSmmSmramRequire|TRUE
   gUefiCpuPkgTokenSpaceGuid.PcdCpuSmmEnableBspElection|FALSE
+!endif
+!if $(CAPSULE_RESET_ENABLE) == TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSupportUpdateCapsuleReset|TRUE
+!else
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSupportUpdateCapsuleReset|FALSE
 !endif
 
 [PcdsFixedAtBuild]
@@ -629,6 +667,12 @@
 !if $(TPM2_CONFIG_ENABLE) == TRUE
   SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
 !endif
+!endif
+
+!if $(CAPSULE_ENABLE) == TRUE
+  MdeModulePkg/Universal/FaultTolerantWritePei/FaultTolerantWritePei.inf
+  MdeModulePkg/Universal/Variable/Pei/VariablePei.inf
+  MdeModulePkg/Universal/CapsulePei/CapsulePei.inf
 !endif
 
   #
@@ -912,4 +956,15 @@
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha512/HashInstanceLibSha512.inf
   }
+!endif
+
+!if $(CAPSULE_ENABLE)
+#  !include OvmfPkg/Feature/Capsule/FmpOvmfSystem.dsc
+  !include OvmfPkg/Feature/Capsule/FmpGreenSampleDevice.dsc
+  !include OvmfPkg/Feature/Capsule/FmpBlueSampleDevice.dsc
+  !include OvmfPkg/Feature/Capsule/FmpRedSampleDevice.dsc
+  !include OvmfPkg/Feature/Capsule/FmpE1000.dsc
+
+  MdeModulePkg/Universal/EsrtFmpDxe/EsrtFmpDxe.inf
+  MdeModulePkg/Application/CapsuleApp/CapsuleApp.inf
 !endif

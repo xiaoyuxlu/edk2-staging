@@ -149,6 +149,13 @@ APRIORI PEI {
 #
 INF  MdeModulePkg/Core/Pei/PeiMain.inf
 INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+
+!if $(CAPSULE_ENABLE) == TRUE
+INF  MdeModulePkg/Universal/FaultTolerantWritePei/FaultTolerantWritePei.inf
+INF  MdeModulePkg/Universal/Variable/Pei/VariablePei.inf
+INF  MdeModulePkg/Universal/CapsulePei/CapsulePei.inf
+!endif
+
 INF  MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.inf
 INF  MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 INF  OvmfPkg/PlatformPei/PlatformPei.inf
@@ -357,6 +364,24 @@ INF  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
 !endif
 !endif
+
+!if $(CAPSULE_ENABLE)
+INF  MdeModulePkg/Universal/EsrtFmpDxe/EsrtFmpDxe.inf
+
+#
+# OVMF System Firmware FMP
+#
+#INF  FILE_GUID = $(FMP_OVMF_SYSTEM) FmpDevicePkg/FmpDxe/FmpDxe.inf
+
+#
+# Sample Device FMP
+#
+INF  FILE_GUID = $(FMP_GREEN_SAMPLE_DEVICE) FmpDevicePkg/FmpDxe/FmpDxe.inf
+INF  FILE_GUID = $(FMP_BLUE_SAMPLE_DEVICE)  FmpDevicePkg/FmpDxe/FmpDxe.inf
+INF  FILE_GUID = $(FMP_RED_SAMPLE_DEVICE)   FmpDevicePkg/FmpDxe/FmpDxe.inf
+
+!endif
+
 
 ################################################################################
 
