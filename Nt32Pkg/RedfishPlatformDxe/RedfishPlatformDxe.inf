@@ -1,0 +1,60 @@
+## @file
+#  RedfishPlatformDxe is to fill the SMBIOS table 42 before EndofDxe phase. And meanwhile, 
+#  RedfishPlatformDxe is required to produce the RedfishCredentialProtocol for the consumer
+#  to get the Redfish credential Info and to restrict Redfish access from UEFI side. 
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RedfishPlatformDxe
+  FILE_GUID                      = 519EAE59-C1D0-4A1C-8B21-F06B620DAD21
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = RedfishPlatformDxeDriverEntryPoint
+
+[Sources]
+  RedfishPlatformDxe.c
+  RedfishPlatformDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PcdLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiLib
+  PrintLib
+
+[Protocols]
+  gEfiRedfishCredentialProtocolGuid     ## BY_START
+  gEfiSmbiosProtocolGuid                ## TO_START
+
+[Guids]
+  gEfiEndOfDxeEventGroupGuid              ## CONSUMES ## Event
+  gEfiEventExitBootServicesGuid           ## CONSUMES ## Event
+  gEfiGlobalVariableGuid
+
+[Depex]
+  gEfiSmbiosProtocolGuid AND
+  gEfiVariableArchProtocolGuid AND
+  gEfiVariableWriteArchProtocolGuid
+  
