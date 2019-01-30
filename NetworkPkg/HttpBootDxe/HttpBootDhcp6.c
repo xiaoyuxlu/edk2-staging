@@ -95,7 +95,7 @@ HttpBootBuildDhcp6Options (
     DEFAULT_CLASS_ID_DATA,
     sizeof (HTTP_BOOT_CLASS_ID)
     );
-  HttpBootUintnToAscDecWithFormat (
+  NetLibUintnToAscDecWithFormat (
     EFI_HTTP_BOOT_CLIENT_SYSTEM_ARCHITECTURE,
     OptEnt.VendorClass->ClassId.ArchitectureType,
     sizeof (OptEnt.VendorClass->ClassId.ArchitectureType)
@@ -107,12 +107,12 @@ HttpBootBuildDhcp6Options (
       Private->Nii->StringId,
       sizeof (OptEnt.VendorClass->ClassId.InterfaceName)
       );
-    HttpBootUintnToAscDecWithFormat (
+    NetLibUintnToAscDecWithFormat (
       Private->Nii->MajorVer,
       OptEnt.VendorClass->ClassId.UndiMajor,
       sizeof (OptEnt.VendorClass->ClassId.UndiMajor)
       );
-    HttpBootUintnToAscDecWithFormat (
+    NetLibUintnToAscDecWithFormat (
       Private->Nii->MinorVer,
       OptEnt.VendorClass->ClassId.UndiMinor,
       sizeof (OptEnt.VendorClass->ClassId.UndiMinor)

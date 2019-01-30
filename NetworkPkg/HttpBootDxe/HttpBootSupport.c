@@ -70,30 +70,6 @@ HttpBootGetNicByIp6Children (
 }
 
 /**
-  This function is to convert UINTN to ASCII string with the required formatting.
-
-  @param[in]  Number         Numeric value to be converted.
-  @param[in]  Buffer         The pointer to the buffer for ASCII string.
-  @param[in]  Length         The length of the required format.
-
-**/
-VOID
-HttpBootUintnToAscDecWithFormat (
-  IN UINTN                       Number,
-  IN UINT8                       *Buffer,
-  IN INTN                        Length
-  )
-{
-  UINTN                          Remainder;
-
-  for (; Length > 0; Length--) {
-    Remainder      = Number % 10;
-    Number        /= 10;
-    Buffer[Length - 1] = (UINT8) ('0' + Remainder);
-  }
-}
-
-/**
   This function is to display the IPv4 address.
 
   @param[in]  Ip        The pointer to the IPv4 address.
@@ -494,138 +470,8 @@ Exit:
   if (DnsServerList != NULL) {
     FreePool (DnsServerList);
   }
-
-  return Status;
-}
-/**
-  Create a HTTP_IO_HEADER to hold the HTTP header items.
-
-  @param[in]  MaxHeaderCount         The maximun number of HTTP header in this holder.
-
-  @return    A pointer of the HTTP header holder or NULL if failed.
-
-**/
-HTTP_IO_HEADER *
-HttpBootCreateHeader (
-  UINTN                     MaxHeaderCount
-  )
-{
-  HTTP_IO_HEADER        *HttpIoHeader;
-
-  if (MaxHeaderCount == 0) {
-    return NULL;
-  }
-
-  HttpIoHeader = AllocateZeroPool (sizeof (HTTP_IO_HEADER) + MaxHeaderCount * sizeof (EFI_HTTP_HEADER));
-  if (HttpIoHeader == NULL) {
-    return NULL;
-  }
-
-  HttpIoHeader->MaxHeaderCount = MaxHeaderCount;
-  HttpIoHeader->Headers = (EFI_HTTP_HEADER *) (HttpIoHeader + 1);
-
-  return HttpIoHeader;
-}
-
-/**
-  Destroy the HTTP_IO_HEADER and release the resouces.
-
-  @param[in]  HttpIoHeader       Point to the HTTP header holder to be destroyed.
-
-**/
-VOID
-HttpBootFreeHeader (
-  IN  HTTP_IO_HEADER       *HttpIoHeader
-  )
-{
-  UINTN      Index;
-
-  if (HttpIoHeader != NULL) {
-    if (HttpIoHeader->HeaderCount != 0) {
-      for (Index = 0; Index < HttpIoHeader->HeaderCount; Index++) {
-        FreePool (HttpIoHeader->Headers[Index].FieldName);
-        FreePool (HttpIoHeader->Headers[Index].FieldValue);
-      }
-    }
-    FreePool (HttpIoHeader);
-  }
-}
-
-/**
-  Set or update a HTTP header with the field name and corresponding value.
-
-  @param[in]  HttpIoHeader       Point to the HTTP header holder.
-  @param[in]  FieldName          Null terminated string which describes a field name.
-  @param[in]  FieldValue         Null terminated string which describes the corresponding field value.
-
-  @retval  EFI_SUCCESS           The HTTP header has been set or updated.
-  @retval  EFI_INVALID_PARAMETER Any input parameter is invalid.
-  @retval  EFI_OUT_OF_RESOURCES  Insufficient resource to complete the operation.
-  @retval  Other                 Unexpected error happened.
-
-**/
-EFI_STATUS
-HttpBootSetHeader (
-  IN  HTTP_IO_HEADER       *HttpIoHeader,
-  IN  CHAR8                *FieldName,
-  IN  CHAR8                *FieldValue
-  )
-{
-  EFI_HTTP_HEADER       *Header;
-  UINTN                 StrSize;
-  CHAR8                 *NewFieldValue;
-
-  if (HttpIoHeader == NULL || FieldName == NULL || FieldValue == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Header = HttpFindHeader (HttpIoHeader->HeaderCount, HttpIoHeader->Headers, FieldName);
-  if (Header == NULL) {
-    //
-    // Add a new header.
-    //
-    if (HttpIoHeader->HeaderCount >= HttpIoHeader->MaxHeaderCount) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    Header = &HttpIoHeader->Headers[HttpIoHeader->HeaderCount];
-
-    StrSize = AsciiStrSize (FieldName);
-    Header->FieldName = AllocatePool (StrSize);
-    if (Header->FieldName == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (Header->FieldName, FieldName, StrSize);
-    Header->FieldName[StrSize -1] = '\0';
-
-    StrSize = AsciiStrSize (FieldValue);
-    Header->FieldValue = AllocatePool (StrSize);
-    if (Header->FieldValue == NULL) {
-      FreePool (Header->FieldName);
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (Header->FieldValue, FieldValue, StrSize);
-    Header->FieldValue[StrSize -1] = '\0';
-
-    HttpIoHeader->HeaderCount++;
-  } else {
-    //
-    // Update an existing one.
-    //
-    StrSize = AsciiStrSize (FieldValue);
-    NewFieldValue = AllocatePool (StrSize);
-    if (NewFieldValue == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (NewFieldValue, FieldValue, StrSize);
-    NewFieldValue[StrSize -1] = '\0';
-
-    if (Header->FieldValue != NULL) {
-      FreePool (Header->FieldValue);
-    }
-    Header->FieldValue = NewFieldValue;
-  }
-
-  return EFI_SUCCESS;
+  
+  return Status;  
 }
 
 /**
@@ -823,7 +669,7 @@ ON_ERROR:
 }
 
 /**
-  Destroy the HTTP_IO and release the resouces.
+  Destroy the HTTP_IO and release the resources.
 
   @param[in]  HttpIo          The HTTP_IO which wraps the HTTP service to be destroyed.
 

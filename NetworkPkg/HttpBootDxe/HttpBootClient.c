@@ -983,7 +983,7 @@ HttpBootGetBootFile (
   //       Accept
   //       User-Agent
   //
-  HttpIoHeader = HttpBootCreateHeader (3);
+  HttpIoHeader = HttpIoCreateHeader (3);
   if (HttpIoHeader == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto ERROR_2;
@@ -1001,7 +1001,7 @@ HttpBootGetBootFile (
   if (EFI_ERROR (Status)) {
     goto ERROR_3;
   }
-  Status = HttpBootSetHeader (
+  Status = HttpIoSetHeader (
              HttpIoHeader,
              HTTP_HEADER_HOST,
              HostName
@@ -1014,7 +1014,7 @@ HttpBootGetBootFile (
   //
   // Add HTTP header field 2: Accept
   //
-  Status = HttpBootSetHeader (
+  Status = HttpIoSetHeader (
              HttpIoHeader,
              HTTP_HEADER_ACCEPT,
              "*/*"
@@ -1026,7 +1026,7 @@ HttpBootGetBootFile (
   //
   // Add HTTP header field 3: User-Agent
   //
-  Status = HttpBootSetHeader (
+  Status = HttpIoSetHeader (
              HttpIoHeader,
              HTTP_HEADER_USER_AGENT,
              HTTP_USER_AGENT_EFI_HTTP_BOOT
@@ -1297,7 +1297,7 @@ ERROR_4:
     FreePool (RequestData);
   }
 ERROR_3:
-  HttpBootFreeHeader (HttpIoHeader);
+  HttpIoFreeHeader (HttpIoHeader);
 ERROR_2:
   if (Cache != NULL) {
     FreePool (Cache);

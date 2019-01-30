@@ -44,22 +44,6 @@ HttpBootGetNicByIp6Children (
   );
 
 /**
-  This function is to convert UINTN to ASCII string with the required formatting.
-
-  @param[in]  Number         Numeric value to be converted.
-  @param[in]  Buffer         The pointer to the buffer for ASCII string.
-  @param[in]  Length         The length of the required format.
-
-**/
-VOID
-HttpBootUintnToAscDecWithFormat (
-  IN UINTN                       Number,
-  IN UINT8                       *Buffer,
-  IN INTN                        Length
-  );
-
-
-/**
   This function is to display the IPv4 address.
 
   @param[in]  Ip        The pointer to the IPv4 address.
@@ -90,59 +74,6 @@ HttpBootShowIp6Addr (
 VOID
 HttpBootPrintErrorMessage (
   EFI_HTTP_STATUS_CODE            StatusCode
-  );
-
-//
-// A wrapper structure to hold the HTTP headers.
-//
-typedef struct {
-  UINTN                       MaxHeaderCount;
-  UINTN                       HeaderCount;
-  EFI_HTTP_HEADER             *Headers;
-} HTTP_IO_HEADER;
-
-/**
-  Create a HTTP_IO_HEADER to hold the HTTP header items.
-
-  @param[in]  MaxHeaderCount         The maximun number of HTTP header in this holder.
-
-  @return    A pointer of the HTTP header holder or NULL if failed.
-
-**/
-HTTP_IO_HEADER *
-HttpBootCreateHeader (
-  IN  UINTN                MaxHeaderCount
-  );
-
-/**
-  Destroy the HTTP_IO_HEADER and release the resouces.
-
-  @param[in]  HttpIoHeader       Point to the HTTP header holder to be destroyed.
-
-**/
-VOID
-HttpBootFreeHeader (
-  IN  HTTP_IO_HEADER       *HttpIoHeader
-  );
-
-/**
-  Set or update a HTTP header with the field name and corresponding value.
-
-  @param[in]  HttpIoHeader       Point to the HTTP header holder.
-  @param[in]  FieldName          Null terminated string which describes a field name.
-  @param[in]  FieldValue         Null terminated string which describes the corresponding field value.
-
-  @retval  EFI_SUCCESS           The HTTP header has been set or updated.
-  @retval  EFI_INVALID_PARAMETER Any input parameter is invalid.
-  @retval  EFI_OUT_OF_RESOURCES  Insufficient resource to complete the operation.
-  @retval  Other                 Unexpected error happened.
-
-**/
-EFI_STATUS
-HttpBootSetHeader (
-  IN  HTTP_IO_HEADER       *HttpIoHeader,
-  IN  CHAR8                *FieldName,
-  IN  CHAR8                *FieldValue
   );
 
 ///
@@ -306,7 +237,7 @@ HttpIoCreateIo (
   );
 
 /**
-  Destroy the HTTP_IO and release the resouces.
+  Destroy the HTTP_IO and release the resources.
 
   @param[in]  HttpIo          The HTTP_IO which wraps the HTTP service to be destroyed.
 
