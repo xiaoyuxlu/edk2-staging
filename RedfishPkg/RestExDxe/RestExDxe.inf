@@ -1,0 +1,69 @@
+## @file
+#  Implementation of EFI_REST_EX_PROTOCOL interfaces.
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION               = 0x00010005
+  BASE_NAME                 = RestExDxe
+  FILE_GUID                 = B64702DA-E6B5-43c8-8CE8-D253071E9D6C
+  MODULE_TYPE               = UEFI_DRIVER
+  VERSION_STRING            = 1.0
+  ENTRY_POINT               = RestExDriverEntryPoint
+  UNLOAD_IMAGE              = NetLibDefaultUnload
+  MODULE_UNI_FILE           = RestExDxe.uni
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  NetworkPkg/NetworkPkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[Sources]
+  ComponentName.c
+  RestExDriver.h
+  RestExDriver.c
+  RestExImpl.h
+  RestExImpl.c
+  RestExProtocol.c
+
+
+[LibraryClasses]
+  BaseLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  NetLib
+  DebugLib
+  DpcLib
+  PrintLib
+  HttpLib
+  DevicePathLib
+
+
+[Protocols]
+  gEfiRestExServiceBindingProtocolGuid            ## BY_START
+  gEfiRestExProtocolGuid                          ## BY_START
+  gEfiHttpServiceBindingProtocolGuid              ## TO_START
+  gEfiHttpProtocolGuid                            ## TO_START
+  gEfiDevicePathProtocolGuid                      ## TO_START
+
+[Pcd]
+  gEfiRedfishPkgTokenSpaceGuid.PcdRestExServiceInBandDevicePath    ## CONSUMES
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  RestExDxeExtra.uni
+
