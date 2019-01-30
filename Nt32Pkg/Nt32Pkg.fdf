@@ -211,7 +211,7 @@ INF  MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
 INF  Nt32Pkg/WinNtThunkDxe/WinNtThunkDxe.inf
 INF  Nt32Pkg/CpuRuntimeDxe/CpuRuntimeDxe.inf
 INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
-INF  MdeModulePkg/Application/UiApp/UiApp.inf
+INF  Nt32Pkg/Override/MdeModulePkg/Application/UiApp/UiApp.inf  ### Override For Redfish
 INF  MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf
 INF  MdeModulePkg/Universal/FaultTolerantWriteDxe/FaultTolerantWriteDxe.inf
 INF  Nt32Pkg/MiscSubClassPlatformDxe/MiscSubClassPlatformDxe.inf
@@ -276,6 +276,14 @@ INF  NetworkPkg/TlsDxe/TlsDxe.inf
 INF  NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf
 !endif
 INF  MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
+
+INF  Nt32Pkg/RedfishPlatformDxe/RedfishPlatformDxe.inf
+
+INF  RedfishPkg/RestExDxe/RestExDxe.inf
+INF  RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
+INF  RedfishPkg/Features/RedfishBootInfoDxe/RedfishBootInfoDxe.inf
+INF  RedfishPkg/Features/RedfishBiosDxe/RedfishBiosDxe.inf
+
 ################################################################################
 #
 # FILE statements are provided so that a platform integrator can include
@@ -293,7 +301,7 @@ INF  EdkShellBinPkg/FullShell/FullShell.inf
 INF FatPkg/EnhancedFatDxe/Fat.inf
 INF MdeModulePkg/Universal/Disk/UdfDxe/UdfDxe.inf
 
-INF MdeModulePkg/Logo/LogoDxe.inf
+#INF MdeModulePkg/Logo/LogoDxe.inf
 INF MdeModulePkg/Universal/LoadFileOnFv2/LoadFileOnFv2.inf
 ################################################################################
 #

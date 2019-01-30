@@ -44,29 +44,29 @@
   # Defines for default states.  These can be changed on the command line.
   # -D FLAG=VALUE
   #
-  # Note: Secure Boot feature highly depends on the OpenSSL building. To enable this 
-  #       feature, please follow the instructions found in the file "Patch-HOWTO.txt" 
+  # Note: Secure Boot feature highly depends on the OpenSSL building. To enable this
+  #       feature, please follow the instructions found in the file "Patch-HOWTO.txt"
   #       located in CryptoPkg\Library\OpensslLib to enable the OpenSSL building first.
   #
-  DEFINE SECURE_BOOT_ENABLE      = FALSE
-  
+  DEFINE SECURE_BOOT_ENABLE      = TRUE
+
   #
-  # This flag is to enable or disable TLS feature.  
+  # This flag is to enable or disable TLS feature.
   # These can be changed on the command line.
   # -D FLAG=VALUE
   #
-  # Note: TLS feature highly depends on the OpenSSL building. To enable this 
-  #       feature, please follow the instructions found in the file "Patch-HOWTO.txt" 
+  # Note: TLS feature highly depends on the OpenSSL building. To enable this
+  #       feature, please follow the instructions found in the file "Patch-HOWTO.txt"
   #       located in CryptoPkg\Library\OpensslLib to enable the OpenSSL building first.
   #
-  DEFINE TLS_ENABLE = FALSE
-  
+  DEFINE TLS_ENABLE = TRUE
+
   #
   # Indicates whether HTTP connections (i.e., unsecured) are permitted or not.
   # -D FLAG=VALUE
   #
-  # Note: If ALLOW_HTTP_CONNECTIONS is TRUE, HTTP connections are allowed. Both 
-  #       the "https://" and "http://" URI schemes are permitted. Otherwise, HTTP 
+  # Note: If ALLOW_HTTP_CONNECTIONS is TRUE, HTTP connections are allowed. Both
+  #       the "https://" and "http://" URI schemes are permitted. Otherwise, HTTP
   #       connections are denied. Only the "https://" URI scheme is permitted.
   #
   DEFINE ALLOW_HTTP_CONNECTIONS = TRUE
@@ -76,7 +76,7 @@
   # These can be changed on the command line.
   # -D FLAG=VALUE
   #
-  DEFINE NETWORK_IP6_ENABLE = FALSE
+  DEFINE NETWORK_IP6_ENABLE = TRUE
 
 ################################################################################
 #
@@ -116,6 +116,7 @@
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   #
   # UEFI & PI
   #
@@ -184,6 +185,11 @@
 !endif
   VarCheckLib|MdeModulePkg/Library/VarCheckLib/VarCheckLib.inf
 
+  JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
+  BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
+  LibredfishLib|RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
+  RedfishLib|RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
+
 [LibraryClasses.common.USER_DEFINED]
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
@@ -245,7 +251,9 @@
 [LibraryClasses.common.UEFI_APPLICATION]
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   PrintLib|MdeModulePkg/Library/DxePrintLibPrint2Protocol/DxePrintLibPrint2Protocol.inf
-  
+  ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   #
   # Runtime
@@ -292,6 +300,10 @@
 !endif
                         
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xaa, 0x2c, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6e, 0x8a, 0xb6, 0xf4, 0x66, 0x23, 0x31 }
+
+  gEfiRedfishPkgTokenSpaceGuid.PcdRestExServiceInBandDevicePath.DevicePathMatchMode|DEVICE_PATH_MATCH_MAC_NODE
+  gEfiRedfishPkgTokenSpaceGuid.PcdRestExServiceInBandDevicePath.DevicePathNum|1
+  gEfiRedfishPkgTokenSpaceGuid.PcdRestExServiceInBandDevicePath.DevicePath|{DEVICE_PATH("MAC(005056C00002,0x1)")}
 
 
 ################################################################################
@@ -491,7 +503,7 @@
 !endif
 
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
-  MdeModulePkg/Application/UiApp/UiApp.inf{
+  Nt32Pkg/Override/MdeModulePkg/Application/UiApp/UiApp.inf{  ### Override For Redfish
     <LibraryClasses>
       NULL|MdeModulePkg/Library/DeviceManagerUiLib/DeviceManagerUiLib.inf
       NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
@@ -514,7 +526,7 @@
     <LibraryClasses>
       NULL|IntelFrameworkModulePkg/Library/LegacyBootManagerLib/LegacyBootManagerLib.inf
   }
-  MdeModulePkg/Logo/LogoDxe.inf
+  #MdeModulePkg/Logo/LogoDxe.inf
   ShellPkg/Application/Shell/Shell.inf {
     <PcdsFixedAtBuild>
       gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
@@ -534,6 +546,15 @@
       FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   }
 
+  RedfishPkg/RestExDxe/RestExDxe.inf
+  RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
+
+  RedfishPkg/Features/RedfishBiosDxe/RedfishBiosDxe.inf
+  RedfishPkg/Features/RedfishBootInfoDxe/RedfishBootInfoDxe.inf
+
+  Nt32Pkg/RedfishPlatformDxe/RedfishPlatformDxe.inf
+  Nt32Pkg/Application/RedfishPlatformConfig/RedfishPlatformConfig.inf
+
 ###################################################################################################
 #
 # BuildOptions Section - Define the module specific tool chain flags that should be used as
@@ -547,6 +568,7 @@
   DEBUG_*_*_DLINK_FLAGS = /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 /SUBSYSTEM:CONSOLE
   NOOPT_*_*_DLINK_FLAGS = /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 /SUBSYSTEM:CONSOLE
   RELEASE_*_*_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
+  DEBUG_*_*_CC_FLAGS = /Od /GL-
 
 #############################################################################################################
 # NOTE:
