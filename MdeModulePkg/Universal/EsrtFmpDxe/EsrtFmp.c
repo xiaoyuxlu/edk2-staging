@@ -2,7 +2,7 @@
   Publishes ESRT table from Firmware Management Protocol instances
 
   Copyright (c) 2016, Microsoft Corporation
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
 
   All rights reserved.
   Redistribution and use in source and binary forms, with or without
@@ -119,8 +119,8 @@ IsSystemFmp (
 
 /**
   Function to create a single ESRT Entry and add it to the ESRT
-  given a FMP descriptor.  If the guid is already in the ESRT it
-  will be ignored.  The ESRT will grow if it does not have enough room.
+  given a FMP descriptor.  If the guid is already in the ESRT, then the ESRT
+  entry is updated.  The ESRT will grow if it does not have enough room.
 
   @param[in, out] Table             On input, pointer to the pointer to the ESRT.
                                     On output, same as input or pointer to the pointer
@@ -134,6 +134,7 @@ IsSystemFmp (
 EFI_STATUS
 CreateEsrtEntry (
   IN OUT EFI_SYSTEM_RESOURCE_TABLE  **Table,
+  IN OUT UINT64                     **HardwareInstances,
   IN EFI_FIRMWARE_IMAGE_DESCRIPTOR  *FmpImageInfoBuf,
   IN UINT32                         FmpVersion
   )
@@ -142,18 +143,78 @@ CreateEsrtEntry (
   EFI_SYSTEM_RESOURCE_ENTRY  *Entry;
   UINTN                      NewSize;
   EFI_SYSTEM_RESOURCE_TABLE  *NewTable;
+  UINT64                     *NewHardwareInstances;
+  UINT64                     FmpHardwareInstance;
 
   Index = 0;
   Entry = NULL;
 
   Entry = (EFI_SYSTEM_RESOURCE_ENTRY *)((*Table) + 1);
   //
-  // Make sure Guid isn't already in the list
+  // Check to see if GUID is already in the table
   //
   for (Index = 0; Index < (*Table)->FwResourceCount; Index++) {
     if (CompareGuid (&Entry->FwClass, &FmpImageInfoBuf->ImageTypeId)) {
-      DEBUG ((DEBUG_ERROR, "EsrtFmpDxe: ESRT Entry already exists for FMP Instance with GUID %g\n", &Entry->FwClass));
-      return EFI_INVALID_PARAMETER;
+      //
+      // If HardwareInstance in ESRT and FmpImageInfoBuf are the same value
+      // for the same ImageTypeId GUID, then there is more than one FMP
+      // instance for the same FW device, which is an error condition.
+      // If FmpVersion is less than 3, then assume HardwareInstance is 0.
+      //
+      FmpHardwareInstance = 0;
+      if (FmpVersion >= 3) {
+        FmpHardwareInstance = FmpImageInfoBuf->HardwareInstance;
+      }
+      if ((*HardwareInstances)[Index] == FmpHardwareInstance) {
+        DEBUG ((DEBUG_ERROR, "EsrtFmpDxe: ESRT Entry already exists for FMP Instance with GUID %g and HardwareInstance %016lx\n", &Entry->FwClass, (*HardwareInstances)[Index]));
+        ASSERT ((*HardwareInstances)[Index] != FmpHardwareInstance);
+        return EFI_UNSUPPORTED;
+      }
+
+      DEBUG ((DEBUG_INFO, "EsrtFmpDxe: ESRT Entry already exists for FMP Instance with GUID %g\n", &Entry->FwClass));
+
+      //
+      // Set ESRT FwVersion to the smaller of the two values
+      //
+      Entry->FwVersion = MIN (FmpImageInfoBuf->Version, Entry->FwVersion);
+
+      //
+      // VERSION 2 has Lowest Supported
+      //
+      if (FmpVersion >= 2) {
+        //
+        // Set ESRT LowestSupportedFwVersion to the smaller of the two values
+        //
+        Entry->LowestSupportedFwVersion =
+          MIN (
+            FmpImageInfoBuf->LowestSupportedImageVersion,
+            Entry->LowestSupportedFwVersion
+            );
+      }
+
+      //
+      // VERSION 3 supports last attempt values
+      //
+      if (FmpVersion >= 3) {
+        Entry->LastAttemptVersion =
+          MIN (
+            FmpImageInfoBuf->LastAttemptVersion,
+            Entry->LastAttemptVersion
+            );
+        //
+        // Update the ESRT entry with the last attempt status and last attempt
+        // version from the first FMP instance whose last attempt status is not
+        // SUCCESS.
+        //
+        if (Entry->LastAttemptStatus == LAST_ATTEMPT_STATUS_SUCCESS) {
+          if (FmpImageInfoBuf->LastAttemptStatus != LAST_ATTEMPT_STATUS_SUCCESS) {
+            Entry->LastAttemptStatus = FmpImageInfoBuf->LastAttemptStatus;
+            Entry->LastAttemptVersion = FmpImageInfoBuf->LastAttemptVersion;
+          }
+        }
+      }
+
+      return EFI_SUCCESS;
     }
     Entry++;
   }
@@ -188,6 +249,29 @@ CreateEsrtEntry (
     // Reassign pointer to new table.
     //
     (*Table) = NewTable;
+
+    NewSize  = ((*Table)->FwResourceCountMax) * sizeof (UINT64);
+    NewHardwareInstances = AllocateZeroPool (NewSize);
+    if (NewHardwareInstances == NULL) {
+      DEBUG ((DEBUG_ERROR, "EsrtFmpDxe: Failed to allocate memory larger table for Hardware Instances.\n"));
+      return EFI_OUT_OF_RESOURCES;
+    }
+    //
+    // Copy the whole old table into new table buffer
+    //
+    CopyMem (
+      NewHardwareInstances,
+      (*HardwareInstances),
+      ((*Table)->FwResourceCountMax) * sizeof (UINT64)
+      );
+    //
+    // Free old table
+    //
+    FreePool ((*HardwareInstances));
+    //
+    // Reassign pointer to new table.
+    //
+    (*HardwareInstances) = NewHardwareInstances;
   }
 
   //
@@ -198,10 +282,6 @@ CreateEsrtEntry (
   // Move to the location of new entry
   //
   Entry = Entry + (*Table)->FwResourceCount;
-  //
-  // Increment resource count
-  //
-  (*Table)->FwResourceCount++;
 
   CopyGuid (&Entry->FwClass, &FmpImageInfoBuf->ImageTypeId);
 
@@ -212,11 +292,11 @@ CreateEsrtEntry (
     Entry->FwType = (UINT32)(ESRT_FW_TYPE_DEVICEFIRMWARE);
   }
 
-  Entry->FwVersion = FmpImageInfoBuf->Version;
+  Entry->FwVersion                = FmpImageInfoBuf->Version;
   Entry->LowestSupportedFwVersion = 0;
-  Entry->CapsuleFlags = 0;
-  Entry->LastAttemptVersion = 0;
-  Entry->LastAttemptStatus = 0;
+  Entry->CapsuleFlags             = 0;
+  Entry->LastAttemptVersion       = 0;
+  Entry->LastAttemptStatus        = 0;
 
   //
   // VERSION 2 has Lowest Supported
@@ -230,8 +310,21 @@ CreateEsrtEntry (
   //
   if (FmpVersion >= 3) {
     Entry->LastAttemptVersion = FmpImageInfoBuf->LastAttemptVersion;
-    Entry->LastAttemptStatus = FmpImageInfoBuf->LastAttemptStatus;
+    Entry->LastAttemptStatus  = FmpImageInfoBuf->LastAttemptStatus;
   }
+
+  //
+  // VERSION 3 supports hardware instance
+  //
+  (*HardwareInstances)[(*Table)->FwResourceCount] = 0;
+  if (FmpVersion >= 3) {
+    (*HardwareInstances)[(*Table)->FwResourceCount] = FmpImageInfoBuf->HardwareInstance;
+  }
+
+  //
+  // Increment resource count
+  //
+  (*Table)->FwResourceCount++;
 
   return EFI_SUCCESS;
 }
@@ -251,6 +344,7 @@ CreateFmpBasedEsrt (
 {
   EFI_STATUS                        Status;
   EFI_SYSTEM_RESOURCE_TABLE         *Table;
+  UINT64                            *HardwareInstances;
   UINTN                             NoProtocols;
   VOID                              **Buffer;
   UINTN                             Index;
@@ -266,6 +360,7 @@ CreateFmpBasedEsrt (
 
   Status             = EFI_SUCCESS;
   Table              = NULL;
+  HardwareInstances  = NULL;
   NoProtocols        = 0;
   Buffer             = NULL;
   PackageVersionName = NULL;
@@ -283,13 +378,21 @@ CreateFmpBasedEsrt (
   }
 
   //
-  // Allocate Memory for table
+  // Allocate Memory for tables
   //
   Table = AllocateZeroPool (
              (GROWTH_STEP * sizeof (EFI_SYSTEM_RESOURCE_ENTRY)) + sizeof (EFI_SYSTEM_RESOURCE_TABLE)
              );
   if (Table == NULL) {
     DEBUG ((DEBUG_ERROR, "EsrtFmpDxe: Failed to allocate memory for ESRT.\n"));
+    gBS->FreePool (Buffer);
+    return NULL;
+  }
+
+  HardwareInstances = AllocateZeroPool (GROWTH_STEP * sizeof (UINT64));
+  if (HardwareInstances == NULL) {
+    DEBUG ((DEBUG_ERROR, "EsrtFmpDxe: Failed to allocate memory for HW Instance Table.\n"));
+    gBS->FreePool (Table);
     gBS->FreePool (Buffer);
     return NULL;
   }
@@ -354,7 +457,7 @@ CreateFmpBasedEsrt (
         //
         // Create ESRT entry
         //
-        CreateEsrtEntry (&Table, FmpImageInfoBuf, FmpImageInfoDescriptorVer);
+        CreateEsrtEntry (&Table, &HardwareInstances, FmpImageInfoBuf, FmpImageInfoDescriptorVer);
       }
       FmpImageInfoCount--;
       //
