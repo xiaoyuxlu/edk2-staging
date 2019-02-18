@@ -12,7 +12,6 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
-#include <OvmfPlatforms.h>
 
 #include <OvmfPlatforms.h>
 
@@ -116,8 +115,11 @@ EnterS3WithImmediateWake (
   VOID
   )
 {
-  AcpiPmControl (1);
-  ASSERT (FALSE);
+  //
+  // Perform warm reset that preserves memory contents.
+  // NOTE: Cold reset also preserves memory on this platform.
+  //
+  ResetWarm ();
 }
 
 /**
