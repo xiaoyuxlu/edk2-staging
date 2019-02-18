@@ -1,7 +1,7 @@
 /** @file
   Reset System Library functions for OVMF
 
-  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,7 +18,6 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
-#include <OvmfPlatforms.h>
 
 #include <OvmfPlatforms.h>
 
@@ -122,8 +121,11 @@ EnterS3WithImmediateWake (
   VOID
   )
 {
-  AcpiPmControl (1);
-  ASSERT (FALSE);
+  //
+  // Perform warm reset that preserves memory contents.
+  // NOTE: Cold reset also preserves memory on this platform.
+  //
+  ResetWarm ();
 }
 
 /**
