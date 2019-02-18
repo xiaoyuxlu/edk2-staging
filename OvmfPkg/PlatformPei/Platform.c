@@ -1,7 +1,7 @@
 /**@file
   Platform PEI driver
 
-  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   Copyright (c) 2011, Andrei Warkentin <andreiw@motorola.com>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -30,6 +30,7 @@
 #include <Library/ResourcePublicationLib.h>
 #include <Guid/MemoryTypeInformation.h>
 #include <Ppi/MasterBootMode.h>
+#include <Ppi/Capsule.h>
 #include <IndustryStandard/Pci22.h>
 #include <OvmfPlatforms.h>
 
@@ -472,15 +473,34 @@ MiscInitialization (
 
 VOID
 BootModeInitialization (
-  VOID
+  IN CONST EFI_PEI_SERVICES                       **PeiServices
   )
 {
-  EFI_STATUS    Status;
+  EFI_STATUS       Status;
+  PEI_CAPSULE_PPI  *Capsule;
 
   if (CmosRead8 (0xF) == 0xFE) {
     mBootMode = BOOT_ON_S3_RESUME;
   }
   CmosWrite8 (0xF, 0x00);
+
+  //
+  // Determine if we're in capsule update mode
+  //
+  Status = (*PeiServices)->LocatePpi (
+                             PeiServices,
+                             &gEfiPeiCapsulePpiGuid,
+                             0,
+                             NULL,
+                             (void **)&Capsule
+                             );
+
+  if (Status == EFI_SUCCESS) {
+    Status = Capsule->CheckCapsuleUpdate ((EFI_PEI_SERVICES**)PeiServices);
+    if (!EFI_ERROR (Status)) {
+      mBootMode = BOOT_ON_FLASH_UPDATE;
+    }
+  }
 
   Status = PeiServicesSetBootMode (mBootMode);
   ASSERT_EFI_ERROR (Status);
@@ -633,7 +653,7 @@ InitializePlatform (
   }
 
   S3Verification ();
-  BootModeInitialization ();
+  BootModeInitialization (PeiServices);
   AddressWidthInitialization ();
   MaxCpuCountInitialization ();
 
