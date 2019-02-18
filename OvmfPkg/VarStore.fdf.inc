@@ -2,7 +2,7 @@
 #  FDF include file with Layout Regions that define an empty variable store.
 #
 #  Copyright (C) 2014, Red Hat, Inc.
-#  Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -10,9 +10,11 @@
 
 !if ($(FD_SIZE_IN_KB) == 1024) || ($(FD_SIZE_IN_KB) == 2048)
 0x00000000|0x0000e000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
 !endif
 !if $(FD_SIZE_IN_KB) == 4096
 0x00000000|0x00040000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
 !endif
 #NV_VARIABLE_STORE
 DATA = {
@@ -90,9 +92,11 @@ DATA = {
 
 !if ($(FD_SIZE_IN_KB) == 1024) || ($(FD_SIZE_IN_KB) == 2048)
 0x0000f000|0x00001000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
 !endif
 !if $(FD_SIZE_IN_KB) == 4096
 0x00041000|0x00001000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
 !endif
 #NV_FTW_WORKING
 DATA = {
@@ -108,8 +112,10 @@ DATA = {
 
 !if ($(FD_SIZE_IN_KB) == 1024) || ($(FD_SIZE_IN_KB) == 2048)
 0x00010000|0x00010000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
 !endif
 !if $(FD_SIZE_IN_KB) == 4096
 0x00042000|0x00042000
+gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase|gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
 !endif
 #NV_FTW_SPARE
