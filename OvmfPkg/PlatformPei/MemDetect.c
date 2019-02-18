@@ -1,7 +1,7 @@
 /**@file
   Memory Detection for Virtual Machines.
 
-  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -37,6 +37,10 @@ Module Name:
 #include <Library/ResourcePublicationLib.h>
 #include <Library/MtrrLib.h>
 #include <Library/QemuFwCfgLib.h>
+#include <Library/PeiServicesLib.h>
+#include <Library/PeiServicesTablePointerLib.h>
+
+#include <Ppi/Capsule.h>
 
 #include "Platform.h"
 #include "Cmos.h"
@@ -47,6 +51,8 @@ STATIC UINT32 mS3AcpiReservedMemoryBase;
 STATIC UINT32 mS3AcpiReservedMemorySize;
 
 STATIC UINT16 mQ35TsegMbytes;
+
+EFI_PHYSICAL_ADDRESS mCapsuleBufferBase = 0;
 
 VOID
 Q35TsegMbytesInitialization (
@@ -572,6 +578,12 @@ PublishPeiMemory (
       MemoryBase = LowerMemorySize - PeiMemoryCap;
       MemorySize = PeiMemoryCap;
     }
+
+    mCapsuleBufferBase = MemoryBase;
+
+    MemoryBase = MemoryBase + SIZE_16MB;
+    MemorySize = MemorySize - SIZE_16MB;
+
   }
 
   //
@@ -712,6 +724,11 @@ InitializeRamRegions (
   VOID
   )
 {
+  EFI_STATUS  Status;
+  VOID                                  *CapsuleBuffer;
+  UINTN                                 CapsuleBufferLength;
+  PEI_CAPSULE_PPI                       *Capsule;
+
   if (!mXen) {
     QemuInitializeRam ();
   } else {
@@ -799,6 +816,40 @@ InitializeRamRegions (
         TsegSize,
         EfiReservedMemoryType
         );
+    }
+  }
+
+  Capsule             = NULL;
+  CapsuleBuffer       = NULL;
+  CapsuleBufferLength = 0;
+  if (mBootMode == BOOT_ON_FLASH_UPDATE) {
+    Status = PeiServicesLocatePpi (
+               &gEfiPeiCapsulePpiGuid,  // GUID
+               0,                    // INSTANCE
+               NULL,                 // EFI_PEI_PPI_DESCRIPTOR
+               (VOID **)&Capsule     // PPI
+               );
+    ASSERT_EFI_ERROR (Status);
+
+    if (Status == EFI_SUCCESS) {
+      CapsuleBuffer = (VOID *)(UINTN)mCapsuleBufferBase;
+      CapsuleBufferLength = SIZE_16MB;
+
+      //
+      // Call the Capsule PPI Coalesce function to coalesce the capsule data.
+      //
+      Status = Capsule->Coalesce (
+                          (EFI_PEI_SERVICES **)GetPeiServicesTablePointer (),
+                          &CapsuleBuffer,
+                          &CapsuleBufferLength
+                          );
+      if (!EFI_ERROR (Status)) {
+        //
+        // If we found the capsule PPI (and we didn't have errors), then
+        // call the capsule PEIM to allocate memory for the capsule.
+        //
+        Status = Capsule->CreateState ((EFI_PEI_SERVICES **)GetPeiServicesTablePointer(), CapsuleBuffer, CapsuleBufferLength);
+      }
     }
   }
 }
