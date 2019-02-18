@@ -1,7 +1,7 @@
 /** @file
   Platform BDS customizations.
 
-  Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2004 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,6 +12,7 @@
 #include <Protocol/FirmwareVolume2.h>
 #include <Library/PlatformBmPrintScLib.h>
 #include <Library/Tcg2PhysicalPresenceLib.h>
+#include <Library/CapsuleLib.h>
 
 
 //
@@ -354,6 +355,7 @@ PlatformBootManagerBeforeConsole (
   EFI_HANDLE    Handle;
   EFI_STATUS    Status;
   RETURN_STATUS PcdStatus;
+  EFI_BOOT_MODE                      BootMode;
 
   DEBUG ((EFI_D_INFO, "PlatformBootManagerBeforeConsole\n"));
   InstallDevicePathCallback ();
@@ -362,41 +364,49 @@ PlatformBootManagerBeforeConsole (
     ConnectRootBridge, NULL);
 
   //
+  // Get current Boot Mode
+  //
+  BootMode = GetBootModeHob ();
+  DEBUG ((DEBUG_INFO, "Boot Mode:%x\n", BootMode));
+
+  //
   // Signal the ACPI platform driver that it can download QEMU ACPI tables.
   //
   EfiEventGroupSignal (&gRootBridgesConnectedEventGroupGuid);
 
-  //
-  // We can't signal End-of-Dxe earlier than this. Namely, End-of-Dxe triggers
-  // the preparation of S3 system information. That logic has a hard dependency
-  // on the presence of the FACS ACPI table. Since our ACPI tables are only
-  // installed after PCI enumeration completes, we must not trigger the S3 save
-  // earlier, hence we can't signal End-of-Dxe earlier.
-  //
-  EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
+  if (BootMode != BOOT_ON_FLASH_UPDATE) {
+    //
+    // We can't signal End-of-Dxe earlier than this. Namely, End-of-Dxe triggers
+    // the preparation of S3 system information. That logic has a hard dependency
+    // on the presence of the FACS ACPI table. Since our ACPI tables are only
+    // installed after PCI enumeration completes, we must not trigger the S3 save
+    // earlier, hence we can't signal End-of-Dxe earlier.
+    //
+    EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
 
-  if (QemuFwCfgS3Enabled ()) {
+    if (QemuFwCfgS3Enabled ()) {
+      //
+      // Save the boot script too. Note that this will require us to emit the
+      // DxeSmmReadyToLock event just below, which in turn locks down SMM.
+      //
+      SaveS3BootScript ();
+    }
+
     //
-    // Save the boot script too. Note that this will require us to emit the
-    // DxeSmmReadyToLock event just below, which in turn locks down SMM.
+    // Prevent further changes to LockBoxes or SMRAM.
     //
-    SaveS3BootScript ();
+    Handle = NULL;
+    Status = gBS->InstallProtocolInterface (&Handle,
+                    &gEfiDxeSmmReadyToLockProtocolGuid, EFI_NATIVE_INTERFACE,
+                    NULL);
+    ASSERT_EFI_ERROR (Status);
+
+    //
+    // Dispatch deferred images after EndOfDxe event and ReadyToLock
+    // installation.
+    //
+    EfiBootManagerDispatchDeferredImages ();
   }
-
-  //
-  // Prevent further changes to LockBoxes or SMRAM.
-  //
-  Handle = NULL;
-  Status = gBS->InstallProtocolInterface (&Handle,
-                  &gEfiDxeSmmReadyToLockProtocolGuid, EFI_NATIVE_INTERFACE,
-                  NULL);
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // Dispatch deferred images after EndOfDxe event and ReadyToLock
-  // installation.
-  //
-  EfiBootManagerDispatchDeferredImages ();
 
   PlatformInitializeConsole (gPlatformConsole);
   PcdStatus = PcdSet16S (PcdPlatformBootTimeOut,
@@ -1499,12 +1509,66 @@ PlatformBootManagerAfterConsole (
   // Go the different platform policy with different boot mode
   // Notes: this part code can be change with the table policy
   //
-  ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
+//  ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
 
   //
   // Logo show
   //
   BootLogoEnableLogo ();
+
+  if (BootMode == BOOT_ON_FLASH_UPDATE) {
+    //
+    // Perform some platform specific connect sequence
+    //
+    DEBUG((DEBUG_INFO, "ProcessCapsules Before EndOfDxe......\n"));
+    ProcessCapsules ();
+    DEBUG((DEBUG_INFO, "ProcessCapsules Done\n"));
+
+    {
+      EFI_STATUS  Status;
+      EFI_HANDLE  Handle;
+
+      //
+      // We can't signal End-of-Dxe earlier than this. Namely, End-of-Dxe triggers
+      // the preparation of S3 system information. That logic has a hard dependency
+      // on the presence of the FACS ACPI table. Since our ACPI tables are only
+      // installed after PCI enumeration completes, we must not trigger the S3 save
+      // earlier, hence we can't signal End-of-Dxe earlier.
+      //
+      EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
+
+      if (QemuFwCfgS3Enabled ()) {
+        //
+        // Save the boot script too. Note that this will require us to emit the
+        // DxeSmmReadyToLock event just below, which in turn locks down SMM.
+        //
+        SaveS3BootScript ();
+      }
+
+      //
+      // Prevent further changes to LockBoxes or SMRAM.
+      //
+      Handle = NULL;
+      Status = gBS->InstallProtocolInterface (&Handle,
+                      &gEfiDxeSmmReadyToLockProtocolGuid, EFI_NATIVE_INTERFACE,
+                      NULL);
+      ASSERT_EFI_ERROR (Status);
+
+      //
+      // Dispatch deferred images after EndOfDxe event and ReadyToLock
+      // installation.
+      //
+      EfiBootManagerDispatchDeferredImages ();
+    }
+
+    PlatformBdsConnectSequence ();
+
+    EfiBootManagerConnectAll ();
+
+    DEBUG((DEBUG_INFO, "ProcessCapsules After ConnectAll......\n"));
+    ProcessCapsules();
+    DEBUG((DEBUG_INFO, "ProcessCapsules Done\n"));
+  }
 
   //
   // Set PCI Interrupt Line registers and ACPI SCI_EN
