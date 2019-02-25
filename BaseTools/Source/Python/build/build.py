@@ -1197,14 +1197,6 @@ class Build():
 
         makefile = GenMake.BuildFile(AutoGenObject)._FILE_NAME_[GenMake.gMakeType]
 
-        # run
-        if Target == 'run':
-            RunDir = os.path.normpath(os.path.join(AutoGenObject.BuildDir, GlobalData.gGlobalDefines['ARCH']))
-            Command = '.\SecMain'
-            os.chdir(RunDir)
-            LaunchCommand(Command, RunDir)
-            return True
-
         # build modules
         if BuildModule:
             BuildCommand = BuildCommand + [Target]
@@ -1327,14 +1319,6 @@ class Build():
         if Target == 'fds':
             if GenFdsApi(AutoGenObject.GenFdsCommandDict, self.Db):
                 EdkLogger.error("build", COMMAND_FAILURE)
-            return True
-
-        # run
-        if Target == 'run':
-            RunDir = os.path.normpath(os.path.join(AutoGenObject.BuildDir, GlobalData.gGlobalDefines['ARCH']))
-            Command = '.\SecMain'
-            os.chdir(RunDir)
-            LaunchCommand(Command, RunDir)
             return True
 
         # build library
