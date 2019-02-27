@@ -1,3 +1,21 @@
+# FmpDevicePkg Multiple Controllers
+
+This branch is used to evaluate methods to update the FmpDevicePkg to support
+drivers that manage multiple controllers and also provide a firmware update
+capability to each managed controller.  The primary use case is the update of
+a PCI Option ROM when multiple adapters are present.  This branch addresses
+the following TianoCore Bugzilla issues:
+
+https://bugzilla.tianocore.org/show_bug.cgi?id=1525
+
+Branch owner(s):
+
+Michael D Kinney <michael.d.kinney@intel.com>
+
+Multiple Controller Examples:
+
+* [OvmfPkg E1000 Example](OvmfPkg/README_CAPSULES.md)
+
 # EDK II Project
 
 A modern, feature-rich, cross-platform firmware development environment
