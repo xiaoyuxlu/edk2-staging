@@ -1,0 +1,55 @@
+## @file
+#
+# Sample driver for exposing capabilities through UEFI Runtime Driver
+#
+# Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RtSample
+  FILE_GUID                      = F3A1B6B2-130B-4667-8FA8-D75DA044219A
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = RtSampleInit
+
+[Sources]
+  RtSample.c
+  RtSample.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  UefiLib
+  UefiBootServicesTableLib
+  DxeServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  MemoryAllocationLib
+  BaseMemoryLib
+
+[Protocols]
+
+[Guids]
+gEfiEndOfDxeEventGroupGuid
+
+[Pcd]
+
+[FeaturePcd]
+
+[Depex]
+TRUE
