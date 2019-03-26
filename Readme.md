@@ -12,6 +12,7 @@ The codes in this package are for proof-of-concept only. The codes do not repres
 ## Resources
 
 * [PRM introduction](https://www.opencompute.org/events/past-summits) (Please search for “UEFI Implementation Intel® Xeon Based OCP Platform” in the webpage, which lists pointers to video and presentation that introduce the concepts of PRM and SMM reduction.)
+* [PRM Case Study](https://www.opencompute.org/events/past-summits) (Please search for “Case Study: Alternatives for SMM usage in Intel Platforms” in the webpage, which lists pointers to video and presentation that introduce a case study for SMM reduction.)
 * [TianoCore](http://www.tianocore.org)
 * [EDK II](https://github.com/tianocore/tianocore.github.io/wiki/EDK-II)
 * [UEFI Forum](https://uefi.org/)
