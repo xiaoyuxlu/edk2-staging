@@ -1,7 +1,8 @@
 UEFI Payload Maintainers
 ==================
   
-  Benjamin You <benjamin.you@intel.com>
+  Guo Dong <guo.dong@intel.com>
   Maurice Ma <maurice.ma@intel.com>
+  Benjamin You <benjamin.you@intel.com>
   Xiaohu Tang <xiaohu.tang@intel.com>
   David Y Wei <david.y.wei@intel.com>
