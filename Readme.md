@@ -1,29 +1,16 @@
-# EDK II Project
+# TCP/IP network stack with multiprocessing
 
-A modern, feature-rich, cross-platform firmware development environment
-for the UEFI and PI specifications from www.uefi.org.
+This branch is used to contribute a faster, multi-core alternative to an existing TCP/IP network stack.
 
-Contributions to the EDK II open source project are covered by the
-[TianoCore Contribution Agreement 1.1](Contributions.txt)
+Branch owner:
+Maciej Rabeda < maciej.rabeda@intel.com >
 
-The majority of the content in the EDK II open source project uses a
-[BSD 2-Clause License](License.txt).  The EDK II open source project contains
-the following components that are covered by additional licenses:
-* [AppPkg/Applications/Python/Python-2.7.2/Tools/pybench](AppPkg/Applications/Python/Python-2.7.2/Tools/pybench/LICENSE)
-* [AppPkg/Applications/Python/Python-2.7.2](AppPkg/Applications/Python/Python-2.7.2/LICENSE)
-* [AppPkg/Applications/Python/Python-2.7.10](AppPkg/Applications/Python/Python-2.7.10/LICENSE)
-* [BaseTools/Source/C/BrotliCompress](BaseTools/Source/C/BrotliCompress/LICENSE)
-* [MdeModulePkg/Library/BrotliCustomDecompressLib](MdeModulePkg/Library/BrotliCustomDecompressLib/LICENSE)
-* [OvmfPkg](OvmfPkg/License.txt)
-* [CryptoPkg/Library/OpensslLib/openssl](CryptoPkg/Library/OpensslLib/openssl/LICENSE)
+## Feature introduction
 
-The EDK II Project is composed of packages.  The maintainers for each package
-are listed in [Maintainers.txt](Maintainers.txt).
+Proposed network stack utilizes non-boostrap processors (non-BSP) in order to speed up overall network processing and offload the core already busy with UEFI. In order to address lack of thread safety in current network stack design, lwIP open-source TCP/IP implementation was used instead.
 
-# Resources
-* [TianoCore](http://www.tianocore.org)
-* [EDK II](https://github.com/tianocore/tianocore.github.io/wiki/EDK-II)
-* [Getting Started with EDK II](https://github.com/tianocore/tianocore.github.io/wiki/Getting-Started-with-EDK-II)
-* [Mailing Lists](https://github.com/tianocore/tianocore.github.io/wiki/Mailing-Lists)
-* [TianoCore Bugzilla](https://bugzilla.tianocore.org)
-* [How To Contribute](https://github.com/tianocore/tianocore.github.io/wiki/How-To-Contribute)
+Changes made to UDK2018 stable implementation allowed to execute PXE boot to WDS server in UEFI environment at average boot image download rate of ~1.1 Gb/s.
+
+```
+Advisory: this implementation is not fully compliant with UEFI specification. This project is currently treated as a proof-of-concept and will be subject to change. Code is provided as-is with no quality assurance. Any and all suggestions or/and constructive criticism are most welcome.
+```
