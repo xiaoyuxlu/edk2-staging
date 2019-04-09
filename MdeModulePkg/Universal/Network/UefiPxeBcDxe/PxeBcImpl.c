@@ -1,7 +1,7 @@
 /** @file
   Interface routines for PxeBc.
 
-Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2007 - 2017, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -16,85 +16,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "PxeBcImpl.h"
 
 UINT32  mPxeDhcpTimeout[4] = { 4, 8, 16, 32 };
-
-/**
-  Get and record the arp cache.
-
-  @param  This                    Pointer to EFI_PXE_BC_PROTOCOL
-
-  @retval EFI_SUCCESS             Arp cache updated successfully
-  @retval others                  If error occurs when getting arp cache
-
-**/
-EFI_STATUS
-UpdateArpCache (
-  IN EFI_PXE_BASE_CODE_PROTOCOL     * This
-  )
-{
-  PXEBC_PRIVATE_DATA      *Private;
-  EFI_PXE_BASE_CODE_MODE  *Mode;
-  EFI_STATUS              Status;
-  UINT32                  EntryLength;
-  UINT32                  EntryCount;
-  EFI_ARP_FIND_DATA       *Entries;
-  UINT32                  Index;
-
-  Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
-  Mode    = Private->PxeBc.Mode;
-
-  Status = Private->Arp->Find (
-                     Private->Arp,
-                     TRUE,
-                     NULL,
-                     &EntryLength,
-                     &EntryCount,
-                     &Entries,
-                     TRUE
-                     );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Mode->ArpCacheEntries = MIN (
-                           EntryCount,
-                           EFI_PXE_BASE_CODE_MAX_ARP_ENTRIES
-                           );
-  for (Index = 0; Index < Mode->ArpCacheEntries; Index ++) {
-    CopyMem (
-      &Mode->ArpCache[Index].IpAddr,
-      Entries + 1,
-      Entries->SwAddressLength
-      );
-    CopyMem (
-      &Mode->ArpCache[Index].MacAddr,
-      (UINT8 *) (Entries + 1) + Entries->SwAddressLength,
-      Entries->HwAddressLength
-      );
-    //
-    // Slip to the next FindData.
-    //
-    Entries = (EFI_ARP_FIND_DATA *) ((UINT8 *) Entries + EntryLength);
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Timeout routine to update arp cache.
-
-  @param  Event              Pointer to EFI_PXE_BC_PROTOCOL
-  @param  Context            Context of the timer event
-
-**/
-VOID
-EFIAPI
-ArpCacheUpdateTimeout (
-  IN EFI_EVENT    Event,
-  IN VOID         *Context
-  )
-{
-  UpdateArpCache ((EFI_PXE_BASE_CODE_PROTOCOL *) Context);
-}
 
 /**
   Do arp resolution from arp cache in PxeBcMode.
@@ -129,120 +50,6 @@ FindInArpCache (
   }
 
   return FALSE;
-}
-
-/**
-  Notify function for the ICMP receive token, used to process
-  the received ICMP packets.
-
-  @param  Context               The PXEBC private data.
-
-**/
-VOID
-EFIAPI
-IcmpErrorListenHandlerDpc (
-  IN VOID      *Context
-  )
-{
-  EFI_STATUS              Status;
-  EFI_IP4_RECEIVE_DATA    *RxData;
-  EFI_IP4_PROTOCOL        *Ip4;
-  PXEBC_PRIVATE_DATA      *Private;
-  EFI_PXE_BASE_CODE_MODE  *Mode;
-  UINTN                   Index;
-  UINT32                  CopiedLen;
-  UINT8                   *CopiedPointer;
-
-  Private = (PXEBC_PRIVATE_DATA *) Context;
-  Mode    = &Private->Mode;
-  Status  = Private->IcmpErrorRcvToken.Status;
-  RxData  = Private->IcmpErrorRcvToken.Packet.RxData;
-  Ip4     = Private->Ip4;
-
-  if (Status == EFI_ABORTED) {
-    //
-    // The reception is actively aborted by the consumer, directly return.
-    //
-    return;
-  }
-
-  if (RxData == NULL) {
-    goto Resume;
-  }
-
-  if (Status != EFI_ICMP_ERROR) {
-    //
-    // The return status should be recognized as EFI_ICMP_ERROR.
-    //
-    goto CleanUp;
-  }
-
-  if (EFI_IP4 (RxData->Header->SourceAddress) != 0 &&
-      (NTOHL (Mode->SubnetMask.Addr[0]) != 0) &&
-      IP4_NET_EQUAL (NTOHL(Mode->StationIp.Addr[0]), EFI_NTOHL (RxData->Header->SourceAddress), NTOHL (Mode->SubnetMask.Addr[0])) &&
-      !NetIp4IsUnicast (EFI_NTOHL (RxData->Header->SourceAddress), NTOHL (Mode->SubnetMask.Addr[0]))) {
-    //
-    // The source address is not zero and it's not a unicast IP address, discard it.
-    //
-    goto CleanUp;
-  }
-
-  if (!EFI_IP4_EQUAL (&RxData->Header->DestinationAddress, &Mode->StationIp.v4)) {
-    //
-    // The dest address is not equal to Station Ip address, discard it.
-    //
-    goto CleanUp;
-  }
-
-  //
-  // Constructor ICMP error packet
-  //
-  CopiedLen = 0;
-  CopiedPointer = (UINT8 *) &Mode->IcmpError;
-
-  for (Index = 0; Index < RxData->FragmentCount; Index ++) {
-    CopiedLen += RxData->FragmentTable[Index].FragmentLength;
-    if (CopiedLen <= sizeof (EFI_PXE_BASE_CODE_ICMP_ERROR)) {
-      CopyMem (
-        CopiedPointer,
-        RxData->FragmentTable[Index].FragmentBuffer,
-        RxData->FragmentTable[Index].FragmentLength
-        );
-    } else {
-      CopyMem (
-        CopiedPointer,
-        RxData->FragmentTable[Index].FragmentBuffer,
-        CopiedLen - sizeof (EFI_PXE_BASE_CODE_ICMP_ERROR)
-        );
-    }
-    CopiedPointer += CopiedLen;
-  }
-
-CleanUp:
-  gBS->SignalEvent (RxData->RecycleSignal);
-
-Resume:
-  Ip4->Receive (Ip4, &(Private->IcmpErrorRcvToken));
-}
-
-/**
-  Request IcmpErrorListenHandlerDpc as a DPC at TPL_CALLBACK
-
-  @param  Event                 The event signaled.
-  @param  Context               The context passed in by the event notifier.
-
-**/
-VOID
-EFIAPI
-IcmpErrorListenHandler (
-  IN EFI_EVENT Event,
-  IN VOID      *Context
-  )
-{
-  //
-  // Request IpIoListenHandlerDpc as a DPC at TPL_CALLBACK
-  //
-  QueueDpc (TPL_CALLBACK, IcmpErrorListenHandlerDpc, Context);
 }
 
 /**
@@ -320,6 +127,8 @@ EfiPxeBcStart (
   EFI_PXE_BASE_CODE_MODE  *Mode;
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcStart\n"));
+
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -341,20 +150,8 @@ EfiPxeBcStart (
   AsciiPrint ("\n>>Start PXE over IPv4");
 
   //
-  // Configure the udp4 instance to let it receive data
-  //
-  Status = Private->Udp4Read->Configure (
-                               Private->Udp4Read,
-                               &Private->Udp4CfgData
-                               );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-
-  //
   // Configure block size for TFTP as a default value to handle all link layers.
-  //
+  // 
   Private->BlockSize   = MIN (Private->Ip4MaxPacketSize, PXEBC_DEFAULT_PACKET_SIZE) -
                            PXEBC_DEFAULT_UDP_OVERHEAD_SIZE - PXEBC_DEFAULT_TFTP_OVERHEAD_SIZE;
   //
@@ -363,7 +160,7 @@ EfiPxeBcStart (
   if (PcdGet64 (PcdTftpBlockSize) != 0) {
     Private->BlockSize   = (UINTN) PcdGet64 (PcdTftpBlockSize);
   }
-
+  
   Private->AddressIsOk = FALSE;
 
   ZeroMem (Mode, sizeof (EFI_PXE_BASE_CODE_MODE));
@@ -373,88 +170,7 @@ EfiPxeBcStart (
   Mode->ToS     = DEFAULT_ToS;
   Mode->AutoArp = TRUE;
 
-  //
-  // Create the event for Arp Cache checking.
-  //
-  Status = gBS->CreateEvent (
-                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  ArpCacheUpdateTimeout,
-                  This,
-                  &Private->GetArpCacheEvent
-                  );
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  //
-  // Start the timeout timer event.
-  //
-  Status = gBS->SetTimer (
-                  Private->GetArpCacheEvent,
-                  TimerPeriodic,
-                  TICKS_PER_SECOND
-                  );
-
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  //
-  // Create ICMP error receiving event
-  //
-  Status = gBS->CreateEvent (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_NOTIFY,
-                  IcmpErrorListenHandler,
-                  Private,
-                  &(Private->IcmpErrorRcvToken.Event)
-                  );
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  //
-  //DHCP4 service allows only one of its children to be configured in
-  //the active state, If the DHCP4 D.O.R.A started by IP4 auto
-  //configuration and has not been completed, the Dhcp4 state machine
-  //will not be in the right state for the PXE to start a new round D.O.R.A.
-  //so we need to switch it's policy to static.
-  //
-  Status = PxeBcSetIp4Policy (Private);
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  Status = Private->Ip4->Configure (Private->Ip4, &Private->Ip4ConfigData);
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  //
-  // start to listen incoming packet
-  //
-  Status = Private->Ip4->Receive (Private->Ip4, &Private->IcmpErrorRcvToken);
-  if (!EFI_ERROR (Status)) {
-    return Status;
-  }
-
-ON_EXIT:
-  Private->Ip4->Configure (Private->Ip4, NULL);
-
-  if (Private->IcmpErrorRcvToken.Event != NULL) {
-    gBS->CloseEvent (Private->IcmpErrorRcvToken.Event);
-  }
-
-  if (Private->GetArpCacheEvent != NULL) {
-    gBS->SetTimer (Private->GetArpCacheEvent, TimerCancel, 0);
-    gBS->CloseEvent (Private->GetArpCacheEvent);
-  }
-
-  Mode->Started = FALSE;
-  Mode->TTL     = 0;
-  Mode->ToS     = 0;
-  Mode->AutoArp = FALSE;
+  Status = EFI_SUCCESS;
 
   return Status;
 }
@@ -486,6 +202,8 @@ EfiPxeBcStop (
   PXEBC_PRIVATE_DATA      *Private;
   EFI_PXE_BASE_CODE_MODE  *Mode;
 
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcStop\n"));
+
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -497,36 +215,10 @@ EfiPxeBcStop (
     return EFI_NOT_STARTED;
   }
 
-  Private->Ip4->Cancel (Private->Ip4, NULL);
-  //
-  // Dispatch the DPCs queued by the NotifyFunction of the canceled rx token's
-  // events.
-  //
-  DispatchDpc ();
-
-  Private->Ip4->Configure (Private->Ip4, NULL);
-
-  //
-  // Close the ICMP error receiving event.
-  //
-  gBS->CloseEvent (Private->IcmpErrorRcvToken.Event);
-
-  //
-  // Cancel the TimeoutEvent timer.
-  //
-  gBS->SetTimer (Private->GetArpCacheEvent, TimerCancel, 0);
-
-  //
-  // Close the TimeoutEvent event.
-  //
-  gBS->CloseEvent (Private->GetArpCacheEvent);
-
   Mode->Started = FALSE;
 
-  Private->CurrentUdpSrcPort = 0;
-  Private->Udp4Write->Configure (Private->Udp4Write, NULL);
-  Private->Udp4Read->Groups (Private->Udp4Read, FALSE, NULL);
-  Private->Udp4Read->Configure (Private->Udp4Read, NULL);
+  Private->OutputSocketSrcPort = 0;
+  ZeroMem (&Private->OutputSocketSrcIp, sizeof (Private->OutputSocketSrcIp));
 
   Private->Dhcp4->Stop (Private->Dhcp4);
   Private->Dhcp4->Configure (Private->Dhcp4, NULL);
@@ -585,8 +277,9 @@ EfiPxeBcDhcp (
   EFI_DHCP4_PACKET_OPTION      *OptList[PXEBC_DHCP4_MAX_OPTION_NUM];
   UINT32                       OptCount;
   EFI_STATUS                   Status;
-  EFI_ARP_CONFIG_DATA          ArpConfigData;
   EFI_PXE_BASE_CODE_IP_FILTER  IpFilter;
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcDhcp\n"));
 
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -604,11 +297,6 @@ EfiPxeBcDhcp (
   }
 
   Mode->IcmpErrorReceived = FALSE;
-
-  //
-  // Stop Udp4Read instance
-  //
-  Private->Udp4Read->Configure (Private->Udp4Read, NULL);
 
   //
   // Initialize the DHCP options and build the option list
@@ -660,8 +348,56 @@ EfiPxeBcDhcp (
   CopyMem (&Private->SubnetMask, &Dhcp4Mode.SubnetMask, sizeof (EFI_IPv4_ADDRESS));
   CopyMem (&Private->GatewayIp, &Dhcp4Mode.RouterAddress, sizeof (EFI_IPv4_ADDRESS));
 
+  DEBUG ((EFI_D_INFO, "[PXE BC] StationIp: %d.%d.%d.%d\n",
+      Dhcp4Mode.ClientAddress.Addr[0],
+      Dhcp4Mode.ClientAddress.Addr[1],
+      Dhcp4Mode.ClientAddress.Addr[2],
+      Dhcp4Mode.ClientAddress.Addr[3]));
+
+  DEBUG ((EFI_D_INFO, "[PXE BC] SubnetMask: %d.%d.%d.%d\n",
+      Dhcp4Mode.SubnetMask.Addr[0],
+      Dhcp4Mode.SubnetMask.Addr[1],
+      Dhcp4Mode.SubnetMask.Addr[2],
+      Dhcp4Mode.SubnetMask.Addr[3]));
+
+  DEBUG ((EFI_D_INFO, "[PXE BC] RouterAddress: %d.%d.%d.%d\n",
+      Dhcp4Mode.RouterAddress.Addr[0],
+      Dhcp4Mode.RouterAddress.Addr[1],
+      Dhcp4Mode.RouterAddress.Addr[2],
+      Dhcp4Mode.RouterAddress.Addr[3]));
+
   CopyMem (&Mode->StationIp, &Private->StationIp, sizeof (EFI_IPv4_ADDRESS));
   CopyMem (&Mode->SubnetMask, &Private->SubnetMask, sizeof (EFI_IPv4_ADDRESS));
+
+  if (Dhcp4Mode.DiscoverPacket) {
+    CopyMem (Private->PxeBc.Mode->DhcpDiscover.Raw, &Dhcp4Mode.DiscoverPacket->Dhcp4, Dhcp4Mode.DiscoverPacket->Length);
+    FreePool (Dhcp4Mode.DiscoverPacket);
+  } else {
+    ASSERT (FALSE);
+  }
+
+  if (Dhcp4Mode.AckPacket) {
+    CopyMem (Private->PxeBc.Mode->DhcpAck.Raw, &Dhcp4Mode.AckPacket->Dhcp4, Dhcp4Mode.AckPacket->Length);
+    FreePool (Dhcp4Mode.AckPacket);
+  } else {
+    ASSERT (FALSE);
+  }
+
+  //
+  // Cache the offer
+  //
+  Status = PxeBcCacheDhcpOffer (Private, Dhcp4Mode.ReplyPacket);
+
+  ASSERT_EFI_ERROR (Status);
+
+  if (Dhcp4Mode.ReplyPacket) {
+    FreePool (Dhcp4Mode.ReplyPacket);
+  }
+
+  //
+  // Select the offer
+  //
+  PxeBcSelectOffer (Private);
 
   //
   // Check the selected offer to see whether BINL is required, if no or BINL is
@@ -689,19 +425,6 @@ ON_EXIT:
 
     if (!Mode->UsingIpv6) {
       //
-      // If in IPv4 mode, configure the corresponding ARP with this new
-      // station IP address.
-      //
-      ZeroMem (&ArpConfigData, sizeof (EFI_ARP_CONFIG_DATA));
-
-      ArpConfigData.SwAddressType   = 0x0800;
-      ArpConfigData.SwAddressLength = (UINT8) sizeof (EFI_IPv4_ADDRESS);
-      ArpConfigData.StationAddress  = &Private->StationIp.v4;
-
-      Private->Arp->Configure (Private->Arp, NULL);
-      Private->Arp->Configure (Private->Arp, &ArpConfigData);
-
-      //
       // Updated the route table. Fill the first entry.
       //
       Mode->RouteTableEntries                = 1;
@@ -718,42 +441,18 @@ ON_EXIT:
         Mode->RouteTable[1].SubnetMask.Addr[0] = 0;
         Mode->RouteTable[1].GwAddr.Addr[0]     = Private->GatewayIp.Addr[0];
       }
-
-      //
-      // Flush new station IP address into Udp4CfgData and Ip4ConfigData
-      //
-      CopyMem (&Private->Udp4CfgData.StationAddress, &Private->StationIp, sizeof (EFI_IPv4_ADDRESS));
-      CopyMem (&Private->Udp4CfgData.SubnetMask, &Private->SubnetMask, sizeof (EFI_IPv4_ADDRESS));
-      CopyMem (&Private->Ip4ConfigData.StationAddress, &Private->StationIp, sizeof (EFI_IPv4_ADDRESS));
-      CopyMem (&Private->Ip4ConfigData.SubnetMask, &Private->SubnetMask, sizeof (EFI_IPv4_ADDRESS));
-
-      //
-      // Reconfigure the Ip4 instance to capture background ICMP packets with new station Ip address.
-      //
-      Private->Ip4->Cancel (Private->Ip4, &Private->IcmpErrorRcvToken);
-      Private->Ip4->Configure (Private->Ip4, NULL);
-
-      Status = Private->Ip4->Configure (Private->Ip4, &Private->Ip4ConfigData);
-      if (EFI_ERROR (Status)) {
-        goto ON_EXIT;
-      }
-
-      Status = Private->Ip4->Receive (Private->Ip4, &Private->IcmpErrorRcvToken);
-      if (EFI_ERROR (Status)) {
-        goto ON_EXIT;
-      }
     }
   }
 
-  Private->Udp4Read->Configure (Private->Udp4Read, &Private->Udp4CfgData);
-
   //
-  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP
+  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP 
   // receive filter list emptied and the filter set to EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP.
   //
   ZeroMem(&IpFilter, sizeof (EFI_PXE_BASE_CODE_IP_FILTER));
   IpFilter.Filters = EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP;
   This->SetIpFilter (This, &IpFilter);
+  
+  DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcDhcp: %r\n", Status));
 
   return Status;
 }
@@ -825,6 +524,8 @@ EfiPxeBcDiscover (
   PXEBC_BOOT_SVR_ENTRY            *BootSvrEntry;
   EFI_PXE_BASE_CODE_IP_FILTER     IpFilter;
 
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcDiscover\n"));
+
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -845,11 +546,6 @@ EfiPxeBcDiscover (
     return EFI_NOT_STARTED;
   }
 
-  //
-  // Stop Udp4Read instance
-  //
-  Private->Udp4Read->Configure (Private->Udp4Read, NULL);
-
   Mode->IcmpErrorReceived = FALSE;
 
   //
@@ -864,7 +560,7 @@ EfiPxeBcDiscover (
     if (!Mode->PxeDiscoverValid || !Mode->PxeReplyReceived || (!Mode->PxeBisReplyReceived && UseBis)) {
 
       Status = EFI_INVALID_PARAMETER;
-      goto ON_EXIT;
+      goto ON_EXIT;  
     }
 
     DefaultInfo.IpCnt                 = 1;
@@ -888,7 +584,7 @@ EfiPxeBcDiscover (
       // Address is not acquired or no discovery options.
       //
       Status = EFI_INVALID_PARAMETER;
-      goto ON_EXIT;
+      goto ON_EXIT;  
     }
 
     DefaultInfo.UseMCast    = (BOOLEAN)!IS_DISABLE_MCAST_DISCOVER (VendorOpt->DiscoverCtrl);
@@ -936,9 +632,9 @@ EfiPxeBcDiscover (
         if (CreatedInfo == NULL) {
           Status = EFI_OUT_OF_RESOURCES;
           goto ON_EXIT;
-
-        }
-
+          
+        }     
+      
         CopyMem (CreatedInfo, &DefaultInfo, sizeof (DefaultInfo));
         Info    = CreatedInfo;
         SrvList = Info->SrvList;
@@ -965,7 +661,7 @@ EfiPxeBcDiscover (
 
       if (Index != Info->IpCnt) {
         Status = EFI_INVALID_PARAMETER;
-        goto ON_EXIT;
+        goto ON_EXIT;        
       }
     }
   }
@@ -1005,7 +701,7 @@ EfiPxeBcDiscover (
                 );
       if (!EFI_ERROR (Status)) {
         break;
-      }
+      }                
     }
 
   } else if (Info->UseMCast) {
@@ -1061,17 +757,14 @@ EfiPxeBcDiscover (
   }
 
 ON_EXIT:
-
-  Private->Udp4Read->Configure (Private->Udp4Read, &Private->Udp4CfgData);
-
   //
-  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP
+  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP 
   // receive filter list emptied and the filter set to EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP.
   //
   ZeroMem(&IpFilter, sizeof (EFI_PXE_BASE_CODE_IP_FILTER));
   IpFilter.Filters = EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP;
   This->SetIpFilter (This, &IpFilter);
-
+  
   return Status;
 }
 
@@ -1166,14 +859,18 @@ EfiPxeBcMtftp (
   EFI_MTFTP4_CONFIG_DATA       Mtftp4Config;
   EFI_STATUS                   Status;
   EFI_PXE_BASE_CODE_MODE       *Mode;
-  EFI_MAC_ADDRESS              TempMacAddr;
   EFI_PXE_BASE_CODE_IP_FILTER  IpFilter;
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcMtftp()\n"));
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcMtftp(): Operation: %d\n", Operation));
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcMtftp(): Server IP: %d.%d.%d.%d\n", ServerIp->v4.Addr[0], ServerIp->v4.Addr[1], ServerIp->v4.Addr[2], ServerIp->v4.Addr[3]));
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcMtftp(): Filename: %a\n", Filename));
 
   if ((This == NULL)                                                          ||
       (Filename == NULL)                                                      ||
       (BufferSize == NULL)                                                    ||
-      ((ServerIp == NULL) ||
-       (IP4_IS_UNSPECIFIED (NTOHL (ServerIp->Addr[0])) ||
+      ((ServerIp == NULL) || 
+       (IP4_IS_UNSPECIFIED (NTOHL (ServerIp->Addr[0])) || 
         IP4_IS_LOCAL_BROADCAST (NTOHL (ServerIp->Addr[0]))))                  ||
       ((BufferPtr == NULL) && DontUseBuffer)                                  ||
       ((BlockSize != NULL) && (*BlockSize < 512))) {
@@ -1184,21 +881,6 @@ EfiPxeBcMtftp (
   Status  = EFI_DEVICE_ERROR;
   Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
   Mode    = &Private->Mode;
-
-  if (!Mode->AutoArp) {
-    //
-    // If AutoArp is set false, check arp cache
-    //
-    UpdateArpCache (This);
-    if (!FindInArpCache (Mode, &ServerIp->v4, &TempMacAddr)) {
-      return EFI_DEVICE_ERROR;
-    }
-  }
-
-  //
-  // Stop Udp4Read instance
-  //
-  Private->Udp4Read->Configure (Private->Udp4Read, NULL);
 
   Mode->TftpErrorReceived = FALSE;
   Mode->IcmpErrorReceived = FALSE;
@@ -1305,14 +987,15 @@ EfiPxeBcMtftp (
   }
 
 ON_EXIT:
-  Private->Udp4Read->Configure (Private->Udp4Read, &Private->Udp4CfgData);
   //
-  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP
+  // Dhcp(), Discover(), and Mtftp() set the IP filter, and return with the IP 
   // receive filter list emptied and the filter set to EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP.
   //
   ZeroMem(&IpFilter, sizeof (EFI_PXE_BASE_CODE_IP_FILTER));
   IpFilter.Filters = EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP;
   This->SetIpFilter (This, &IpFilter);
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcMtftp(): Status: %r\n", Status));
 
   return Status;
 }
@@ -1372,36 +1055,21 @@ EfiPxeBcUdpWrite (
   )
 {
   PXEBC_PRIVATE_DATA        *Private;
-  EFI_UDP4_PROTOCOL         *Udp4;
-  EFI_UDP4_COMPLETION_TOKEN Token;
-  EFI_UDP4_TRANSMIT_DATA    *Udp4TxData;
-  UINT32                    FragCount;
-  UINT32                    DataLength;
-  EFI_UDP4_SESSION_DATA     Udp4Session;
   EFI_STATUS                Status;
-  BOOLEAN                   IsDone;
   EFI_PXE_BASE_CODE_MODE    *Mode;
-  EFI_MAC_ADDRESS           TempMacAddr;
-
-  IsDone = FALSE;
+  BOOLEAN                   UdpReconfigNeeded;
 
   if ((This == NULL) || (DestIp == NULL) || (DestPort == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if ((GatewayIp != NULL) && (IP4_IS_UNSPECIFIED (NTOHL (GatewayIp->Addr[0])) || IP4_IS_LOCAL_BROADCAST (NTOHL (GatewayIp->Addr[0])))) {
+  if (HeaderSize != NULL) {
     //
-    // Gateway is provided but it's not a unicast IP address.
+    // Header is handled automatically via LWIP stack. Unsupported.
     //
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if ((HeaderSize != NULL) && ((*HeaderSize == 0) || (HeaderPtr == NULL))) {
-    //
-    // The HeaderSize ptr isn't NULL and: 1. the value is zero; or 2. the HeaderPtr
-    // is NULL.
-    //
-    return EFI_INVALID_PARAMETER;
+    DEBUG ((EFI_D_ERROR, "[PXE BC] Client provides a header.\n"));
+    ASSERT (FALSE);
+    return EFI_UNSUPPORTED;
   }
 
   if ((BufferSize == NULL) || ((*BufferSize != 0) && (BufferPtr == NULL))) {
@@ -1409,127 +1077,125 @@ EfiPxeBcUdpWrite (
   }
 
   Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
-  Udp4    = Private->Udp4Write;
   Mode    = &Private->Mode;
   if (!Mode->Started) {
     return EFI_NOT_STARTED;
   }
 
   if (!Private->AddressIsOk && (SrcIp == NULL)) {
+    //
+    // Source address is not given and address was not obtained via DHCP.
+    //
     return EFI_INVALID_PARAMETER;
   }
 
   if (!Mode->AutoArp) {
     //
-    // If AutoArp is set false, check arp cache
+    // Manual ARP not supported in currect LWIP protocol implementation.
     //
-    UpdateArpCache (This);
-    if (!FindInArpCache (Mode, &DestIp->v4, &TempMacAddr)) {
-      return EFI_DEVICE_ERROR;
-    }
+    DEBUG ((EFI_D_ERROR, "[PXE BC] ARP is not in auto mode.\n"));
+    ASSERT (FALSE);
+    return EFI_DEVICE_ERROR;
   }
 
-  Mode->IcmpErrorReceived = FALSE;
+  UdpReconfigNeeded = FALSE;
 
-  if ((Private->CurrentUdpSrcPort == 0) ||
-      ((SrcPort != NULL) && (*SrcPort != Private->CurrentUdpSrcPort))) {
+  if ((Private->OutputSocketSrcPort == 0) ||
+      ((SrcPort != NULL) && (*SrcPort != Private->OutputSocketSrcPort))) {
     //
     // Port is changed, (re)configure the Udp4Write instance
     //
     if (SrcPort != NULL) {
-      Private->CurrentUdpSrcPort = *SrcPort;
+      DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpWrite: Reconfig required (Old port: %d, New port: %d)\n",
+          Private->OutputSocketSrcPort, *SrcPort));
+      UdpReconfigNeeded = TRUE;
     }
   }
 
-  Status = PxeBcConfigureUdpWriteInstance (
-             Udp4,
-             &Private->StationIp.v4,
-             &Private->SubnetMask.v4,
-             &Private->GatewayIp.v4,
-             &Private->CurrentUdpSrcPort,
-             Private->Mode.TTL,
-             Private->Mode.ToS
-             );
-  if (EFI_ERROR (Status)) {
-    Private->CurrentUdpSrcPort = 0;
-    return EFI_INVALID_PARAMETER;
+  if (UdpReconfigNeeded && Private->OutputSocket != -1) {
+    DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: UDP reconfig needed & socket is already created.\n"));
+
+    Status = Private->Sockets->Close (
+                                 Private->Sockets,
+                                 Private->OutputSocket
+                                 );
+    ASSERT_EFI_ERROR (Status);
+    Private->OutputSocket = -1;
+    Private->OutputSocketSrcPort = 0;
+    ZeroMem (&Private->OutputSocketSrcIp, sizeof (Private->OutputSocketSrcIp));
   }
 
-  ZeroMem (&Token, sizeof (EFI_UDP4_COMPLETION_TOKEN));
-  ZeroMem (&Udp4Session, sizeof (EFI_UDP4_SESSION_DATA));
+  if (Private->OutputSocket == -1) {
+    EFI_IPv4_ADDRESS  *SourceIpAddr;
 
-  CopyMem (&Udp4Session.DestinationAddress, DestIp, sizeof (EFI_IPv4_ADDRESS));
-  Udp4Session.DestinationPort = *DestPort;
-  if (SrcIp != NULL) {
-    CopyMem (&Udp4Session.SourceAddress, SrcIp, sizeof (EFI_IPv4_ADDRESS));
-  }
-  if (SrcPort != NULL) {
-    Udp4Session.SourcePort = *SrcPort;
-  }
+    DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: Configuring.\n"));
 
-  FragCount = (HeaderSize != NULL) ? 2 : 1;
-  Udp4TxData = (EFI_UDP4_TRANSMIT_DATA *) AllocateZeroPool (sizeof (EFI_UDP4_TRANSMIT_DATA) + (FragCount - 1) * sizeof (EFI_UDP4_FRAGMENT_DATA));
-  if (Udp4TxData == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
+    //
+    // Socket was not created
+    //
+    Status = Private->Sockets->Create (
+                                 Private->Sockets,
+                                 LWIP_AF_INET,
+                                 LWIP_SOCK_DGRAM,
+                                 LWIP_IPPROTO_UDP,
+                                 &Private->OutputSocket
+                                 );
 
-  Udp4TxData->FragmentCount = FragCount;
-  Udp4TxData->FragmentTable[FragCount - 1].FragmentLength = (UINT32) *BufferSize;
-  Udp4TxData->FragmentTable[FragCount - 1].FragmentBuffer = BufferPtr;
-  DataLength = (UINT32) *BufferSize;
+//    DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: Socket create: %r\n", Status));
 
-  if (FragCount == 2) {
-
-    Udp4TxData->FragmentTable[0].FragmentLength = (UINT32) *HeaderSize;
-    Udp4TxData->FragmentTable[0].FragmentBuffer = HeaderPtr;
-    DataLength += (UINT32) *HeaderSize;
-  }
-
-  if (GatewayIp != NULL) {
-    Udp4TxData->GatewayAddress  = (EFI_IPv4_ADDRESS *) GatewayIp;
-  }
-  Udp4TxData->UdpSessionData  = &Udp4Session;
-  Udp4TxData->DataLength      = DataLength;
-  Token.Packet.TxData         = Udp4TxData;
-
-  Status = gBS->CreateEvent (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_NOTIFY,
-                  PxeBcCommonNotify,
-                  &IsDone,
-                  &Token.Event
-                  );
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  Status = Udp4->Transmit (Udp4, &Token);
-  if (EFI_ERROR (Status)) {
-    if (Status == EFI_ICMP_ERROR) {
-      Mode->IcmpErrorReceived = TRUE;
+    if (EFI_ERROR (Status)) {
+      return EFI_DEVICE_ERROR;
     }
-    goto ON_EXIT;
+
+    //
+    // Bind the socket to DHPC IP or address given as argument
+    //
+    if (Private->AddressIsOk) {
+      SourceIpAddr = &Mode->StationIp.v4;
+    } else {
+      SourceIpAddr = &SrcIp->v4;
+    }
+
+    Status = Private->Sockets->Bind (
+                                 Private->Sockets,
+                                 Private->OutputSocket,
+                                 SourceIpAddr,
+                                 *SrcPort
+                                 );
+
+//    DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: Socket bind: %r\n", Status));
+
+    if (EFI_ERROR (Status)) {
+      Private->Sockets->Close (
+                          Private->Sockets,
+                          Private->OutputSocket
+                          );
+      return EFI_DEVICE_ERROR;
+    }
+
+    Private->OutputSocketSrcPort = *SrcPort;
+    CopyMem (&Private->OutputSocketSrcIp, SourceIpAddr, sizeof (Private->OutputSocketSrcIp));
   }
 
-  while (!IsDone) {
+//  DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: BufferSize: %d\n", *BufferSize));
+//  DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: DestIp: %d.%d.%d.%d\n", DestIp->v4.Addr[0], DestIp->v4.Addr[1], DestIp->v4.Addr[2], DestIp->v4.Addr[3]));
+//  DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpWrite: DestPort: %d\n", *DestPort));
 
-    Udp4->Poll (Udp4);
+  {
+    IP4_ADDR  Destination;
+
+    Destination = EFI_NTOHL(DestIp->v4);
+
+    Status = Private->Sockets->SendTo (
+                                 Private->Sockets,
+                                 Private->OutputSocket,
+                                 BufferPtr,
+                                 (UINT32)*BufferSize,
+                                 (EFI_IPv4_ADDRESS*)&Destination,
+                                 *DestPort
+                                 );
   }
 
-  Status = Token.Status;
-
-ON_EXIT:
-
-  if (Token.Event != NULL) {
-    gBS->CloseEvent (Token.Event);
-  }
-
-  FreePool (Udp4TxData);
-
-  //
-  // Reset the instance.
-  //
-  Udp4->Configure (Udp4, NULL);
   return Status;
 }
 
@@ -1646,35 +1312,33 @@ EfiPxeBcUdpRead (
   IN VOID                                      *BufferPtr
   )
 {
+//  DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead\n"));
+
   PXEBC_PRIVATE_DATA        *Private;
   EFI_PXE_BASE_CODE_MODE    *Mode;
-  EFI_UDP4_PROTOCOL         *Udp4;
-  EFI_UDP4_COMPLETION_TOKEN Token;
-  EFI_UDP4_RECEIVE_DATA     *RxData;
-  EFI_UDP4_SESSION_DATA     *Session;
   EFI_STATUS                Status;
-  BOOLEAN                   IsDone;
-  BOOLEAN                   Matched;
-  UINTN                     CopiedLen;
-  UINTN                     HeaderLen;
-  UINTN                     HeaderCopiedLen;
-  UINTN                     BufferCopiedLen;
-  UINT32                    FragmentLength;
-  UINTN                     FragmentIndex;
-  UINT8                     *FragmentBuffer;
+  EFI_IPv4_ADDRESS            SocketDestIp;
+  UINT16                      SocketDestPort;
+  UINTN                       SocketPacketLength;
+  EFI_IPv4_ADDRESS            SocketSourceIp;
+  UINT16                      SocketSourcePort;
+  BOOLEAN                     ReconfigRequired;
+  BOOLEAN                     UseOutputSocket;
+  EFI_LWIP_SOCKET             InputSocket;
 
   if (This == NULL || DestIp == NULL || DestPort == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) == 0 && (DestPort == NULL)) ||
-      ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) == 0 && (SrcIp == NULL)) ||
+      ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_IP) == 0 && (SrcIp == NULL)) ||
       ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_PORT) == 0 && (SrcPort == NULL))) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (((HeaderSize != NULL) && (*HeaderSize == 0)) || ((HeaderSize != NULL) && (HeaderPtr == NULL))) {
-    return EFI_INVALID_PARAMETER;
+  if (OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_USE_FILTER) {
+    DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpRead: IP filter currently unsupported.\n"));
+    ASSERT (FALSE);
   }
 
   if ((BufferSize == NULL) || (BufferPtr == NULL)) {
@@ -1683,209 +1347,166 @@ EfiPxeBcUdpRead (
 
   Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
   Mode    = Private->PxeBc.Mode;
-  Udp4    = Private->Udp4Read;
+  ReconfigRequired = FALSE;
+  UseOutputSocket = FALSE;
 
-  if (!Mode->Started) {
-    return EFI_NOT_STARTED;
-  }
-
-  Mode->IcmpErrorReceived = FALSE;
-
-  Status = gBS->CreateEvent (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_NOTIFY,
-                  PxeBcCommonNotify,
-                  &IsDone,
-                  &Token.Event
-                  );
-  if (EFI_ERROR (Status)) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-TRY_AGAIN:
-
-  IsDone = FALSE;
-  Status = Udp4->Receive (Udp4, &Token);
-  if (EFI_ERROR (Status)) {
-    if (Status == EFI_ICMP_ERROR) {
-      Mode->IcmpErrorReceived = TRUE;
+  if ((Private->RecvOpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) == 0 &&
+      (Private->RecvOpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_IP) == 0 &&
+      *DestPort == Private->OutputSocketSrcPort) {
+    if ((DestIp == NULL && EFI_IP4_EQUAL (&Private->OutputSocketSrcIp, &Mode->StationIp.v4)) ||
+        (EFI_IP4_EQUAL (&Private->OutputSocketSrcIp, DestIp))) {
+      UseOutputSocket = TRUE;
     }
-    goto ON_EXIT;
+  } else if ((Private->RecvOpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_IP) != (OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_IP)) {
+    //
+    // Behavior change (enable/disable DestinationIp filtering)
+    //
+    ReconfigRequired = TRUE;
+  } else if ((Private->RecvOpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) != (OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT)) {
+    //
+    // Behavior change (enable/disable DestinationPort filtering)
+    //
+    ReconfigRequired = TRUE;
   }
 
-  Udp4->Poll (Udp4);
-
-  if (!IsDone) {
-    Status = EFI_TIMEOUT;
+  if (UseOutputSocket && Private->OutputSocket != -1) {
+    InputSocket = Private->OutputSocket;
   } else {
-
-    //
-    // check whether this packet matches the filters
-    //
-    if (EFI_ERROR (Token.Status)){
-      goto ON_EXIT;
+    if (ReconfigRequired && Private->InputSocket != -1) {
+      Status = Private->Sockets->Close (
+                                   Private->Sockets,
+                                   Private->InputSocket
+                                   );
+      DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: Reconfiguring...\n"));
     }
 
-    RxData  = Token.Packet.RxData;
-    Session = &RxData->UdpSession;
-
-    Matched = TRUE;
-
-    if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_USE_FILTER) != 0) {
-      Matched = FALSE;
+    if (Private->InputSocket == -1) {
       //
-      // Check UDP package by IP filter settings
+      // Socket was not created
       //
-      if (CheckIpByFilter (Mode, Session)) {
-        Matched = TRUE;
+      Status = Private->Sockets->Create (
+                                   Private->Sockets,
+                                   LWIP_AF_INET,
+                                   LWIP_SOCK_DGRAM,
+                                   LWIP_IPPROTO_UDP,
+                                   &Private->InputSocket
+                                   );
+
+//      DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpRead: Socket create: %r\n", Status));
+
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
       }
-    }
 
-    if (Matched) {
-      Matched = FALSE;
-
-      //
-      // Match the destination ip of the received udp dgram
-      //
-      if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_IP) != 0) {
-        Matched = TRUE;
-
-        if (DestIp != NULL) {
-          CopyMem (DestIp, &Session->DestinationAddress, sizeof (EFI_IPv4_ADDRESS));
-        }
+      if (OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_IP) {
+        ZeroMem (&SocketDestIp, sizeof(Private->RecvDestIp));
       } else {
         if (DestIp != NULL) {
-          if (EFI_IP4_EQUAL (DestIp, &Session->DestinationAddress)) {
-            Matched = TRUE;
-          }
+          CopyMem (&SocketDestIp, &DestIp->v4, sizeof(EFI_IPv4_ADDRESS));
         } else {
-          if (EFI_IP4_EQUAL (&Private->StationIp, &Session->DestinationAddress)) {
-            Matched = TRUE;
-          }
+          CopyMem (&SocketDestIp, &Mode->StationIp.v4, sizeof(EFI_IPv4_ADDRESS));
         }
       }
-    }
 
-    if (Matched) {
-      //
-      // Match the destination port of the received udp dgram
-      //
-      if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) != 0) {
-
-        if (DestPort != NULL) {
-          *DestPort = Session->DestinationPort;
-        }
+      if (OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_DEST_PORT) {
+        SocketDestPort = 0;
       } else {
-
-        if (*DestPort != Session->DestinationPort) {
-          Matched = FALSE;
-        }
-      }
-    }
-
-    if (Matched) {
-      //
-      // Match the source ip of the received udp dgram
-      //
-      if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_IP) != 0) {
-
-        if (SrcIp != NULL) {
-          CopyMem (SrcIp, &Session->SourceAddress, sizeof (EFI_IPv4_ADDRESS));
-        }
-      } else {
-
-        if (!EFI_IP4_EQUAL (SrcIp, &Session->SourceAddress)) {
-          Matched = FALSE;
-        }
-      }
-    }
-
-    if (Matched) {
-      //
-      // Match the source port of the received udp dgram
-      //
-      if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_PORT) != 0) {
-
-        if (SrcPort != NULL) {
-          *SrcPort = Session->SourcePort;
-        }
-      } else {
-
-        if (*SrcPort != Session->SourcePort) {
-          Matched = FALSE;
-        }
-      }
-    }
-
-    if (Matched) {
-      ASSERT (RxData != NULL);
-
-      HeaderLen = 0;
-      if (HeaderSize != NULL) {
-        HeaderLen = MIN (*HeaderSize, RxData->DataLength);
+        SocketDestPort = *DestPort;
       }
 
-      if (RxData->DataLength - HeaderLen > *BufferSize) {
-        Status = EFI_BUFFER_TOO_SMALL;
-      } else {
-        *HeaderSize = HeaderLen;
-        *BufferSize = RxData->DataLength - HeaderLen;
+      Status = Private->Sockets->Bind (
+                                   Private->Sockets,
+                                   Private->InputSocket,
+                                   &SocketDestIp,
+                                   SocketDestPort
+                                   );
 
-        HeaderCopiedLen = 0;
-        BufferCopiedLen = 0;
-        for (FragmentIndex = 0; FragmentIndex < RxData->FragmentCount; FragmentIndex++) {
-          FragmentLength = RxData->FragmentTable[FragmentIndex].FragmentLength;
-          FragmentBuffer = RxData->FragmentTable[FragmentIndex].FragmentBuffer;
-          if (HeaderCopiedLen + FragmentLength < HeaderLen) {
-            //
-            // Copy the header part of received data.
-            //
-            CopyMem ((UINT8 *) HeaderPtr + HeaderCopiedLen, FragmentBuffer, FragmentLength);
-            HeaderCopiedLen += FragmentLength;
-          } else if (HeaderCopiedLen < HeaderLen) {
-            //
-            // Copy the header part of received data.
-            //
-            CopiedLen = HeaderLen - HeaderCopiedLen;
-            CopyMem ((UINT8 *) HeaderPtr + HeaderCopiedLen, FragmentBuffer, CopiedLen);
-            HeaderCopiedLen += CopiedLen;
+//      DEBUG ((EFI_D_ERROR, "[PXE BC] EfiPxeBcUdpRead: Socket bind: %r\n", Status));
 
-            //
-            // Copy the other part of received data.
-            //
-            CopyMem ((UINT8 *) BufferPtr + BufferCopiedLen, FragmentBuffer + CopiedLen, FragmentLength - CopiedLen);
-            BufferCopiedLen += (FragmentLength - CopiedLen);
-          } else {
-            //
-            // Copy the other part of received data.
-            //
-            CopyMem ((UINT8 *) BufferPtr + BufferCopiedLen, FragmentBuffer, FragmentLength);
-            BufferCopiedLen += FragmentLength;
-          }
-        }
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
       }
-    } else {
 
-      Status = EFI_TIMEOUT;
+      CopyMem (&Private->RecvDestIp, &SocketDestIp, sizeof(EFI_IPv4_ADDRESS));
+      Private->RecvDestPort = SocketDestPort;
+      Private->RecvOpFlags = OpFlags;
     }
 
-    //
-    // Recycle the RxData
-    //
-    gBS->SignalEvent (RxData->RecycleSignal);
-
-    if (!Matched) {
-      goto TRY_AGAIN;
-    }
+    InputSocket = Private->InputSocket;
   }
 
-ON_EXIT:
+  SocketPacketLength = 0;
 
-  Udp4->Cancel (Udp4, &Token);
+  while (1) {
+    SocketPacketLength = *BufferSize;
 
-  gBS->CloseEvent (Token.Event);
+//    DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: Trying to get packet: %d\n", SocketPacketLength));
 
-  return Status;
+    Status = Private->Sockets->ReceiveFrom (
+                                 Private->Sockets,
+                                 InputSocket,
+                                 FALSE,
+                                 BufferPtr,
+                                 (UINT32*)&SocketPacketLength,
+                                 &SocketSourceIp,
+                                 &SocketSourcePort
+                                 );
+
+//    DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: ReceiveFrom: %r\n", Status));
+
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+
+    if (SocketPacketLength == 0) {
+      continue;
+    }
+
+    if (SocketPacketLength > *BufferSize) {
+      DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: Buffer too small\n"));
+      *BufferSize = SocketPacketLength;
+      Status = EFI_BUFFER_TOO_SMALL;
+      break;
+    }
+
+    if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_IP) == 0) {
+      //
+      // Is it from a specific source IP we expect?
+      //
+      if (!EFI_IP4_EQUAL (&SocketSourceIp, &SrcIp->v4)) {
+//        DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: Source IP mismatch\n"));
+        SocketPacketLength = 0;
+        continue;
+      }
+    }
+    if ((OpFlags & EFI_PXE_BASE_CODE_UDP_OPFLAGS_ANY_SRC_PORT) == 0) {
+      //
+      // Is it from a specific source port?
+      //
+      if (SocketSourcePort != *SrcPort) {
+//        DEBUG ((EFI_D_INFO, "[PXE BC] EfiPxeBcUdpRead: Source port mismatch\n"));
+        SocketPacketLength = 0;
+        continue;
+      }
+    }
+    break;
+  }
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (SrcIp) {
+    CopyMem (SrcIp, &SocketSourceIp, sizeof(EFI_IPv4_ADDRESS));
+  }
+
+  if (SrcPort) {
+    *SrcPort = SocketSourcePort;
+  }
+
+  *BufferSize = SocketPacketLength;
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -1927,148 +1548,6 @@ EfiPxeBcSetIpFilter (
   IN EFI_PXE_BASE_CODE_IP_FILTER      *NewFilter
   )
 {
-  EFI_STATUS                Status;
-  PXEBC_PRIVATE_DATA        *Private;
-  EFI_PXE_BASE_CODE_MODE    *Mode;
-  UINTN                     Index;
-  EFI_UDP4_CONFIG_DATA      *Udp4Cfg;
-  BOOLEAN                   PromiscuousNeed;
-  BOOLEAN                   AcceptPromiscuous;
-  BOOLEAN                   AcceptBroadcast;
-  BOOLEAN                   MultiCastUpdate;
-
-  if (This == NULL) {
-    DEBUG ((EFI_D_ERROR, "This == NULL.\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
-  Mode = Private->PxeBc.Mode;
-
-  if (NewFilter == NULL) {
-    DEBUG ((EFI_D_ERROR, "NewFilter == NULL.\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (NewFilter->IpCnt > EFI_PXE_BASE_CODE_MAX_IPCNT) {
-    DEBUG ((EFI_D_ERROR, "NewFilter->IpCnt > %d.\n", EFI_PXE_BASE_CODE_MAX_IPCNT));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (!Mode->Started) {
-    DEBUG ((EFI_D_ERROR, "BC was not started.\n"));
-    return EFI_NOT_STARTED;
-  }
-
-  if (Mode->UsingIpv6) {
-    DEBUG ((EFI_D_ERROR, "This driver is PXE for IPv4 Only.\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  PromiscuousNeed = FALSE;
-
-  for (Index = 0; Index < NewFilter->IpCnt; ++Index) {
-    if (IP4_IS_LOCAL_BROADCAST (EFI_IP4 (NewFilter->IpList[Index].v4))) {
-      //
-      // The IP is a broadcast address.
-      //
-      DEBUG ((EFI_D_ERROR, "There is broadcast address in NewFilter.\n"));
-      return EFI_INVALID_PARAMETER;
-    }
-    if ((EFI_NTOHL(Mode->StationIp) != 0) &&
-        (EFI_NTOHL(Mode->SubnetMask) != 0) &&
-        IP4_NET_EQUAL(EFI_NTOHL(Mode->StationIp), EFI_NTOHL(NewFilter->IpList[Index].v4), EFI_NTOHL(Mode->SubnetMask)) &&
-        NetIp4IsUnicast (EFI_IP4 (NewFilter->IpList[Index].v4), EFI_NTOHL(Mode->SubnetMask)) &&
-        ((NewFilter->Filters & EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP) != 0)) {
-      //
-      // If EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP is set and IP4 address is in IpList,
-      // promiscuous mode is needed.
-      //
-      PromiscuousNeed = TRUE;
-    }
-  }
-
-  AcceptPromiscuous = FALSE;
-  AcceptBroadcast   = FALSE;
-  MultiCastUpdate   = FALSE;
-
-  if (PromiscuousNeed ||
-      ((NewFilter->Filters & EFI_PXE_BASE_CODE_IP_FILTER_PROMISCUOUS) != 0) ||
-      ((NewFilter->Filters & EFI_PXE_BASE_CODE_IP_FILTER_PROMISCUOUS_MULTICAST) != 0)
-     ) {
-    //
-    // Configure the udp4 filter to receive all packages.
-    //
-    AcceptPromiscuous  = TRUE;
-  } else if ((NewFilter->Filters & EFI_PXE_BASE_CODE_IP_FILTER_BROADCAST) != 0) {
-    //
-    // Configure the udp4 filter to receive all broadcast packages.
-    //
-    AcceptBroadcast   = TRUE;
-  }
-
-  //
-  // In multicast condition when Promiscuous FALSE and IpCnt no-zero.
-  // Here check if there is any update of the multicast ip address. If yes,
-  // we need leave the old multicast group (by Config UDP instance to NULL),
-  // and join the new multicast group.
-  //
-  if (!AcceptPromiscuous) {
-    if ((NewFilter->Filters & EFI_PXE_BASE_CODE_IP_FILTER_STATION_IP) != 0) {
-      if (Mode->IpFilter.IpCnt != NewFilter->IpCnt) {
-        MultiCastUpdate = TRUE;
-      } else if (CompareMem (Mode->IpFilter.IpList, NewFilter->IpList, NewFilter->IpCnt * sizeof (EFI_IP_ADDRESS)) != 0 ) {
-        MultiCastUpdate = TRUE;
-      }
-    }
-  }
-
-  //
-  // Check whether we need reconfigure the UDP instance.
-  //
-  Udp4Cfg = &Private->Udp4CfgData;
-  if ((AcceptPromiscuous != Udp4Cfg->AcceptPromiscuous) ||
-      (AcceptBroadcast != Udp4Cfg->AcceptBroadcast)     || MultiCastUpdate) {
-    //
-    // Clear the UDP instance configuration, all joined groups will be left
-    // during the operation.
-    //
-    Private->Udp4Read->Configure (Private->Udp4Read, NULL);
-
-    //
-    // Configure the UDP instance with the new configuration.
-    //
-    Udp4Cfg->AcceptPromiscuous = AcceptPromiscuous;
-    Udp4Cfg->AcceptBroadcast   = AcceptBroadcast;
-    Status = Private->Udp4Read->Configure (Private->Udp4Read, Udp4Cfg);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-
-    //
-    // In not Promiscuous mode, need to join the new multicast group.
-    //
-    if (!AcceptPromiscuous) {
-      for (Index = 0; Index < NewFilter->IpCnt; ++Index) {
-        if (IP4_IS_MULTICAST (EFI_NTOHL (NewFilter->IpList[Index].v4))) {
-          //
-          // Join the mutilcast group.
-          //
-          Status = Private->Udp4Read->Groups (Private->Udp4Read, TRUE, &NewFilter->IpList[Index].v4);
-          if (EFI_ERROR (Status)) {
-            return Status;
-          }
-        }
-      }
-    }
-  }
-
-
-  //
-  // Save the new filter.
-  //
-  CopyMem (&Mode->IpFilter, NewFilter, sizeof (Mode->IpFilter));
-
   return EFI_SUCCESS;
 }
 
@@ -2108,55 +1587,9 @@ EfiPxeBcArp (
   IN EFI_MAC_ADDRESS                  * MacAddr OPTIONAL
   )
 {
-  PXEBC_PRIVATE_DATA      *Private;
-  EFI_PXE_BASE_CODE_MODE  *Mode;
-  EFI_STATUS              Status;
-  EFI_MAC_ADDRESS         TempMacAddr;
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcArp\n"));
 
-  if (This == NULL || IpAddr == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
-  Mode    = Private->PxeBc.Mode;
-
-  if (!Mode->Started) {
-    return EFI_NOT_STARTED;
-  }
-
-  if (!Private->AddressIsOk || Mode->UsingIpv6) {
-    //
-    // We can't resolve the IP address if we don't have a local address now.
-    // Don't have ARP for IPv6.
-    //
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Mode->IcmpErrorReceived = FALSE;
-
-  if (!Mode->AutoArp) {
-    //
-    // If AutoArp is set false, check arp cache
-    //
-    UpdateArpCache (This);
-    if (!FindInArpCache (Mode, &IpAddr->v4, &TempMacAddr)) {
-      return EFI_DEVICE_ERROR;
-    }
-  } else {
-    Status = Private->Arp->Request (Private->Arp, &IpAddr->v4, NULL, &TempMacAddr);
-    if (EFI_ERROR (Status)) {
-      if (Status == EFI_ICMP_ERROR) {
-        Mode->IcmpErrorReceived = TRUE;
-      }
-      return Status;
-    }
-  }
-
-  if (MacAddr != NULL) {
-    CopyMem (MacAddr, &TempMacAddr, sizeof (EFI_MAC_ADDRESS));
-  }
-
-  return EFI_SUCCESS;
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -2205,6 +1638,8 @@ EfiPxeBcSetParameters (
   PXEBC_PRIVATE_DATA      *Private;
   EFI_PXE_BASE_CODE_MODE  *Mode;
   EFI_STATUS              Status;
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcSetParameters\n"));
 
   Status = EFI_SUCCESS;
 
@@ -2315,7 +1750,8 @@ EfiPxeBcSetStationIP (
 {
   PXEBC_PRIVATE_DATA      *Private;
   EFI_PXE_BASE_CODE_MODE  *Mode;
-  EFI_ARP_CONFIG_DATA     ArpConfigData;
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcSetStationIP\n"));
 
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -2326,13 +1762,13 @@ EfiPxeBcSetStationIP (
   }
 
   if (NewStationIp != NULL) {
-    if (IP4_IS_UNSPECIFIED(NTOHL (NewStationIp->Addr[0])) ||
+    if (IP4_IS_UNSPECIFIED(NTOHL (NewStationIp->Addr[0])) || 
         IP4_IS_LOCAL_BROADCAST(NTOHL (NewStationIp->Addr[0])) ||
         (NewSubnetMask != NULL && NewSubnetMask->Addr[0] != 0 && !NetIp4IsUnicast (NTOHL (NewStationIp->Addr[0]), NTOHL (NewSubnetMask->Addr[0])))) {
       return EFI_INVALID_PARAMETER;
     }
   }
-
+  
   Private = PXEBC_PRIVATE_DATA_FROM_PXEBC (This);
   Mode    = Private->PxeBc.Mode;
 
@@ -2353,19 +1789,6 @@ EfiPxeBcSetStationIP (
   Private->AddressIsOk = TRUE;
 
   if (!Mode->UsingIpv6) {
-    //
-    // If in IPv4 mode, configure the corresponding ARP with this new
-    // station IP address.
-    //
-    ZeroMem (&ArpConfigData, sizeof (EFI_ARP_CONFIG_DATA));
-
-    ArpConfigData.SwAddressType   = 0x0800;
-    ArpConfigData.SwAddressLength = (UINT8) sizeof (EFI_IPv4_ADDRESS);
-    ArpConfigData.StationAddress  = &Private->StationIp.v4;
-
-    Private->Arp->Configure (Private->Arp, NULL);
-    Private->Arp->Configure (Private->Arp, &ArpConfigData);
-
     //
     // Update the route table.
     //
@@ -2429,6 +1852,8 @@ EfiPxeBcSetPackets (
 {
   PXEBC_PRIVATE_DATA      *Private;
   EFI_PXE_BASE_CODE_MODE  *Mode;
+
+  DEBUG ((EFI_D_INFO, "[PXEBC] EfiPxeBcSetPackets\n"));
 
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -2801,12 +2226,12 @@ EfiPxeLoadFile (
   BOOLEAN                     NewMakeCallback;
   EFI_STATUS                  Status;
   UINT64                      TmpBufSize;
-  EFI_STATUS                  MediaStatus;
+  BOOLEAN                     MediaPresent;
 
   if (FilePath == NULL || !IsDevicePathEnd (FilePath)) {
     return EFI_INVALID_PARAMETER;
   }
-
+  
   Private         = PXEBC_PRIVATE_DATA_FROM_LOADFILE (This);
   PxeBc           = &Private->PxeBc;
   NewMakeCallback = FALSE;
@@ -2827,9 +2252,9 @@ EfiPxeLoadFile (
   //
   // Check media status before PXE start
   //
-  MediaStatus = EFI_SUCCESS;
-  NetLibDetectMediaWaitTimeout (Private->Controller, PXEBC_CHECK_MEDIA_WAITING_TIME, &MediaStatus);
-  if (MediaStatus != EFI_SUCCESS) {
+  MediaPresent = TRUE;
+  NetLibDetectMedia (Private->Controller, &MediaPresent);
+  if (!MediaPresent) {
     return EFI_NO_MEDIA;
   }
 
@@ -2933,7 +2358,7 @@ EfiPxeLoadFile (
     AsciiPrint ("\n  NBP file downloaded successfully.\n");
     //
     // The DHCP4 can have only one configured child instance so we need to stop
-    // reset the DHCP4 child before we return. Otherwise the other programs which
+    // reset the DHCP4 child before we return. Otherwise the other programs which 
     // also need to use DHCP4 will be impacted.
     // The functionality of PXE Base Code protocol will not be stopped,
     // when downloading is successfully.

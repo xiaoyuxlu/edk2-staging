@@ -29,6 +29,7 @@ EFI_METRONOME_ARCH_PROTOCOL       *gMetronome     = NULL;
 EFI_TIMER_ARCH_PROTOCOL           *gTimer         = NULL;
 EFI_BDS_ARCH_PROTOCOL             *gBds           = NULL;
 EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *gWatchdogTimer = NULL;
+EFI_THREADING_PROTOCOL            *gThreading     = NULL;
 
 //
 // DXE Core globals for optional protocol dependencies
@@ -95,7 +96,8 @@ EFI_BOOT_SERVICES mBootServices = {
   (EFI_CALCULATE_CRC32)                         CoreEfiNotAvailableYetArg3,               // CalculateCrc32
   (EFI_COPY_MEM)                                CopyMem,                                  // CopyMem
   (EFI_SET_MEM)                                 SetMem,                                   // SetMem
-  (EFI_CREATE_EVENT_EX)                         CoreCreateEventEx                         // CreateEventEx
+  (EFI_CREATE_EVENT_EX)                         CoreCreateEventEx,                        // CreateEventEx
+  (EFI_GET_TIME_TICKS)                          CoreCurrentSystemTime                     // GetTime
 };
 
 EFI_DXE_SERVICES mDxeServices = {
@@ -249,6 +251,13 @@ DxeMain (
   EFI_VECTOR_HANDOFF_INFO       *VectorInfoList;
   EFI_VECTOR_HANDOFF_INFO       *VectorInfo;
   VOID                          *EntryPoint;
+
+  //
+  // Initialize locks (memory, event)
+  //
+  CoreInitializeMemoryLocks ();
+  CoreInitializeEventLocks ();
+  CoreInitializeProtocolLocks ();
 
   //
   // Setup the default exception handlers
@@ -560,6 +569,28 @@ DxeMain (
 
 
 
+/**
+  Place holder function until all the Boot Services and Runtime Services are
+  available.
+
+  @return EFI_NOT_AVAILABLE_YET
+
+**/
+EFI_STATUS
+EFIAPI
+CoreEfiNotAvailableYetArg0 (
+  VOID
+  )
+{
+  //
+  // This function should never be executed.  If it does, then the architectural protocols
+  // have not been designed correctly.  The CpuBreakpoint () is commented out for now until the
+  // DXE Core and all the Architectural Protocols are complete.
+  //
+
+  return EFI_NOT_AVAILABLE_YET;
+}
+
 
 /**
   Place holder function until all the Boot Services and Runtime Services are
@@ -723,7 +754,7 @@ CalculateEfiHdrCrc (
   //  Crc will come back as zero if we set it to zero here
   //
   Crc = 0;
-  gBS->CalculateCrc32 ((UINT8 *)Hdr, Hdr->HeaderSize, &Crc);
+  mBootServices.CalculateCrc32 ((UINT8 *)Hdr, Hdr->HeaderSize, &Crc);
   Hdr->CRC32 = Crc;
 }
 

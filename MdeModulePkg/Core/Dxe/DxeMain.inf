@@ -101,6 +101,7 @@
   DebugAgentLib
   CpuExceptionHandlerLib
   PcdLib
+  SynchronizationLib
 
 [Guids]
   gEfiEventMemoryMapChangeGuid                  ## PRODUCES             ## Event
@@ -178,6 +179,7 @@
   gEfiVariableArchProtocolGuid                  ## CONSUMES
   gEfiCapsuleArchProtocolGuid                   ## CONSUMES
   gEfiWatchdogTimerArchProtocolGuid             ## CONSUMES
+  gEfiThreadingProtocolGuid                     ## CONSUMES
 
 [FeaturePcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrameworkCompatibilitySupport     ## CONSUMES

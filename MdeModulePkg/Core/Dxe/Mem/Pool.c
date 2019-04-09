@@ -16,7 +16,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "Imem.h"
 #include "HeapGuard.h"
 
-STATIC EFI_LOCK mPoolMemoryLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_NOTIFY);
+EFI_DEBUG_SPIN_LOCK  mPoolMemoryLock;
 
 #define POOL_FREE_SIGNATURE   SIGNATURE_32('p','f','r','0')
 typedef struct {
@@ -111,6 +111,17 @@ GetPoolIndexFromSize (
     }
   }
   return MAX_POOL_LIST;
+}
+
+VOID
+CoreInitializeMemoryLocks (
+  VOID
+  )
+{
+  DEBUG ((EFI_D_INFO, "mPoolMemoryLock = %lX\n", &mPoolMemoryLock));
+  DEBUG ((EFI_D_INFO, "gMemoryLock = %lX\n", &gMemoryLock));
+  CoreInitializeSpinLock (&mPoolMemoryLock, TPL_NOTIFY);
+  CoreInitializeSpinLock (&gMemoryLock, TPL_NOTIFY);
 }
 
 /**
@@ -216,7 +227,6 @@ CoreInternalAllocatePool (
   OUT VOID            **Buffer
   )
 {
-  EFI_STATUS            Status;
   BOOLEAN               NeedGuard;
 
   //
@@ -246,13 +256,9 @@ CoreInternalAllocatePool (
   //
   // Acquire the memory lock and make the allocation
   //
-  Status = CoreAcquireLockOrFail (&mPoolMemoryLock);
-  if (EFI_ERROR (Status)) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
+  CoreAcquireSpinLock (&mPoolMemoryLock, __FILE__, __LINE__);
   *Buffer = CoreAllocatePoolI (PoolType, Size, NeedGuard);
-  CoreReleaseLock (&mPoolMemoryLock);
+  CoreReleaseSpinLock (&mPoolMemoryLock);
   return (*Buffer != NULL) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES;
 }
 
@@ -318,13 +324,8 @@ CoreAllocatePoolPagesI (
   )
 {
   VOID        *Buffer;
-  EFI_STATUS  Status;
 
-  Status = CoreAcquireLockOrFail (&gMemoryLock);
-  if (EFI_ERROR (Status)) {
-    return NULL;
-  }
-
+  CoreAcquireSpinLock (&gMemoryLock, __FILE__, __LINE__);
   Buffer = CoreAllocatePoolPages (PoolType, NoPages, Granularity, NeedGuard);
   CoreReleaseMemoryLock ();
 
@@ -370,7 +371,7 @@ CoreAllocatePoolI (
   BOOLEAN     HasPoolTail;
   BOOLEAN     PageAsPool;
 
-  ASSERT_LOCKED (&mPoolMemoryLock);
+  ASSERT (mPoolMemoryLock.Lock == 2);
 
   if  (PoolType == EfiACPIReclaimMemory   ||
        PoolType == EfiACPIMemoryNVS       ||
@@ -559,9 +560,11 @@ CoreInternalFreePool (
     return EFI_INVALID_PARAMETER;
   }
 
-  CoreAcquireLock (&mPoolMemoryLock);
+  CoreAcquireSpinLock (&mPoolMemoryLock, __FILE__, __LINE__);
+//  CoreAcquireSpinLock (&gMemoryLock, __FILE__, __LINE__);
   Status = CoreFreePoolI (Buffer, PoolType);
-  CoreReleaseLock (&mPoolMemoryLock);
+//  CoreReleaseSpinLock (&gMemoryLock);
+  CoreReleaseSpinLock (&mPoolMemoryLock);
   return Status;
 }
 
@@ -614,7 +617,7 @@ CoreFreePoolPagesI (
   IN UINTN                  NoPages
   )
 {
-  CoreAcquireMemoryLock ();
+  CoreAcquireSpinLock (&gMemoryLock, __FILE__, __LINE__);
   CoreFreePoolPages (Memory, NoPages);
   CoreReleaseMemoryLock ();
 
@@ -730,7 +733,7 @@ CoreFreePoolI (
     }
   }
 
-  ASSERT_LOCKED (&mPoolMemoryLock);
+  ASSERT (mPoolMemoryLock.Lock == 2);
 
   //
   // Determine the pool type and account for it

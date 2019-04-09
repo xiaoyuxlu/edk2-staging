@@ -32,6 +32,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/UefiLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
+#include <Library/SynchronizationLib.h>
 
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/Acpi.h>
@@ -107,9 +108,11 @@ typedef struct {
   // and data block.
   //
   PXE_CDB               Cdb;
-  VOID                  *Cpb;
+  VOID                  *Cpb;             // 2kB
   VOID                  *CpbUnmap;
-  VOID                  *Db;
+  VOID                  *Db;              // 2kB
+  SPIN_LOCK             MpLock;
+  SPIN_LOCK             RxLock;
 
   //
   // UNDI structure, we need to remember the init info for a long time!

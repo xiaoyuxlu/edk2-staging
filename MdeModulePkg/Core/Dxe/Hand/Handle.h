@@ -263,8 +263,8 @@ CoreValidateHandle (
 //
 // Externs
 //
-extern EFI_LOCK         gProtocolDatabaseLock;
-extern LIST_ENTRY       gHandleList;
-extern UINT64           gHandleDatabaseKey;
+extern EFI_DEBUG_SPIN_LOCK  gProtocolDatabaseLock;
+extern LIST_ENTRY           gHandleList;
+extern UINT64               gHandleDatabaseKey;
 
 #endif

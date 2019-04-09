@@ -75,6 +75,9 @@
 
   ##  @libraryclass  Library for Deferred Procedure Calls.
   DpcLib|Include/Library/DpcLib.h
+  
+  ##  @libraryclass Library for creating and managing thread-safe structures.
+  ThreadingStructLib|Include/Library/DxeThreadingStructLib.h
 
   ##  @libraryclass    Provides global variables that are pointers
   #   to the UEFI HII related protocols.
@@ -502,6 +505,9 @@
 
   ## Include/Protocol/Dpc.h
   gEfiDpcProtocolGuid            = {0x480f8ae9, 0xc46, 0x4aa9,  { 0xbc, 0x89, 0xdb, 0x9f, 0xba, 0x61, 0x98, 0x6 }}
+
+  ## Include/Protocol/Threading.h
+  gEfiThreadingProtocolGuid      = {0x99fc2222, 0x5c4d, 0x472b, { 0x84, 0xf9, 0x9f, 0xda, 0xf8, 0xe9, 0x9c, 0x03 }}
 
   ## Fault Tolerant Write protocol provides boot-time service to do fault tolerant write capability for block devices.
   #  Include/Protocol/FaultTolerantWrite.h

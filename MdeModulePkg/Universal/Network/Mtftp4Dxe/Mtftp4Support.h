@@ -1,7 +1,7 @@
 /** @file
   Support routines for MTFTP.
-
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  
+Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -30,16 +30,16 @@ typedef struct {
 
 
 /**
-  Initialize the block range for either RRQ or WRQ.
-
-  RRQ and WRQ have different requirements for Start and End.
-  For example, during start up, WRQ initializes its whole valid block range
-  to [0, 0xffff]. This is bacause the server will send us a ACK0 to inform us
-  to start the upload. When the client received ACK0, it will remove 0 from the
+  Initialize the block range for either RRQ or WRQ. 
+  
+  RRQ and WRQ have different requirements for Start and End. 
+  For example, during start up, WRQ initializes its whole valid block range 
+  to [0, 0xffff]. This is bacause the server will send us a ACK0 to inform us 
+  to start the upload. When the client received ACK0, it will remove 0 from the 
   range, get the next block number, which is 1, then upload the BLOCK1. For RRQ
-  without option negotiation, the server will directly send us the BLOCK1 in
-  response to the client's RRQ. When received BLOCK1, the client will remove
-  it from the block range and send an ACK. It also works if there is option
+  without option negotiation, the server will directly send us the BLOCK1 in 
+  response to the client's RRQ. When received BLOCK1, the client will remove 
+  it from the block range and send an ACK. It also works if there is option 
   negotiation.
 
   @param  Head                  The block range head to initialize
@@ -62,7 +62,7 @@ Mtftp4InitBlockRange (
 
   @param  Head                  The block range head
 
-  @return The first valid block number, -1 if the block range is empty.
+  @return The first valid block number, -1 if the block range is empty. 
 
 **/
 INTN
@@ -71,10 +71,10 @@ Mtftp4GetNextBlockNum (
   );
 
 /**
-  Set the last block number of the block range list.
-
+  Set the last block number of the block range list. 
+  
   It will remove all the blocks after the Last. MTFTP initialize the block range
-  to the maximum possible range, such as [0, 0xffff] for WRQ. When it gets the
+  to the maximum possible range, such as [0, 0xffff] for WRQ. When it gets the 
   last block number, it will call this function to set the last block number.
 
   @param  Head                  The block range list
@@ -92,8 +92,8 @@ Mtftp4SetLastBlockNum (
 
   @param  Head                  The block range list to remove from
   @param  Num                   The block number to remove
-  @param  Completed             Whether Num is the last block number.
-  @param  BlockCounter          The continuous block counter instead of the value after roll-over.
+  @param  Completed             Wether Num is the last block number
+  @param  TotalBlock            The continuous block number in all 
 
   @retval EFI_NOT_FOUND         The block number isn't in the block range list
   @retval EFI_SUCCESS           The block number has been removed from the list
@@ -105,7 +105,7 @@ Mtftp4RemoveBlockNum (
   IN LIST_ENTRY             *Head,
   IN UINT16                 Num,
   IN BOOLEAN                Completed,
-  OUT UINT64                *BlockCounter
+  OUT UINT64                *TotalBlock
   );
 
 /**
@@ -120,10 +120,10 @@ Mtftp4SetTimeout (
   );
 
 /**
-  Send the packet for the instance.
-
-  It will first save a reference to the packet for later retransmission.
-  Then determine the destination port, listen port for requests, and connected
+  Send the packet for the instance. 
+  
+  It will first save a reference to the packet for later retransmission. 
+  Then determine the destination port, listen port for requests, and connected 
   port for others. At last, send the packet out.
 
   @param  Instance              The Mtftp instance
@@ -158,7 +158,7 @@ Mtftp4SendRequest (
   Build then send an error message.
 
   @param  Instance              The MTFTP session
-  @param  ErrCode               The error code
+  @param  ErrCode               The error code  
   @param  ErrInfo               The error message
 
   @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for the error packet
@@ -173,19 +173,18 @@ Mtftp4SendError (
   IN UINT8                  *ErrInfo
   );
 
-
 /**
-  The timer ticking function in TPL_NOTIFY level for the Mtftp service instance.
+  Retransmit the last packet for the instance.
 
-  @param  Event                 The ticking event
-  @param  Context               The Mtftp service instance
+  @param  Instance              The Mtftp instance
+
+  @retval EFI_SUCCESS           The last packet is retransmitted.
+  @retval Others                Failed to retransmit.
 
 **/
-VOID
-EFIAPI
-Mtftp4OnTimerTickNotifyLevel (
-  IN EFI_EVENT              Event,
-  IN VOID                   *Context
+EFI_STATUS
+Mtftp4Retransmit (
+  IN MTFTP4_PROTOCOL        *Instance
   );
 
 /**

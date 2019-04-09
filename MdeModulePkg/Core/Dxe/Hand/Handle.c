@@ -24,7 +24,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 LIST_ENTRY      mProtocolDatabase     = INITIALIZE_LIST_HEAD_VARIABLE (mProtocolDatabase);
 LIST_ENTRY      gHandleList           = INITIALIZE_LIST_HEAD_VARIABLE (gHandleList);
-EFI_LOCK        gProtocolDatabaseLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_NOTIFY);
+EFI_DEBUG_SPIN_LOCK   gProtocolDatabaseLock;
 UINT64          gHandleDatabaseKey    = 0;
 
 
@@ -38,7 +38,7 @@ CoreAcquireProtocolLock (
   VOID
   )
 {
-  CoreAcquireLock (&gProtocolDatabaseLock);
+  CoreAcquireSpinLock (&gProtocolDatabaseLock, __FILE__, __LINE__);
 }
 
 
@@ -52,7 +52,15 @@ CoreReleaseProtocolLock (
   VOID
   )
 {
-  CoreReleaseLock (&gProtocolDatabaseLock);
+  CoreReleaseSpinLock (&gProtocolDatabaseLock);
+}
+
+VOID
+CoreInitializeProtocolLocks (
+  VOID
+  )
+{
+  CoreInitializeSpinLock (&gProtocolDatabaseLock, TPL_NOTIFY);
 }
 
 
@@ -110,7 +118,7 @@ CoreFindProtocolEntry (
   PROTOCOL_ENTRY      *Item;
   PROTOCOL_ENTRY      *ProtEntry;
 
-  ASSERT_LOCKED(&gProtocolDatabaseLock);
+  ASSERT (gProtocolDatabaseLock.Lock == 2);
 
   //
   // Search the database for the matching GUID
@@ -184,7 +192,7 @@ CoreFindProtocolInterface (
   PROTOCOL_ENTRY      *ProtEntry;
   LIST_ENTRY          *Link;
 
-  ASSERT_LOCKED(&gProtocolDatabaseLock);
+  ASSERT (gProtocolDatabaseLock.Lock == 2);
   Prot = NULL;
 
   //

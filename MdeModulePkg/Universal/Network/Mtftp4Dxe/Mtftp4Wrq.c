@@ -1,7 +1,7 @@
 /** @file
   Routines to process Wrq (upload).
-
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  
+Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -41,6 +41,8 @@ Mtftp4WrqSendBlock (
   UINT16                    DataLen;
   UINT8                     *DataBuf;
   UINT64                    Start;
+
+  DEBUG ((EFI_D_ERROR, "[MTFTP] Mtftp4WrqSendBlock()\n"));
 
   //
   // Allocate a buffer to hold the user data
@@ -94,9 +96,7 @@ Mtftp4WrqSendBlock (
         FreePool (DataBuf);
       }
 
-      if (UdpPacket != NULL) {
-        NetbufFree (UdpPacket);
-      }
+      DEBUG ((EFI_D_ERROR, "[MTFTP] Sending 'user aborted the transfer' case 2\n"));
 
       Mtftp4SendError (
         Instance,
@@ -124,9 +124,9 @@ Mtftp4WrqSendBlock (
 
 
 /**
-  Function to handle received ACK packet.
-
-  If the ACK number matches the expected block number, and there are more
+  Function to handle received ACK packet. 
+  
+  If the ACK number matches the expected block number, and there are more 
   data pending, send the next block. Otherwise tell the caller that we are done.
 
   @param  Instance              The MTFTP upload session
@@ -149,8 +149,8 @@ Mtftp4WrqHandleAck (
 {
   UINT16                    AckNum;
   INTN                      Expected;
-  UINT64                    BlockCounter;
-
+  UINT64                    TotalBlock;
+ 
   *Completed  = FALSE;
   AckNum      = NTOHS (Packet->Ack.Block[0]);
   Expected    = Mtftp4GetNextBlockNum (&Instance->Blocks);
@@ -168,14 +168,14 @@ Mtftp4WrqHandleAck (
   //
   // Remove the acked block number, if this is the last block number,
   // tell the Mtftp4WrqInput to finish the transfer. This is the last
-  // block number if the block range are empty.
+  // block number if the block range are empty..
   //
-  Mtftp4RemoveBlockNum (&Instance->Blocks, AckNum, *Completed, &BlockCounter);
+  Mtftp4RemoveBlockNum (&Instance->Blocks, AckNum, *Completed,&TotalBlock);
 
   Expected = Mtftp4GetNextBlockNum (&Instance->Blocks);
 
   if (Expected < 0) {
-
+  
     //
     // The block range is empty. It may either because the the last
     // block has been ACKed, or the sequence number just looped back,
@@ -202,8 +202,8 @@ Mtftp4WrqHandleAck (
 
 
 /**
-  Check whether the received OACK is valid.
-
+  Check whether the received OACK is valid. 
+  
   The OACK is valid only if:
   1. It only include options requested by us
   2. It can only include a smaller block size
@@ -244,8 +244,8 @@ Mtftp4WrqOackValid (
 
 
 /**
-  Function to handle the MTFTP OACK packet.
-
+  Function to handle the MTFTP OACK packet. 
+  
   It parses the packet's options, and update the internal states of the session.
 
   @param  Instance              The MTFTP session
@@ -286,7 +286,7 @@ Mtftp4WrqHandleOack (
   // Parse and validate the options from server
   //
   ZeroMem (&Reply, sizeof (MTFTP4_OPTION));
-  Status = Mtftp4ParseOptionOack (Packet, Len, Instance->Operation, &Reply);
+  Status = Mtftp4ParseOptionOack (Packet, Len, &Reply);
 
   if (EFI_ERROR (Status) || !Mtftp4WrqOackValid (&Reply, &Instance->RequestOption)) {
     //
@@ -354,6 +354,8 @@ Mtftp4WrqInput (
   EFI_STATUS                Status;
   UINT32                    Len;
   UINT16                    Opcode;
+
+//  DEBUG ((EFI_D_ERROR, "[MTFTP] Mtftp4WrqInput()\n"));
 
   Instance = (MTFTP4_PROTOCOL *) Context;
   NET_CHECK_SIGNATURE (Instance, MTFTP4_PROTOCOL_SIGNATURE);
@@ -426,6 +428,7 @@ Mtftp4WrqInput (
       // Send an error message to the server to inform it
       //
       if (Opcode != EFI_MTFTP4_OPCODE_ERROR) {
+        DEBUG ((EFI_D_ERROR, "[MTFTP] Sending 'user aborted the transfer' case 3\n"));
         Mtftp4SendError (
           Instance,
           EFI_MTFTP4_ERRORCODE_REQUEST_DENIED,
@@ -458,7 +461,7 @@ Mtftp4WrqInput (
   case EFI_MTFTP4_OPCODE_ERROR:
     Status = EFI_TFTP_ERROR;
     break;
-
+    
   default:
     break;
   }
@@ -476,9 +479,9 @@ ON_EXIT:
     NetbufFree (UdpPacket);
   }
 
-  if (!EFI_ERROR (Status) && !Completed) {
-    Status = UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4WrqInput, Instance, 0);
-  }
+//  if (!EFI_ERROR (Status) && !Completed) {
+//    Status = UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4WrqInput, Instance, 0);
+//  }
 
   //
   // Status may have been updated by UdpIoRecvDatagram
@@ -492,8 +495,8 @@ ON_EXIT:
 
 /**
   Start the MTFTP session for upload.
-
-  It will first init some states, then send the WRQ request packet,
+  
+  It will first init some states, then send the WRQ request packet, 
   and start receiving the packet.
 
   @param  Instance              The MTFTP session
@@ -512,6 +515,8 @@ Mtftp4WrqStart (
 {
   EFI_STATUS                Status;
 
+  DEBUG ((EFI_D_INFO, "[MTFTP] Mtftp4WrqStart()\n"));
+
   //
   // The valid block number range are [0, 0xffff]. For example:
   // the client sends an WRQ request to the server, the server
@@ -524,12 +529,15 @@ Mtftp4WrqStart (
     return Status;
   }
 
+  Instance->ReceiveCallback = Mtftp4WrqInput;
+
   Status = Mtftp4SendRequest (Instance);
 
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+//  if (EFI_ERROR (Status)) {
+//    return Status;
+//  }
 
-  return UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4WrqInput, Instance, 0);
+//  return UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4WrqInput, Instance, 0);
+  return Status;
 }
 

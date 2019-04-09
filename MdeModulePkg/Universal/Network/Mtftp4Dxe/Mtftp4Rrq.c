@@ -1,8 +1,8 @@
 /** @file
   Routines to process Rrq (download).
-
+  
 (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -37,9 +37,9 @@ Mtftp4RrqInput (
 
 
 /**
-  Start the MTFTP session to download.
-
-  It will first initialize some of the internal states then build and send a RRQ
+  Start the MTFTP session to download. 
+  
+  It will first initialize some of the internal states then build and send a RRQ 
   reqeuest packet, at last, it will start receive for the downloading.
 
   @param  Instance              The Mtftp session
@@ -58,6 +58,8 @@ Mtftp4RrqStart (
 {
   EFI_STATUS                Status;
 
+  DEBUG ((EFI_D_INFO, "[MTFTP] Mtftp4RrqStart()\n"));
+
   //
   // The valid block number range are [1, 0xffff]. For example:
   // the client sends an RRQ request to the server, the server
@@ -67,16 +69,22 @@ Mtftp4RrqStart (
   Status = Mtftp4InitBlockRange (&Instance->Blocks, 1, 0xffff);
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_INFO, "[MTFTP] Mtftp4InitBlockRange failed: %r\n", Status));
     return Status;
   }
+
+  Instance->ReceiveCallback = Mtftp4RrqInput;
 
   Status = Mtftp4SendRequest (Instance);
 
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+  DEBUG ((EFI_D_INFO, "[MTFTP] Mtftp4RrqStart(): Returning %r\n", Status));
 
-  return UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4RrqInput, Instance, 0);
+  return Status;
+//  if (EFI_ERROR (Status)) {
+//    return Status;
+//  }
+
+//  return UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4RrqInput, Instance, 0);
 }
 
 
@@ -99,9 +107,6 @@ Mtftp4RrqSendAck (
 {
   EFI_MTFTP4_PACKET         *Ack;
   NET_BUF                   *Packet;
-  EFI_STATUS                Status;
-
-  Status = EFI_SUCCESS;
 
   Packet = NetbufAlloc (sizeof (EFI_MTFTP4_ACK_HEADER));
   if (Packet == NULL) {
@@ -118,12 +123,7 @@ Mtftp4RrqSendAck (
   Ack->Ack.OpCode   = HTONS (EFI_MTFTP4_OPCODE_ACK);
   Ack->Ack.Block[0] = HTONS (BlkNo);
 
-  Status = Mtftp4SendPacket (Instance, Packet);
-  if (!EFI_ERROR (Status)) {
-    Instance->AckedBlock = Instance->TotalBlock;
-  }
-
-  return Status;
+  return Mtftp4SendPacket (Instance, Packet);
 }
 
 
@@ -154,7 +154,7 @@ Mtftp4RrqSaveBlock (
   UINT16                    Block;
   UINT64                    Start;
   UINT32                    DataLen;
-  UINT64                    BlockCounter;
+  UINT64                    TotalBlock;
   BOOLEAN                   Completed;
 
   Completed = FALSE;
@@ -166,7 +166,7 @@ Mtftp4RrqSaveBlock (
   // This is the last block, save the block no
   //
   if (DataLen < Instance->BlkSize) {
-    Completed = TRUE;
+	Completed = TRUE;
     Instance->LastBlock = Block;
     Mtftp4SetLastBlockNum (&Instance->Blocks, Block);
   }
@@ -175,10 +175,10 @@ Mtftp4RrqSaveBlock (
   // Remove this block number from the file hole. If Mtftp4RemoveBlockNum
   // returns EFI_NOT_FOUND, the block has been saved, don't save it again.
   // Note that : For bigger files, allowing the block counter to roll over
-  // to accept transfers of unlimited size. So BlockCounter is memorised as
+  // to accept transfers of unlimited size. So TotalBlock is memorised as 
   // continuous block counter.
   //
-  Status = Mtftp4RemoveBlockNum (&Instance->Blocks, Block, Completed, &BlockCounter);
+  Status = Mtftp4RemoveBlockNum (&Instance->Blocks, Block, Completed, &TotalBlock);
 
   if (Status == EFI_NOT_FOUND) {
     return EFI_SUCCESS;
@@ -201,7 +201,7 @@ Mtftp4RrqSaveBlock (
   }
 
   if (Token->Buffer != NULL) {
-     Start = MultU64x32 (BlockCounter - 1, Instance->BlkSize);
+     Start = MultU64x32 (TotalBlock - 1, Instance->BlkSize);
 
     if (Start + DataLen <= Token->BufferSize) {
       CopyMem ((UINT8 *) Token->Buffer + Start, Packet->Data.Data, DataLen);
@@ -236,8 +236,8 @@ Mtftp4RrqSaveBlock (
 
 
 /**
-  Function to process the received data packets.
-
+  Function to process the received data packets. 
+  
   It will save the block then send back an ACK if it is active.
 
   @param  Instance              The downloading MTFTP session
@@ -265,22 +265,19 @@ Mtftp4RrqHandleData (
   INTN                      Expected;
 
   *Completed  = FALSE;
-  Status      = EFI_SUCCESS;
   BlockNum    = NTOHS (Packet->Data.Block);
   Expected    = Mtftp4GetNextBlockNum (&Instance->Blocks);
 
   ASSERT (Expected >= 0);
 
   //
-  // If we are active (Master) and received an unexpected packet, transmit
-  // the ACK for the block we received, then restart receiving the
-  // expected one. If we are passive (Slave), save the block.
+  // If we are active and received an unexpected packet, retransmit
+  // the last ACK then restart receiving. If we are passive, save
+  // the block.
   //
   if (Instance->Master && (Expected != BlockNum)) {
-    //
-    // If Expected is 0, (UINT16) (Expected - 1) is also the expected Ack number (65535).
-    //
-    return Mtftp4RrqSendAck (Instance,  (UINT16) (Expected - 1));
+    Mtftp4Retransmit (Instance);
+    return EFI_SUCCESS;
   }
 
   Status = Mtftp4RrqSaveBlock (Instance, Packet, Len);
@@ -288,11 +285,6 @@ Mtftp4RrqHandleData (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
-  //
-  // Record the total received and saved block number.
-  //
-  Instance->TotalBlock ++;
 
   //
   // Reset the passive client's timer whenever it received a
@@ -325,19 +317,16 @@ Mtftp4RrqHandleData (
       BlockNum = (UINT16) (Expected - 1);
     }
 
-    if (Instance->WindowSize == (Instance->TotalBlock - Instance->AckedBlock) || Expected < 0) {
-      Status = Mtftp4RrqSendAck (Instance, BlockNum);
-    }
-
+    Mtftp4RrqSendAck (Instance, BlockNum);
   }
 
-  return Status;
+  return EFI_SUCCESS;
 }
 
 
 /**
   Validate whether the options received in the server's OACK packet is valid.
-
+  
   The options are valid only if:
   1. The server doesn't include options not requested by us
   2. The server can only use smaller blksize than that is requested
@@ -368,13 +357,11 @@ Mtftp4RrqOackValid (
   }
 
   //
-  // Server can only specify a smaller block size and window size to be used and
+  // Server can only specify a smaller block size to be used and
   // return the timeout matches that requested.
   //
   if ((((Reply->Exist & MTFTP4_BLKSIZE_EXIST) != 0)&& (Reply->BlkSize > Request->BlkSize)) ||
-      (((Reply->Exist & MTFTP4_WINDOWSIZE_EXIST) != 0)&& (Reply->WindowSize > Request->WindowSize)) ||
-      (((Reply->Exist & MTFTP4_TIMEOUT_EXIST) != 0) && (Reply->Timeout != Request->Timeout))
-     ) {
+      (((Reply->Exist & MTFTP4_TIMEOUT_EXIST) != 0) && (Reply->Timeout != Request->Timeout))) {
     return FALSE;
   }
 
@@ -449,20 +436,20 @@ Mtftp4RrqConfigMcastPort (
     return Status;
   }
 
-  if (!Config->UseDefaultSetting &&
+  if (!Config->UseDefaultSetting && 
       !EFI_IP4_EQUAL (&mZeroIp4Addr, &Config->GatewayIp)) {
     //
     // The station IP address is manually configured and the Gateway IP is not 0.
     // Add the default route for this UDP instance.
     //
     Status = McastIo->Protocol.Udp4->Routes (
-                                       McastIo->Protocol.Udp4,
+                                       McastIo->Protocol.Udp4, 
                                        FALSE,
                                        &mZeroIp4Addr,
                                        &mZeroIp4Addr,
                                        &Config->GatewayIp
                                        );
-
+                             
     if (EFI_ERROR (Status)) {
       McastIo->Protocol.Udp4->Configure (McastIo->Protocol.Udp4, NULL);
       return Status;
@@ -480,8 +467,8 @@ Mtftp4RrqConfigMcastPort (
 
 
 /**
-  Function to process the OACK.
-
+  Function to process the OACK. 
+  
   It will first validate the OACK packet, then update the various negotiated parameters.
 
   @param  Instance              The download MTFTP session
@@ -528,7 +515,7 @@ Mtftp4RrqHandleOack (
   //
   ZeroMem (&Reply, sizeof (MTFTP4_OPTION));
 
-  Status = Mtftp4ParseOptionOack (Packet, Len, Instance->Operation, &Reply);
+  Status = Mtftp4ParseOptionOack (Packet, Len, &Reply);
 
   if (EFI_ERROR (Status) ||
       !Mtftp4RrqOackValid (Instance, &Reply, &Instance->RequestOption)) {
@@ -550,7 +537,7 @@ Mtftp4RrqHandleOack (
 
     //
     // Save the multicast info. Always update the Master, only update the
-    // multicast IP address, block size, window size, timeoute at the first time. If IP
+    // multicast IP address, block size, timeoute at the first time. If IP
     // address is updated, create a UDP child to receive the multicast.
     //
     Instance->Master = Reply.Master;
@@ -572,13 +559,13 @@ Mtftp4RrqHandleOack (
       Instance->McastIp      = Reply.McastIp;
       Instance->McastPort    = Reply.McastPort;
       if (Instance->McastUdpPort == NULL) {
-        Instance->McastUdpPort = UdpIoCreateIo (
-                                   Instance->Service->Controller,
-                                   Instance->Service->Image,
-                                   Mtftp4RrqConfigMcastPort,
-                                   UDP_IO_UDP4_VERSION,
-                                   Instance
-                                   );
+//        Instance->McastUdpPort = UdpIoCreateIo (
+//                                   Instance->Service->Controller,
+//                                   Instance->Service->Image,
+//                                   Mtftp4RrqConfigMcastPort,
+//                                   UDP_IO_UDP4_VERSION,
+//                                   Instance
+//                                   );
         if (Instance->McastUdpPort != NULL) {
           Status = gBS->OpenProtocol (
                           Instance->McastUdpPort->UdpHandle,
@@ -589,7 +576,7 @@ Mtftp4RrqHandleOack (
                           EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER
                           );
           if (EFI_ERROR (Status)) {
-            UdpIoFreeIo (Instance->McastUdpPort);
+//            UdpIoFreeIo (Instance->McastUdpPort);
             Instance->McastUdpPort = NULL;
             return EFI_DEVICE_ERROR;
           }
@@ -601,50 +588,42 @@ Mtftp4RrqHandleOack (
         return EFI_DEVICE_ERROR;
       }
 
-      Status = UdpIoRecvDatagram (Instance->McastUdpPort, Mtftp4RrqInput, Instance, 0);
-
-      if (EFI_ERROR (Status)) {
-        Mtftp4SendError (
-          Instance,
-          EFI_MTFTP4_ERRORCODE_ACCESS_VIOLATION,
-          (UINT8 *) "Failed to create socket to receive multicast packet"
-          );
-
-        return Status;
-      }
-
+//      Status = UdpIoRecvDatagram (Instance->McastUdpPort, Mtftp4RrqInput, Instance, 0);
+//
+//      if (EFI_ERROR (Status)) {
+//        Mtftp4SendError (
+//          Instance,
+//          EFI_MTFTP4_ERRORCODE_ACCESS_VIOLATION,
+//          (UINT8 *) "Failed to create socket to receive multicast packet"
+//          );
+//
+//        return Status;
+//      }
+    
       //
       // Update the parameters used.
       //
       if (Reply.BlkSize != 0) {
         Instance->BlkSize = Reply.BlkSize;
       }
-
-      if (Reply.WindowSize != 0) {
-        Instance->WindowSize = Reply.WindowSize;
-      }
-
+      
       if (Reply.Timeout != 0) {
         Instance->Timeout = Reply.Timeout;
-      }
-    }
-
+      }  
+    }    
+    
   } else {
     Instance->Master = TRUE;
-
+    
     if (Reply.BlkSize != 0) {
       Instance->BlkSize = Reply.BlkSize;
-    }
-
-    if (Reply.WindowSize != 0) {
-      Instance->WindowSize = Reply.WindowSize;
     }
 
     if (Reply.Timeout != 0) {
       Instance->Timeout = Reply.Timeout;
     }
   }
-
+  
   //
   // Send an ACK to (Expected - 1) which is 0 for unicast download,
   // or tell the server we want to receive the Expected block.
@@ -678,6 +657,8 @@ Mtftp4RrqInput (
   EFI_STATUS                Status;
   UINT16                    Opcode;
   UINT32                    Len;
+
+//  DEBUG ((EFI_D_ERROR, "[MTFTP] Mtftp4RrqInput()\n"));
 
   Instance  = (MTFTP4_PROTOCOL *) Context;
   NET_CHECK_SIGNATURE (Instance, MTFTP4_PROTOCOL_SIGNATURE);
@@ -746,6 +727,14 @@ Mtftp4RrqInput (
   if ((Instance->Token->CheckPacket != NULL) &&
       ((Opcode == EFI_MTFTP4_OPCODE_OACK) || (Opcode == EFI_MTFTP4_OPCODE_ERROR))) {
 
+    UINTN   i;
+
+    DEBUG ((EFI_D_INFO, "[MTFTP] Packet payload: "));
+    for (i = 0; i < Len; i++) {
+      DEBUG ((EFI_D_INFO, "%02X ", ((UINT8*)Packet)[i]));
+    }
+    DEBUG ((EFI_D_INFO, "\n"));
+
     Status = Instance->Token->CheckPacket (
                                 &Instance->Mtftp4,
                                 Instance->Token,
@@ -758,6 +747,7 @@ Mtftp4RrqInput (
       // Send an error message to the server to inform it
       //
       if (Opcode != EFI_MTFTP4_OPCODE_ERROR) {
+        DEBUG ((EFI_D_ERROR, "[MTFTP] Sending 'user aborted the transfer' case 1\n"));
         Mtftp4SendError (
           Instance,
           EFI_MTFTP4_ERRORCODE_REQUEST_DENIED,
@@ -791,7 +781,7 @@ Mtftp4RrqInput (
   case EFI_MTFTP4_OPCODE_ERROR:
     Status = EFI_TFTP_ERROR;
     break;
-
+    
   default:
     break;
   }
@@ -810,13 +800,13 @@ ON_EXIT:
     NetbufFree (UdpPacket);
   }
 
-  if (!EFI_ERROR (Status) && !Completed) {
-    if (Multicast) {
-      Status = UdpIoRecvDatagram (Instance->McastUdpPort, Mtftp4RrqInput, Instance, 0);
-    } else {
-      Status = UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4RrqInput, Instance, 0);
-    }
-  }
+//  if (!EFI_ERROR (Status) && !Completed) {
+//    if (Multicast) {
+//      Status = UdpIoRecvDatagram (Instance->McastUdpPort, Mtftp4RrqInput, Instance, 0);
+//    } else {
+//      Status = UdpIoRecvDatagram (Instance->UnicastPort, Mtftp4RrqInput, Instance, 0);
+//    }
+//  }
 
   if (EFI_ERROR (Status) || Completed) {
     Mtftp4CleanOperation (Instance, Status);

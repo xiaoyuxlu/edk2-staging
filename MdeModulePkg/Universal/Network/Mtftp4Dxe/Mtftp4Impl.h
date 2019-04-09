@@ -1,16 +1,15 @@
 /** @file
-
+  
   Mtftp4 Implementation.
-
+  
   Mtftp4 Implementation, it supports the following RFCs:
   RFC1350 - THE TFTP PROTOCOL (REVISION 2)
   RFC2090 - TFTP Multicast Option
   RFC2347 - TFTP Option Extension
   RFC2348 - TFTP Blocksize Option
   RFC2349 - TFTP Timeout Interval and Transfer Size Options
-  RFC7440 - TFTP Windowsize Option
-
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  
+Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -29,6 +28,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Protocol/Udp4.h>
 #include <Protocol/Mtftp4.h>
+#include <Protocol/MpSocket.h>
 
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -57,7 +57,6 @@ typedef struct _MTFTP4_PROTOCOL MTFTP4_PROTOCOL;
 #define MTFTP4_DEFAULT_TIMEOUT      3
 #define MTFTP4_DEFAULT_RETRY        5
 #define MTFTP4_DEFAULT_BLKSIZE      512
-#define MTFTP4_DEFAULT_WINDOWSIZE   1
 #define MTFTP4_TIME_TO_GETMAP       5
 
 #define MTFTP4_STATE_UNCONFIGED     0
@@ -74,9 +73,8 @@ struct _MTFTP4_SERVICE {
   UINT16                        ChildrenNum;
   LIST_ENTRY                    Children;
 
-  EFI_EVENT                     Timer;  ///< Ticking timer for all the MTFTP clients to handle the packet timeout case.
-  EFI_EVENT                     TimerNotifyLevel; ///< Ticking timer for all the MTFTP clients to calculate the packet live time.
-  EFI_EVENT                     TimerToGetMap;
+//  EFI_EVENT                     Timer;  ///< Ticking timer for all the MTFTP clients
+//  EFI_EVENT                     TimerToGetMap;
 
   EFI_HANDLE                    Controller;
   EFI_HANDLE                    Image;
@@ -85,7 +83,7 @@ struct _MTFTP4_SERVICE {
   // This UDP child is used to keep the connection between the UDP
   // and MTFTP, so MTFTP will be notified when UDP is uninstalled.
   //
-  UDP_IO                        *ConnectUdp;
+//  UDP_IO                        *ConnectUdp;
 };
 
 
@@ -94,6 +92,15 @@ typedef struct {
   UINT32                        *PacketLen;
   EFI_STATUS                    Status;
 } MTFTP4_GETINFO_STATE;
+
+typedef
+VOID
+(EFIAPI *MTFTP4_CALLBACK) (
+  IN NET_BUF                *UdpPacket,
+  IN UDP_END_POINT          *EndPoint,
+  IN EFI_STATUS             IoStatus,
+  IN VOID                   *Context
+  );
 
 struct _MTFTP4_PROTOCOL {
   UINT32                        Signature;
@@ -123,18 +130,6 @@ struct _MTFTP4_PROTOCOL {
   UINT16                        LastBlock;
   LIST_ENTRY                    Blocks;
 
-  UINT16                        WindowSize;
-
-  //
-  // Record the total received and saved block number.
-  //
-  UINT64                        TotalBlock;
-
-  //
-  // Record the acked block number.
-  //
-  UINT64                        AckedBlock;
-
   //
   // The server's communication end point: IP and two ports. one for
   // initial request, one for its selected port.
@@ -143,14 +138,16 @@ struct _MTFTP4_PROTOCOL {
   UINT16                        ListeningPort;
   UINT16                        ConnectedPort;
   IP4_ADDR                      Gateway;
-  UDP_IO                        *UnicastPort;
+//  UDP_IO                        *UnicastPort;
+  EFI_LWIP_SOCKET_PROTOCOL      *Sockets;
+  EFI_LWIP_SOCKET               Socket;
+  MTFTP4_CALLBACK               ReceiveCallback;
 
   //
   // Timeout and retransmit status
   //
   NET_BUF                       *LastPacket;
   UINT32                        PacketToLive;
-  BOOLEAN                       HasTimeout;
   UINT32                        CurRetry;
   UINT32                        MaxRetry;
   UINT32                        Timeout;
@@ -185,8 +182,8 @@ Mtftp4CleanOperation (
 
 /**
   Start the MTFTP session for upload.
-
-  It will first init some states, then send the WRQ request packet,
+  
+  It will first init some states, then send the WRQ request packet, 
   and start receiving the packet.
 
   @param  Instance              The MTFTP session
@@ -204,9 +201,9 @@ Mtftp4WrqStart (
   );
 
 /**
-  Start the MTFTP session to download.
-
-  It will first initialize some of the internal states then build and send a RRQ
+  Start the MTFTP session to download. 
+  
+  It will first initialize some of the internal states then build and send a RRQ 
   reqeuest packet, at last, it will start receive for the downloading.
 
   @param  Instance              The Mtftp session

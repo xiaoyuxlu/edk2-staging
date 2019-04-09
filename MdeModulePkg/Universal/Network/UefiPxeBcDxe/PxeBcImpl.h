@@ -32,6 +32,8 @@ typedef struct _PXEBC_PRIVATE_DATA  PXEBC_PRIVATE_DATA;
 #include <Protocol/Arp.h>
 #include <Protocol/Ip4.h>
 #include <Protocol/Ip4Config2.h>
+#include <Protocol/ServiceBinding.h>
+#include <Protocol/MpSocket.h>
 
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
@@ -57,18 +59,16 @@ typedef struct _PXEBC_PRIVATE_DATA  PXEBC_PRIVATE_DATA;
 #define PXEBC_DEFAULT_TFTP_OVERHEAD_SIZE   4
 #define PXEBC_DEFAULT_PACKET_SIZE          1480
 #define PXEBC_DEFAULT_LIFETIME             50000  // 50ms, unit is microsecond
-#define PXEBC_CHECK_MEDIA_WAITING_TIME     EFI_TIMER_PERIOD_SECONDS(20)
 
 struct _PXEBC_PRIVATE_DATA {
   UINT32                                    Signature;
   EFI_HANDLE                                Controller;
   EFI_HANDLE                                Image;
-  EFI_HANDLE                                ArpChild;
   EFI_HANDLE                                Dhcp4Child;
-  EFI_HANDLE                                Ip4Child;
   EFI_HANDLE                                Mtftp4Child;
-  EFI_HANDLE                                Udp4ReadChild;
-  EFI_HANDLE                                Udp4WriteChild;
+  EFI_LWIP_SOCKET_PROTOCOL                  *Sockets;
+  EFI_LWIP_SOCKET                           InputSocket;
+  EFI_LWIP_SOCKET                           OutputSocket;
 
   EFI_NETWORK_INTERFACE_IDENTIFIER_PROTOCOL *Nii;
 
@@ -76,17 +76,17 @@ struct _PXEBC_PRIVATE_DATA {
   EFI_LOAD_FILE_PROTOCOL                    LoadFile;
   EFI_PXE_BASE_CODE_CALLBACK_PROTOCOL       LoadFileCallback;
   EFI_PXE_BASE_CODE_CALLBACK_PROTOCOL       *PxeBcCallback;
-  EFI_ARP_PROTOCOL                          *Arp;
   EFI_DHCP4_PROTOCOL                        *Dhcp4;
-  EFI_IP4_PROTOCOL                          *Ip4;
-  EFI_IP4_CONFIG2_PROTOCOL                  *Ip4Config2;
-  EFI_IP4_CONFIG_DATA                       Ip4ConfigData;
   EFI_MTFTP4_PROTOCOL                       *Mtftp4;
-  EFI_UDP4_PROTOCOL                         *Udp4Read;
-  EFI_UDP4_PROTOCOL                         *Udp4Write;
-  UINT16                                    CurrentUdpSrcPort;
-  EFI_UDP4_CONFIG_DATA                      Udp4CfgData;
+  UINT16                                    OutputSocketSrcPort;
+  EFI_IPv4_ADDRESS                          OutputSocketSrcIp;
 
+  //
+  // Receive socket configuration in regards to PxeBc->UdpRead()
+  //
+  UINT16                                    RecvOpFlags;
+  EFI_IPv4_ADDRESS                          RecvDestIp;
+  EFI_PXE_BASE_CODE_UDP_PORT                RecvDestPort;
 
   EFI_PXE_BASE_CODE_MODE                    Mode;
   EFI_PXE_BASE_CODE_FUNCTION                Function;
@@ -132,11 +132,9 @@ struct _PXEBC_PRIVATE_DATA {
   UINT32                                    ProxyIndex[DHCP4_PACKET_TYPE_MAX];
   UINT32                                    BinlIndex[PXEBC_MAX_OFFER_NUM];
 
-  EFI_EVENT                                 GetArpCacheEvent;
   //
   // token and event used to get ICMP error data from IP
   //
-  EFI_IP4_COMPLETION_TOKEN                  IcmpErrorRcvToken;
 };
 
 #define PXEBC_PRIVATE_DATA_FROM_PXEBC(a)          CR (a, PXEBC_PRIVATE_DATA, PxeBc, PXEBC_PRIVATE_DATA_SIGNATURE)

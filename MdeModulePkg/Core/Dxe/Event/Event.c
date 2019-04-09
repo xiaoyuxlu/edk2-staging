@@ -17,6 +17,15 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "DxeMain.h"
 #include "Event.h"
 
+typedef struct _EFI_EVENT_GROUP {
+  UINTN           Signature;
+  LIST_ENTRY      ListLink;
+  EFI_GUID        GroupGuid;
+  LIST_ENTRY      EventList;
+} EFI_EVENT_GROUP;
+
+#define EVENT_GROUP_SIGNATURE         SIGNATURE_32('e','v','t','G')
+
 ///
 /// gEfiCurrentTpl - Current Task priority level
 ///
@@ -25,7 +34,8 @@ EFI_TPL  gEfiCurrentTpl = TPL_APPLICATION;
 ///
 /// gEventQueueLock - Protects the event queues
 ///
-EFI_LOCK gEventQueueLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_HIGH_LEVEL);
+//EFI_LOCK gEventQueueLock = EFI_INITIALIZE_LOCK_VARIABLE (TPL_HIGH_LEVEL);
+EFI_DEBUG_SPIN_LOCK gEventQueueLock;
 
 ///
 /// gEventQueue - A list of event's to notify for each priority level
@@ -41,7 +51,7 @@ UINTN           gEventPending = 0;
 /// gEventSignalQueue - A list of events to signal based on EventGroup type
 ///
 LIST_ENTRY      gEventSignalQueue = INITIALIZE_LIST_HEAD_VARIABLE (gEventSignalQueue);
-
+LIST_ENTRY      gEventGroupList = INITIALIZE_LIST_HEAD_VARIABLE (gEventGroupList);
 ///
 /// Enumerate the valid types
 ///
@@ -66,6 +76,7 @@ UINT32 mEventTable[] = {
   /// is queue when the event is signaled with SignalEvent()
   ///
   EVT_NOTIFY_SIGNAL,
+
   ///
   /// 0x00000201       ExitBootServicesEvent.
   ///
@@ -93,6 +104,17 @@ UINT32 mEventTable[] = {
 ///
 EFI_EVENT       gIdleLoopEvent = NULL;
 
+extern EFI_THREADING_PROTOCOL  *gThreading;
+
+
+VOID
+CoreInitializeEventLocks (
+  VOID
+  )
+{
+  CoreInitializeSpinLock (&gEventQueueLock, TPL_HIGH_LEVEL);
+  DEBUG ((EFI_D_INFO, "[DXE] Event lock: %lX\n", &gEventQueueLock));
+}
 
 /**
   Enter critical section by acquiring the lock on gEventQueueLock.
@@ -103,7 +125,7 @@ CoreAcquireEventLock (
   VOID
   )
 {
-  CoreAcquireLock (&gEventQueueLock);
+  CoreAcquireSpinLock (&gEventQueueLock, __FILE__, __LINE__);
 }
 
 
@@ -116,7 +138,7 @@ CoreReleaseEventLock (
   VOID
   )
 {
-  CoreReleaseLock (&gEventQueueLock);
+  CoreReleaseSpinLock (&gEventQueueLock);
 }
 
 
@@ -152,6 +174,37 @@ CoreInitializeEventServices (
   return EFI_SUCCESS;
 }
 
+//
+// Find an event group in event group list
+//
+EFI_EVENT_GROUP*
+CoreFindEventGroup (
+  IN EFI_GUID     *GroupGuid
+  )
+{
+  LIST_ENTRY              *Link;
+  LIST_ENTRY              *Head;
+  EFI_EVENT_GROUP         *EventGroup, *Result;
+
+  ASSERT_LOCKED (&gEventQueueLock);
+
+  Head = &gEventGroupList;
+  Result = NULL;
+
+  for (Link = Head->ForwardLink; Link != Head; Link = Link->ForwardLink) {
+    //DEBUG ((EFI_D_INFO, "[CORE] Event group list iteration.\n"));
+
+    EventGroup = CR (Link, EFI_EVENT_GROUP, ListLink, EVENT_GROUP_SIGNATURE);
+
+    //DEBUG ((EFI_D_INFO, "[CORE] Event group: %lX.\n", EventGroup));
+    if (CompareGuid (&EventGroup->GroupGuid, GroupGuid)) {
+      Result = EventGroup;
+      break;
+    }
+  }
+
+  return Result;
+}
 
 
 /**
@@ -262,17 +315,22 @@ CoreNotifySignalList (
   LIST_ENTRY              *Link;
   LIST_ENTRY              *Head;
   IEVENT                  *Event;
+  EFI_EVENT_GROUP         *Group;
+  UINTN                   Count;
 
   CoreAcquireEventLock ();
 
-  Head = &gEventSignalQueue;
-  for (Link = Head->ForwardLink; Link != Head; Link = Link->ForwardLink) {
-    Event = CR (Link, IEVENT, SignalLink, EVENT_SIGNATURE);
-    if (CompareGuid (&Event->EventGroup, EventGroup)) {
+  Group = CoreFindEventGroup (EventGroup);
+
+  if (Group != NULL) {
+    Head = &Group->EventList;
+    Count = 0;
+    for (Link = Head->ForwardLink; Link != Head; Link = Link->ForwardLink) {
+      Event = CR (Link, IEVENT, SignalLink, EVENT_SIGNATURE);
       CoreNotifyEvent (Event);
+      Count++;
     }
   }
-
   CoreReleaseEventLock ();
 }
 
@@ -495,16 +553,59 @@ CoreCreateEventInternal (
     InsertTailList (&gRuntime->EventHead, &IEvent->RuntimeData.Link);
   }
 
-  CoreAcquireEventLock ();
-
   if ((Type & EVT_NOTIFY_SIGNAL) != 0x00000000) {
-    //
-    // The Event's NotifyFunction must be queued whenever the event is signaled
-    //
-    InsertHeadList (&gEventSignalQueue, &IEvent->SignalLink);
-  }
 
-  CoreReleaseEventLock ();
+    if (EventGroup != NULL) {
+      //
+      // If event should be tied to a group, see whether group was created
+      // If yes, attach the event to that group
+      // If not, create a group, then attach the event
+      //
+      EFI_EVENT_GROUP     *Group;
+
+      //DEBUG ((EFI_D_INFO, "[CORE] Group event case.\n"));
+
+      CoreAcquireEventLock ();
+      Group = CoreFindEventGroup ((EFI_GUID*)EventGroup);
+      CoreReleaseEventLock ();
+
+      //DEBUG ((EFI_D_INFO, "[CORE] Group: %lX\n", Group));
+      if (Group == NULL) {
+
+        //DEBUG ((EFI_D_INFO, "[CORE] Creating new group.\n"));
+
+        Group = AllocateZeroPool (sizeof (EFI_EVENT_GROUP));
+
+        if (Group == NULL) {
+          //DEBUG ((EFI_D_INFO, "[CORE] No resources.\n"));
+          FreePool (IEvent);
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        //DEBUG ((EFI_D_INFO, "[CORE] Group resource OK.\n"));
+
+        Group->Signature = EVENT_GROUP_SIGNATURE;
+        CopyGuid (&Group->GroupGuid, EventGroup);
+        InitializeListHead (&Group->EventList);
+        CoreAcquireEventLock ();
+        InsertTailList (&gEventGroupList, &Group->ListLink);
+        CoreReleaseEventLock ();
+        //DEBUG ((EFI_D_INFO, "[CORE] New group created: %lX.\n", Group));
+      }
+
+      CoreAcquireEventLock ();
+      InsertHeadList (&Group->EventList, &IEvent->SignalLink);
+      CoreReleaseEventLock ();
+      //DEBUG ((EFI_D_INFO, "[CORE] Added event to the list.\n"));
+    } else {
+      //
+      // Tie the event to "ungrouped events" list
+      //
+      CoreAcquireEventLock ();
+      InsertHeadList (&gEventSignalQueue, &IEvent->SignalLink);
+      CoreReleaseEventLock ();
+    }
+  }
 
   //
   // Done
@@ -542,34 +643,38 @@ CoreSignalEvent (
     return EFI_INVALID_PARAMETER;
   }
 
-  CoreAcquireEventLock ();
-
-  //
-  // If the event is not already signalled, do so
-  //
-
-  if (Event->SignalCount == 0x00000000) {
-    Event->SignalCount++;
+  do {
+    CoreAcquireEventLock ();
 
     //
-    // If signalling type is a notify function, queue it
+    // If the event is not already signalled, do so
     //
-    if ((Event->Type & EVT_NOTIFY_SIGNAL) != 0) {
-      if ((Event->ExFlag & EVT_EXFLAG_EVENT_GROUP) != 0) {
-        //
-        // The CreateEventEx() style requires all members of the Event Group
-        //  to be signaled.
-        //
-        CoreReleaseEventLock ();
-        CoreNotifySignalList (&Event->EventGroup);
-        CoreAcquireEventLock ();
-       } else {
-        CoreNotifyEvent (Event);
+
+    if (Event->SignalCount == 0x00000000) {
+      Event->SignalCount++;
+
+      //
+      // If signalling type is a notify function, queue it
+      //
+      if ((Event->Type & EVT_NOTIFY_SIGNAL) != 0) {
+        if ((Event->ExFlag & EVT_EXFLAG_EVENT_GROUP) != 0) {
+          //
+          // The CreateEventEx() style requires all members of the Event Group
+          //  to be signaled.
+          //
+          CoreReleaseEventLock ();
+          CoreNotifySignalList (&Event->EventGroup);
+          CoreAcquireEventLock ();
+         } else {
+          CoreNotifyEvent (Event);
+        }
       }
     }
-  }
 
-  CoreReleaseEventLock ();
+    CoreReleaseEventLock ();
+
+  } while (0);
+
   return EFI_SUCCESS;
 }
 
