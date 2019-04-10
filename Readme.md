@@ -7,7 +7,7 @@ This package contains proof-of-concept codes that implement the ideas of PRM.
 Detailed description of the package can be found in PRM_Proof_Of_Concept.pdf
 
 ## ** IMPORTANT NOTE **
-The codes in this package are for proof-of-concept only. The codes do not represent a formal design, nor do the codes aim at product quality, or being used in products.
+The codes in this package are for proof-of-concept only. The codes do not represent a formal design, nor do the codes aim at product quality, or being used in products. For example, the codes interpret a parameter of the GetVariable() service as a function pointer, and do not consider the case that the GetVariable() service may be called from user mode with invalid or even malicious parameters. This is a security issue that this proof-of-concept implementation does not address.
 
 ## Resources
 
