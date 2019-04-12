@@ -93,8 +93,13 @@ InitDevAliasTable (
   @param[in]          Statement           The question to be parsed to attribute JSON value
   @param[in]          AttributesArray     The attribute array to be appended
 
+  @retval  EFI_SUCCESS                    Device alias table has been initialized successfully.
+  @retval  EFI_UNSUPPORTED                This attribute is not supported.
+  @retval  EFI_OUT_OF_RESOURCES           System has no other memory to allocate.
+  @retval  Others                         Another unexpected error occured.
+
 **/
-VOID
+EFI_STATUS
 AttributesArrayAppendValue (
   IN REDFISH_FORMSET      *FormSet,
   IN REDFISH_FORM         *Form,
@@ -119,21 +124,6 @@ GetAttributeByName (
   IN           EDKII_JSON_VALUE     RegistryEntries,
   IN     CONST CHAR8                *AttributeName,
      OUT       EDKII_JSON_VALUE     *Attribute
-  );
-
-/**
-  Set menu path string to a form menu. The menu path records the information of the path from root menu
-  to current menu, as "/Root_Menu/Sub_Menu/.../Current_Menu/".
-
-  @param[in]       FormMenu                          The current form menu to set menu path string.
-
-  @retval  EFI_SUCCESS                               The menu path has been set successfully.
-  @retval  EFI_NOT_FOUND                             This form menu is not found in system menu list.
-
-**/
-EFI_STATUS
-SetMenuPathToFormMenu(
-  IN REDFISH_FORM_MENU    *FormMenu
   );
 
 /**
@@ -237,14 +227,14 @@ SetMessageArrayToRedfishSetting (
 
   @param[in]          RedfishFormSet     The Redfish formset this form belongs to
   @param[in]          RedfishForm        The Redfish form which contains the form needed
-  @param[in,out]      FormMenu           The Refish menu to initiallize
+  @param[in,out]      RedfishMenu        The Refish menu to initiallize
 
 **/
 VOID
-InitRedfishFormMenu (
+InitRedfishMenu (
   IN     REDFISH_FORMSET      *RedfishFormSet,
   IN     REDFISH_FORM         *RedfishForm,
-  IN OUT REDFISH_FORM_MENU    *FormMenu
+  IN OUT REDFISH_MENU         *RedfishMenu
   );
 
 /**
@@ -256,7 +246,7 @@ InitRedfishFormMenu (
 
 **/
 UINTN
-GetSystemFormMenuCount (
+GetSystemRedfishMenuCount (
   VOID
   );
 
@@ -267,14 +257,14 @@ GetSystemFormMenuCount (
   For each form in HII databse, there is a path form root form to it. This function is to link
   all forms to their parent forms in system.
 
-  @param[in]          FormMenuList                The list of Redfish form menus
-  @param[in]          FormMenuListCount           The count of Redfish form menus in system
+  @param[in]          MenuList                The list of Redfish form menus
+  @param[in]          MenuListCount           The count of Redfish form menus in system
 
 **/
 VOID
-LinkSystemRedfishFormMenu (
-  IN REDFISH_FORM_MENU    *FormMenuList,
-  IN UINTN                FormMenuListCount
+LinkSystemRedfishMenus (
+  IN REDFISH_MENU    *MenuList,
+  IN UINTN           MenuListCount
   );
 
 /**

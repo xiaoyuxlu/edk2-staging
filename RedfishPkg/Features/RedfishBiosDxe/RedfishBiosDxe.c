@@ -402,6 +402,7 @@ RedfishCleanupPendingSettings (
   }
 
   EmptyAttributePayload = RedfishCreatePayload (EmptyAttributeJsonValue, RedfishService);
+  JsonValueFree (EmptyAttributeJsonValue);
   if (EmptyAttributePayload == NULL) {
     Status = EFI_DEVICE_ERROR;
     goto ON_EXIT;
@@ -532,6 +533,7 @@ RedfishPatchBios (
   }
 
   NewBiosPayload = RedfishCreatePayload (NewBiosJsonValue, RedfishService);
+  JsonValueFree (NewBiosJsonValue);
   if (NewBiosPayload == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;

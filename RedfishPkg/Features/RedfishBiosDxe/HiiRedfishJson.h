@@ -75,6 +75,7 @@
 #define MAX_SIZE_REDFISH_MENU_LENGTH         255
 #define MAX_SIZE_QUENSTIONID_STR_LENGTH      32
 #define MAX_SIZE_U64_NUMBER_STR              65
+#define MAX_COUNT_REDIFHS_MENU_CHILD         32
 
 //
 // Structures for Redfish
@@ -82,7 +83,7 @@
 typedef struct _ATTRIBUTE_NAME_NODE    ATTRIBUTE_NAME_NODE;
 typedef struct _MENU_NAME_NODE         MENU_NAME_NODE;
 typedef struct _NAMESPACE_DATA         NAMESPACE_DATA;
-typedef struct _REDFISH_FORM_MENU      REDFISH_FORM_MENU;
+typedef struct _REDFISH_MENU           REDFISH_MENU;
 
 //
 // ***** ATTRIBUTE_NAME_NODE Begin
@@ -140,7 +141,7 @@ struct _NAMESPACE_DATA {
 //
 // Redfish Menu
 //
-struct _REDFISH_FORM_MENU{
+struct _REDFISH_MENU{
   EFI_GUID             FormSetGuid;
   EFI_FORM_ID          FormId;
   EFI_STRING           MenuName;
@@ -148,7 +149,12 @@ struct _REDFISH_FORM_MENU{
   EFI_STRING           DisplayName;
   BOOLEAN              IsHidden;
   BOOLEAN              IsReadOnly;
-  REDFISH_FORM_MENU    *Parent;
+
+  BOOLEAN              IsRootMenu;
+  BOOLEAN              IsRestMenu;
+  UINTN                MenuDepth;
+  UINTN                ChildCount;
+  REDFISH_MENU         *ChildList[MAX_COUNT_REDIFHS_MENU_CHILD];
 };
 
 //
@@ -196,11 +202,13 @@ typedef struct {
   UINTN         Signature;
   LIST_ENTRY    Link;
   HII_FORM      *HiiForm;
+  BOOLEAN       IsRootForm;
+  BOOLEAN       IsRest;
 
   LIST_ENTRY    RedfishStatementList;
 
-  EFI_STRING    FormMenuName;
-  EFI_STRING    FormMenuPath;
+  EFI_STRING    RedfishMenuName;
+  EFI_STRING    RedfishMenuPath;
 } REDFISH_FORM;
 
 #define REDFISH_FORM_FROM_LINK(a)  CR (a, REDFISH_FORM, Link, REDFISH_FORM_SIGNATURE)
@@ -232,8 +240,6 @@ typedef struct {
 typedef struct {
   // For Bios Json object
   EDKII_JSON_VALUE    Bios;
-  EDKII_JSON_VALUE    Attributes;
-  EDKII_JSON_VALUE    RedfishSettings;
   EDKII_JSON_VALUE    MessagesArray;
   EDKII_JSON_VALUE    Message;
 

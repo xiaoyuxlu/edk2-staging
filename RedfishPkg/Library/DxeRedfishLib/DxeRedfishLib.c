@@ -130,7 +130,10 @@ RedfishCreatePayload (
   IN REDFISH_SERVICE            RedfishService
   )
 {
-  return createRedfishPayload (Value, RedfishService);
+  EDKII_JSON_VALUE    CopyValue;
+
+  CopyValue = JsonValueClone (Value);
+  return createRedfishPayload (CopyValue, RedfishService);
 }
 
 /**

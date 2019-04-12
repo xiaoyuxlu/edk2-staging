@@ -18,7 +18,7 @@
   INF_VERSION                    = 0x00010006
   BASE_NAME                      = BaseJsonLib
   FILE_GUID                      = e2e11121-5233-11e7-a917-005056c00009
-  MODULE_TYPE                    = UEFI_DRIVER
+  MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = BaseJsonLib | DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
 
@@ -33,11 +33,9 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
   RedfishPkg/RedfishPkg.dec
 
 [LibraryClasses]
-  UefiLib
   BaseLib
   BaseMemoryLib
   MemoryAllocationLib

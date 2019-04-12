@@ -17,7 +17,6 @@
 
 #include <Uefi.h>
 
-#include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 
@@ -37,6 +36,8 @@ typedef    VOID*    EDKII_JSON_OBJECT;
 
   Real number and number with exponent part are not supportted by UEFI.
 
+  Caller needs to cleanup the root value by calling JsonValueFree().
+
   @param[in]   Text             The NULL terminated UTF8 encoded string to convert
 
   @retval      Array JSON value or object JSON value, or NULL when any error occurs.
@@ -52,7 +53,8 @@ TextToJson (
   The function is used to convert the JSON root value to a UTF8 encoded string which
   is terminated by NULL, or return NULL on error.
 
-  Only array JSON value or object JSON value is valid for UEFI usage.
+  Only array JSON value or object JSON value is valid for converting, and caller is
+  responsible for free converted string.
 
   @param[in]   Json               The JSON value to be converted
 
@@ -69,6 +71,11 @@ JsonToText (
   The function is used to initialize a JSON value which contains a new JSON array,
   or NULL on error. Initially, the array is empty.
 
+  The reference count of this value will be set to 1, and caller needs to cleanup the
+  value by calling JsonValueFree().
+
+  More details for reference count strategy can refer to the API description for JsonValueFree().
+
   @retval      The created JSON value which contains a JSON array or NULL.
 
 **/
@@ -81,6 +88,11 @@ JsonValueInitArray (
 /**
   The function is used to initialize a JSON value which contains a new JSON object,
   or NULL on error. Initially, the object is empty.
+
+  The reference count of this value will be set to 1, and caller needs to cleanup the
+  value by calling JsonValueFree().
+
+  More details for reference count strategy can refer to the API description for JsonValueFree().
 
   @retval      The created JSON value which contains a JSON object or NULL.
 
@@ -99,6 +111,11 @@ JsonValueInitObject (
   be processed as an error. Unicode characters can also be represented by Ascii string
   as the format: \u + 4 hexadecimal digits, like \u3E5A, or \u003F.
 
+  The reference count of this value will be set to 1, and caller needs to cleanup the
+  value by calling JsonValueFree().
+
+  More details for reference count strategy can refer to the API description for JsonValueFree().
+
   @param[in]   String      The Ascii string to initialize to JSON value
 
   @retval      The created JSON value which contains a JSON string or NULL. Select a
@@ -115,9 +132,14 @@ JsonValueInitAsciiString (
   The function is used to initialize a JSON value which contains a new JSON string,
   or NULL on error.
 
-  The input string must be NULL terminated UCS2 format.
+  The input must be a NULL terminated UCS2 format Unicode string.
 
-  @param[in]   String      The UCS2 string to initialize to JSON value
+  The reference count of this value will be set to 1, and caller needs to cleanup the
+  value by calling JsonValueFree().
+
+  More details for reference count strategy can refer to the API description for JsonValueFree().
+
+  @param[in]   String      The Unicode string to initialize to JSON value
 
   @retval      The created JSON value which contains a JSON string or NULL. Select a
                Getter API for a specific encoding format.
@@ -125,17 +147,20 @@ JsonValueInitAsciiString (
 **/
 EDKII_JSON_VALUE
 EFIAPI
-JsonValueInitUCS2String (
+JsonValueInitUnicodeString (
   IN    CHAR16    *String
   );
 
 /**
-  The function is used to initialize a JSON value which contains a new JSON number,
+  The function is used to initialize a JSON value which contains a new JSON integer,
   or NULL on error.
 
-  The input number must be a positive integer.
+  The reference count of this value will be set to 1, and caller needs to cleanup the
+  value by calling JsonValueFree().
 
-  @param[in]   Value       The positive integer to initialize to JSON value
+  More details for reference count strategy can refer to the API description for JsonValueFree().
+
+  @param[in]   Value       The integer to initialize to JSON value
 
   @retval      The created JSON value which contains a JSON number or NULL.
 
@@ -143,12 +168,14 @@ JsonValueInitUCS2String (
 EDKII_JSON_VALUE
 EFIAPI
 JsonValueInitNumber (
-  IN    UINT64    Value
+  IN    INT64    Value
   );
 
 /**
   The function is used to initialize a JSON value which contains a new JSON boolean,
   or NULL on error.
+
+  Boolean JSON value is kept as static value, and no need to do any cleanup work.
 
   @param[in]   Value       The boolean value to initialize.
 
@@ -165,6 +192,8 @@ JsonValueInitBoolean (
   The function is used to initialize a JSON value which contains a new JSON NULL,
   or NULL on error.
 
+  NULL JSON value is kept as static value, and no need to do any cleanup work.
+
   @retval      The created NULL JSON value.
 
 **/
@@ -175,11 +204,17 @@ JsonValueInitNull (
   );
 
 /**
-  The function is used to free a JSON value. If it is an array JSON value or object JSON
-  value, all containing elements will also be freed iterately.
+  The function is used to decrease the reference count of a JSON value by one, and once
+  this reference count drops to zero, the value is destroyed and it can no longer be used.
+  If this destroyed value is object type or array type, reference counts for all containing
+  JSON values will be decreased by 1. Boolean JSON value and NULL JSON value won't be destroyed
+  since they are static values kept in memory.
 
-  The boolean JSON value and null JSON value won't be freed since they are static values
-  kept in memory.
+  Reference Count Strategy: BaseJsonLib uses this strategy to track whether a value is still
+  in use or not. When a value is created, it’s reference count is set to 1. If a reference
+  to a value is kept for use, its reference count is incremented, and when the value is no
+  longer needed, the reference count is decremented. When the reference count drops to zero,
+  there are no references left, and the value can be destroyed.
 
   @param[in]   Json             The JSON value to be freed.
 
@@ -187,6 +222,29 @@ JsonValueInitNull (
 VOID
 EFIAPI
 JsonValueFree (
+  IN    EDKII_JSON_VALUE    Json
+  );
+
+/**
+  The function is used to create a fresh copy of a JSON value, and all child values are deep
+  copied in a recursive fashion. It should be called when this JSON value might be modified
+  in later use, but the original still wants to be used in somewhere else.
+
+  Reference counts of the returned root JSON value and all child values will be set to 1, and
+  caller needs to cleanup the root value by calling JsonValueFree().
+
+  * Note: Since this function performs a copy from bottom to up, too many calls may cause some
+  performance issues, user should avoid unnecessary calls to this function unless it is really
+  needed.
+
+  @param[in]   Json             The JSON value to be cloned.
+
+  @retval      Return the cloned JSON value, or NULL on error.
+
+**/
+EDKII_JSON_VALUE
+EFIAPI
+JsonValueClone (
   IN    EDKII_JSON_VALUE    Json
   );
 
@@ -222,7 +280,7 @@ JsonValueIsObject (
 
 /**
   The function is used to return if the provided JSON Value contains a string, Ascii or
-  UCS2 format is not differentiated.
+  Unicode format is not differentiated.
 
   @param[in]   Json             The provided JSON value.
 
@@ -282,11 +340,13 @@ JsonValueIsNull (
   );
 
 /**
-  The function is used to retrieve the associated value of JSON array.
+  The function is used to retrieve the associated array in an array type JSON value.
+
+  Any changes to the returned array will impact the original JSON value.
 
   @param[in]   Json             The provided JSON value.
 
-  @retval      Return the associated value of JSON array or NULL.
+  @retval      Return the associated array in JSON value or NULL.
 
 **/
 EDKII_JSON_ARRAY
@@ -296,11 +356,13 @@ JsonValueGetArray (
   );
 
 /**
-  The function is used to retrieve the associated value of JSON object.
+  The function is used to retrieve the associated object in an object type JSON value.
+
+  Any changes to the returned object will impact the original JSON value.
 
   @param[in]   Json             The provided JSON value.
 
-  @retval      Return the associated value of JSON object or NULL.
+  @retval      Return the associated object in JSON value or NULL.
 
 **/
 EDKII_JSON_OBJECT
@@ -310,61 +372,60 @@ JsonValueGetObject (
   );
 
 /**
-  The function is used to retrieve the associated value of JSON string as Ascii
-  format.
+  The function is used to retrieve the associated Ascii string in a string type JSON value.
 
-  The retuned string is read only and must not be modified or freed by the caller.
+  Any changes to the returned string will impact the original JSON value.
 
   @param[in]   Json             The provided JSON value.
 
-  @retval      Return the associated value of JSON string or NULL.
+  @retval      Return the associated Ascii string in JSON value or NULL.
 
 **/
-CONST CHAR8*
+CHAR8*
 EFIAPI
 JsonValueGetAsciiString (
   IN    EDKII_JSON_VALUE    Json
   );
 
 /**
-  The function is used to retrieve the associated value of JSON string as UCS2
-  format.
+  The function is used to retrieve the associated Unicode string in a string type JSON value.
 
-  Caller is responsible to free the returned string.
+  Caller can do any changes to the returned string without any impact to the original JSON
+  value, and caller needs to free the returned string.
 
   @param[in]   Json             The provided JSON value.
 
-  @retval      Return the associated value of JSON string or NULL.
+  @retval      Return the associated Unicode string in JSON value or NULL.
 
 **/
 CHAR16*
 EFIAPI
-JsonValueGetUCS2String (
+JsonValueGetUnicodeString (
   IN    EDKII_JSON_VALUE    Json
   );
 
 /**
-  The function is used to retrieve the associated value of JSON number.
+  The function is used to retrieve the associated integer in a number type JSON value.
 
-  The input JSON value should not be NULL or contain no JSON number, otherwise
-  it will ASSERT() and return 0.
+  The input JSON value should not be NULL or contain no JSON number, otherwise it will
+  ASSERT() and return 0.
 
   @param[in]   Json             The provided JSON value.
 
-  @retval      Return the associated value of JSON number.
+  @retval      Return the associated number in JSON value.
 
 **/
-UINT64
+INT64
 EFIAPI
 JsonValueGetNumber (
   IN    EDKII_JSON_VALUE    Json
   );
 
 /**
-  The function is used to retrieve the associated value of JSON boolean.
+  The function is used to retrieve the associated boolean in a boolean type JSON value.
 
-  The input JSON value should not be NULL or contain no JSON boolean, otherwise
-  it will ASSERT() and return FALSE.
+  The input JSON value should not be NULL or contain no JSON boolean, otherwise it will
+  ASSERT() and return FALSE.
 
   @param[in]   Json             The provided JSON value.
 
@@ -404,7 +465,7 @@ JsonObjectSize (
   @retval      Return an array of the enumerated keys in this JSON object or NULL.
 
 **/
-CONST CHAR8**
+CHAR8**
 JsonObjectGetKeys (
   IN    EDKII_JSON_OBJECT    JsonObj,
   OUT   UINTN                *KeyCount
@@ -412,14 +473,18 @@ JsonObjectGetKeys (
 
 /**
   The function is used to get a JSON value corresponding to the input key from a JSON object.
-
-  The key must be a valid NULL terminated UTF8 encoded string. Returns NULL if key is not found
-  or any error occurs.
+  
+  It only returns a reference to this value and any changes on this value will impact the
+  original JSON object. If that is not expected, please call JsonValueClone() to clone it to
+  use.
+  
+  Input key must be a valid NULL terminated UTF8 encoded string. NULL will be returned when 
+  Key-Value is not found in this JSON object.
 
   @param[in]   JsonObj           The provided JSON object.
   @param[in]   Key               The key of the JSON value to be retrieved.
 
-  @retval      Return the corresponding JSON value mapped by key, or NULL on error.
+  @retval      Return the corresponding JSON value to key, or NULL on error.
 
 **/
 EDKII_JSON_VALUE
@@ -430,17 +495,18 @@ JsonObjectGetValue (
   );
 
 /**
-  The function is used to set a JSON value corresponding to the input key from a JSON object.
+  The function is used to set a JSON value corresponding to the input key from a JSON object,
+  and the reference count of this value will be increased by 1.
 
-  The key must be a valid NULL terminated UTF8 encoded string. If there already is a value for
-  key, it is replaced by the new value.
+  Input key must be a valid NULL terminated UTF8 encoded string. If there already is a value for
+  this key, this key will be assigned to the new JSON value. The old JSON value will be removed
+  from this object and thus its' reference count will be decreased by 1.
 
-  The JSON value to be set should not be referred as an element by other JSON objects or JSON
-  arrays.
+  More details for reference count strategy can refer to the API description for JsonValueFree().
 
   @param[in]   JsonObj                The provided JSON object.
   @param[in]   Key                    The key of the JSON value to be set.
-  @param[in]   Json                   The JSON Value to set to this JSON object defined by key.
+  @param[in]   Json                   The JSON value to set to this JSON object mapped by key.
 
   @retval      EFI_ABORTED            Some error occur and operation aborted.
   @retval      EFI_SUCCESS            The JSON value has been set to this JSON object.
@@ -473,6 +539,10 @@ JsonArrayCount (
   The function is used to return the JSON value in the array at position index. The valid range
   for this index is from 0 to the return value of JsonArrayCount() minus 1.
 
+  It only returns a reference to this value and any changes on this value will impact the
+  original JSON object. If that is not expected, please call JsonValueClone() to clone it to
+  use.
+
   If this array is NULL or not a JSON array, or if index is out of range, NULL will be returned.
 
   @param[in]   JsonArray         The provided JSON Array.
@@ -489,10 +559,9 @@ JsonArrayGetValue (
 
 /**
   The function is used to append a JSON value to the end of the JSON array, and grow the size of
-  array by 1.
+  array by 1. The reference count of this value will be increased by 1.
 
-  The JSON value to be appended should not be referred as an element by other JSON objects or JSON
-  arrays.
+  More details for reference count strategy can refer to the API description for JsonValueFree().
 
   @param[in]   JsonArray              The provided JSON object.
   @param[in]   Json                   The JSON value to append.
@@ -510,7 +579,10 @@ JsonArrayAppendValue (
 
 /**
   The function is used to remove a JSON value at position index, shifting the elements after index
-  one position towards the start of the array.
+  one position towards the start of the array. The reference count of this value will be decreased
+  by 1.
+
+  More details for reference count strategy can refer to the API description for JsonValueFree().
 
   @param[in]   JsonArray              The provided JSON array.
   @param[in]   Index                  The Index position before removement.

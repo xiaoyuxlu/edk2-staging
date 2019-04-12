@@ -34,6 +34,7 @@
   RedfishBootInfoDxe.c
 
 [LibraryClasses]
+  UefiLib
   DebugLib
   PrintLib
   DevicePathLib

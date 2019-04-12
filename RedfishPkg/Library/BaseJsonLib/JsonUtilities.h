@@ -18,7 +18,7 @@
 #include <jansson.h>
 
 #include <Base.h>
-#include <Library/UefiLib.h>
+#include <Uefi.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PrintLib.h>

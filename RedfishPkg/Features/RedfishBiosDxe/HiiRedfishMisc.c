@@ -449,56 +449,6 @@ GetOrderListByString  (
 }
 
 /**
-  Create a menu path string from the root menu to current menu. Each menu cell node is decorated by "/MenuName/".
-
-  For example, if there is a menu path: Root Menu A -> Sub Menu B -> Current Menu C, the generated menu path
-  should be "/A/B/C/".
-
-  @param[in]           ParentFormMenu           The parent of current menu
-  @param[in,out]       CurrentMenuPath          As the input, indicates the menu path string for current menu. As
-                                                the output, indicates the menu path from the root menu to current
-                                                menu.
-
-**/
-VOID
-CreateMenuPath (
-  IN     REDFISH_FORM_MENU    *ParentFormMenu,
-  IN OUT EFI_STRING           CurrentMenuPath
-  )
-{
-  CHAR16    *MatchedStr;
-  CHAR16    MenuPathTempStr[MAX_SIZE_REDFISH_MENU_LENGTH];
-
-  if (ParentFormMenu == NULL) {
-    return;
-  }
-
-  if (ParentFormMenu->MenuName == NULL || StrCmp (ParentFormMenu->MenuName, L"NULL") == 0) {
-    return;
-  }
-
-  //
-  // Create a node like "/MenuName/"
-  //
-  MatchedStr = AllocateZeroPool (sizeof (CHAR16) * (StrLen (ParentFormMenu->MenuName) + 3));
-  if (MatchedStr == NULL) {
-    return;
-  }
-  StrCpyS (MatchedStr, StrLen (ParentFormMenu->MenuName) + 3, L"/");
-  StrCpyS (MatchedStr + 1, StrLen (ParentFormMenu->MenuName) + 2, ParentFormMenu->MenuName);
-  StrCpyS (MatchedStr + 1 + StrLen (ParentFormMenu->MenuName), 2, L"/");
-
-  if (StrStr (CurrentMenuPath, MatchedStr) == NULL &&
-    StrLen (MatchedStr) - 1 + StrLen (CurrentMenuPath) < MAX_SIZE_REDFISH_MENU_LENGTH) {
-
-    StrCpyS (MenuPathTempStr, MAX_SIZE_REDFISH_MENU_LENGTH, CurrentMenuPath);
-    StrCpyS (CurrentMenuPath, MAX_SIZE_REDFISH_MENU_LENGTH, MatchedStr);
-    StrCpyS (CurrentMenuPath + StrLen (CurrentMenuPath) - 1, MAX_SIZE_REDFISH_MENU_LENGTH - (StrLen (CurrentMenuPath) - 1), MenuPathTempStr);
-    CreateMenuPath (ParentFormMenu->Parent, CurrentMenuPath);
-  }
-}
-
-/**
   Get the name node by question id and formset guid from system name node list.
 
   Name node list is the mapping relationship between an attribute and its' question, and is recorded in a
@@ -877,12 +827,13 @@ SetAttributeNameToAttribute (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  EFI_STATUS             Status;
-  LIST_ENTRY             *NamespaceLink;
-  NAMESPACE_DATA         *Namespace;
-  CHAR8                  *AttributeName;
-  CHAR16                 *KeywordName;
-  CHAR16                 ItemName[MAX_SIZE_QUENSTIONID_STR_LENGTH];
+  EFI_STATUS           Status;
+  LIST_ENTRY           *NamespaceLink;
+  NAMESPACE_DATA       *Namespace;
+  CHAR8                *AttributeName;
+  CHAR16               *KeywordName;
+  CHAR16               ItemName[MAX_SIZE_QUENSTIONID_STR_LENGTH];
+  EDKII_JSON_VALUE     JsonTemp;
 
   Status        = EFI_SUCCESS;
   KeywordName   = NULL;
@@ -940,43 +891,61 @@ SetAttributeNameToAttribute (
     }
   }
 
-  JsonObjectSetValue (
-    JsonValueGetObject (Attribute),
-    "AttributeName",
-    JsonValueInitAsciiString (AttributeName)
-    );
+  JsonTemp = JsonValueInitAsciiString (AttributeName);
+  Status = JsonObjectSetValue (
+             JsonValueGetObject (Attribute),
+             "AttributeName",
+             JsonTemp
+             );
+  JsonValueFree (JsonTemp);
+  if (EFI_ERROR (Status)) {
+    goto ON_EXIT;
+  }
 
   //
   // Add this attribute name node to global list
   //
-  AppendNameNodeList (
-    &FormSet->HiiFormSet->Guid,
-    Statement->HiiStatement->QuestionId,
-    AttributeName
-    );
+  Status = AppendNameNodeList (
+             &FormSet->HiiFormSet->Guid,
+             Statement->HiiStatement->QuestionId,
+             AttributeName
+             );
+  if (EFI_ERROR (Status)) {
+    goto ON_EXIT;
+  }
 
   //
   // Set three related properties UefiNamespaceId, UefiDevicePath and UefiKeywordName
   //
+  JsonTemp = JsonValueInitAsciiString (Namespace->NamespaceId);
   JsonObjectSetValue (
     JsonValueGetObject (Attribute),
     "UefiNamespaceId",
-    JsonValueInitAsciiString (Namespace->NamespaceId)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
+  JsonTemp = JsonValueInitUnicodeString (FormSet->DevicePathStr);
   JsonObjectSetValue (
     JsonValueGetObject (Attribute),
     "UefiDevicePath",
-    JsonValueInitUCS2String (FormSet->DevicePathStr)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
   if (KeywordName != NULL) {
+
+    JsonTemp = JsonValueInitUnicodeString (KeywordName);
     JsonObjectSetValue (
       JsonValueGetObject (Attribute),
       "UefiKeywordName",
-      JsonValueInitUCS2String (KeywordName)
+      JsonValueInitUnicodeString (KeywordName)
       );
+    JsonValueFree (JsonTemp);
   }
 
 ON_EXIT:
+
   if (KeywordName != NULL) {
     FreePool (KeywordName);
   }
@@ -1010,8 +979,9 @@ SetStringPropertyToAttribute (
      OUT EDKII_JSON_VALUE    Attribute
   )
 {
-  EFI_STATUS           Status;
-  CHAR16               *String;
+  EFI_STATUS          Status;
+  CHAR16              *String;
+  EDKII_JSON_VALUE    JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (Attribute, EFI_INVALID_PARAMETER);
 
@@ -1030,11 +1000,13 @@ SetStringPropertyToAttribute (
     return EFI_NOT_FOUND;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (Attribute),
-             PropertyName,
-             JsonValueInitUCS2String (String)
-             );
+  JsonTemp = JsonValueInitUnicodeString (String);
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (Attribute),
+               PropertyName,
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
 
   FreePool (String);
   return Status;
@@ -1059,7 +1031,8 @@ SetDisplayNameToAttribute (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  EFI_STATUS    Status;
+  EFI_STATUS        Status;
+  EDKII_JSON_VALUE  JsonTemp;
 
   if (Statement->HiiStatement->Prompt != 0) {
 
@@ -1075,11 +1048,13 @@ SetDisplayNameToAttribute (
     }
   }
 
+  JsonTemp = JsonValueInitUnicodeString (L"");
   JsonObjectSetValue (
     JsonValueGetObject (Attribute),
     "DisplayName",
-    JsonValueInitUCS2String (L"None")
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 }
 
 /**
@@ -1101,7 +1076,8 @@ SetHelpTextToAttribute (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  EFI_STATUS    Status;
+  EFI_STATUS        Status;
+  EDKII_JSON_VALUE  JsonTemp;
 
   if (Statement->HiiStatement->Help != 0) {
 
@@ -1117,11 +1093,13 @@ SetHelpTextToAttribute (
     }
   }
 
+  JsonTemp = JsonValueInitUnicodeString (L"");
   JsonObjectSetValue (
     JsonValueGetObject (Attribute),
     "HelpText",
-    JsonValueInitUCS2String (L"None")
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 }
 
 /**
@@ -1198,34 +1176,39 @@ SetMenuPathToAttribute (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  MENU_NAME_NODE*    MenuNameNode;
+  MENU_NAME_NODE*     MenuNameNode;
+  EDKII_JSON_VALUE    JsonTemp;
 
-  if (Form->FormMenuName != NULL &&
-    StrLen (Form->FormMenuName) != 0 &&
-    StrCmp (Form->FormMenuName, L"_") != 0) {
+  if (Form->RedfishMenuName != NULL &&
+    StrLen (Form->RedfishMenuName) != 0 &&
+    StrCmp (Form->RedfishMenuName, L"_") != 0) {
 
+    JsonTemp = JsonValueInitUnicodeString (Form->RedfishMenuName);
     JsonObjectSetValue (
       JsonValueGetObject (Attribute),
       "MenuPath",
-      JsonValueInitUCS2String (Form->FormMenuName)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
 
     MenuNameNode = AllocateZeroPool (sizeof (MENU_NAME_NODE));
     if (MenuNameNode == NULL) {
       return;
     }
     MenuNameNode->Signature = MENU_NAME_NODE_SIGNATURE;
-    StrCpyS (MenuNameNode->MenuName, MAX_SIZE_REDFISH_MENU_LENGTH, Form->FormMenuName);
+    StrCpyS (MenuNameNode->MenuName, MAX_SIZE_REDFISH_MENU_LENGTH, Form->RedfishMenuName);
 
     InsertTailList (&mMenuNameList, &MenuNameNode->Link);
 
   } else {
 
+    JsonTemp = JsonValueInitUnicodeString (L"");
     JsonObjectSetValue (
       JsonValueGetObject (Attribute),
       "MenuPath",
-      JsonValueInitUCS2String (L"None")
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 }
 
@@ -1247,13 +1230,13 @@ SetOptionListToAttribute (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  EFI_STATUS              Status;
   LIST_ENTRY              *OptionListEntry;
   HII_QUESTION_OPTION     *CurrentOption;
   CHAR8                   ValueNameAsciiStr[MAX_SIZE_U64_NUMBER_STR];
   CHAR16                  *TempStr;
   EDKII_JSON_VALUE        ListOptionArrayValue;
   EDKII_JSON_VALUE        ListOptionObjValue;
+  EDKII_JSON_VALUE        JsonTemp;
 
   if (IsListEmpty (&Statement->HiiStatement->OptionListHead)) {
     return;
@@ -1270,18 +1253,16 @@ SetOptionListToAttribute (
     ListOptionObjValue = JsonValueInitObject ();
 
     AsciiSPrint (ValueNameAsciiStr, MAX_SIZE_U64_NUMBER_STR, "%d", CurrentOption->Value.Value.u64);
-    Status = JsonObjectSetValue (
-               JsonValueGetObject (ListOptionObjValue),
-               "ValueName",
-               JsonValueInitAsciiString (ValueNameAsciiStr)
-               );
-    if (EFI_ERROR (Status)) {
 
-      JsonValueFree (ListOptionObjValue);
-      continue;
-    }
+    JsonTemp = JsonValueInitAsciiString (ValueNameAsciiStr);
+    JsonObjectSetValue (
+      JsonValueGetObject (ListOptionObjValue),
+      "ValueName",
+      JsonTemp
+      );
+    JsonValueFree (JsonTemp);
 
-    TempStr = L"None";
+    TempStr = NULL;
     if (CurrentOption->Text != 0) {
       TempStr = HiiGetStringEx (
                   FormSet->HiiFormSet->HiiHandle,
@@ -1289,33 +1270,30 @@ SetOptionListToAttribute (
                   NULL,
                   TRUE
                   );
-       if (TempStr == NULL) {
-         continue;
-       }
     }
 
-    Status = JsonObjectSetValue (
-               JsonValueGetObject (ListOptionObjValue),
-               "ValueDisplayName",
-               JsonValueInitUCS2String (TempStr)
-               );
-    if (EFI_ERROR (Status)) {
-
-      JsonValueFree (ListOptionObjValue);
-      continue;
+    JsonTemp = JsonValueInitUnicodeString (TempStr);
+    if (TempStr != NULL) {
+      FreePool (TempStr);
     }
+
+    JsonObjectSetValue (
+      JsonValueGetObject (ListOptionObjValue),
+      "ValueDisplayName",
+      JsonTemp
+      );
+    JsonValueFree (JsonTemp);
 
     JsonArrayAppendValue (JsonValueGetArray (ListOptionArrayValue), ListOptionObjValue);
+    JsonValueFree (ListOptionObjValue);
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (Attribute),
-             "Value",
-             ListOptionArrayValue
-             );
-  if (EFI_ERROR (Status)) {
-    JsonValueFree (ListOptionArrayValue);
-  }
+  JsonObjectSetValue (
+    JsonValueGetObject (Attribute),
+    "Value",
+    ListOptionArrayValue
+    );
+  JsonValueFree (ListOptionArrayValue);
 }
 
 
@@ -1402,6 +1380,7 @@ SetDefaultToAttributeForOrderList (
   CHAR8                   DefaultBufferStr[MAX_SIZE_FOR_REDFISH_ORDERED_LIST];
   LIST_ENTRY              *DefaultListEntry;
   HII_QUESTION_DEFAULT    *CurrentDefault;
+  EDKII_JSON_VALUE        JsonTemp;
 
   if (IsListEmpty (&Statement->HiiStatement->DefaultListHead)) {
     return;
@@ -1431,11 +1410,13 @@ SetDefaultToAttributeForOrderList (
     }
   }
 
+  JsonTemp = JsonValueInitAsciiString (DefaultBufferStr);
   JsonObjectSetValue (
     JsonValueGetObject (Attribute),
     "DefaultValue",
-    JsonValueInitAsciiString (DefaultBufferStr)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 }
 
 
@@ -1467,7 +1448,8 @@ OrderListToJson (
      OUT EDKII_JSON_VALUE     Attribute
   )
 {
-  EFI_STATUS    Status;
+  EFI_STATUS        Status;
+  EDKII_JSON_VALUE  JsonTemp;
 
   if (!JsonValueIsObject (Attribute)) {
     return EFI_INVALID_PARAMETER;
@@ -1478,11 +1460,13 @@ OrderListToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (Attribute),
-             "Type",
-             JsonValueInitAsciiString ("String")
-             );
+  JsonTemp = JsonValueInitAsciiString ("String");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (Attribute),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1524,6 +1508,7 @@ OneofToJson (
   EFI_STATUS              Status;
   LIST_ENTRY              *DefaultListEntry;
   HII_QUESTION_DEFAULT    *CurrentDefault;
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (Attribute, EFI_INVALID_PARAMETER);
 
@@ -1532,11 +1517,13 @@ OneofToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (Attribute),
-             "Type",
-             JsonValueInitAsciiString ("Enumeration")
-             );
+  JsonTemp = JsonValueInitAsciiString ("Enumeration");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (Attribute),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1545,11 +1532,14 @@ OneofToJson (
 
     DefaultListEntry = GetFirstNode (&Statement->HiiStatement->DefaultListHead);
     CurrentDefault   = HII_QUESTION_DEFAULT_FROM_LINK (DefaultListEntry);
+
+    JsonTemp = JsonValueInitNumber (CurrentDefault->Value.Value.u64);
     JsonObjectSetValue (
       JsonValueGetObject (Attribute),
       "DefaultValue",
-      JsonValueInitNumber (CurrentDefault->Value.Value.u64)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 
   SetOptionListToAttribute (FormSet, Statement, Attribute);
@@ -1589,6 +1579,7 @@ NumericToJson (
   EFI_STATUS              Status;
   LIST_ENTRY              *DefaultListEntry;
   HII_QUESTION_DEFAULT    *CurrentDefault;
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1597,36 +1588,45 @@ NumericToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("Integer")
-             );
+  JsonTemp = JsonValueInitAsciiString ("Integer");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.NumData.Maximum);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "UpperBound",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.NumData.Maximum)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.NumData.Minimum);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "LowerBound",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.NumData.Minimum)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
   if (!IsListEmpty (& Statement->HiiStatement->DefaultListHead)) {
 
     DefaultListEntry = GetFirstNode (&Statement->HiiStatement->DefaultListHead);
     CurrentDefault = HII_QUESTION_DEFAULT_FROM_LINK (DefaultListEntry);
+
+    JsonTemp = JsonValueInitNumber (CurrentDefault->Value.Value.u64);
     JsonObjectSetValue (
       JsonValueGetObject (AttributeValue),
       "DefaultValue",
-      JsonValueInitNumber (CurrentDefault->Value.Value.u64)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 
   return EFI_SUCCESS;
@@ -1666,6 +1666,7 @@ DateToJson (
   HII_QUESTION_DEFAULT    *CurrentDefault;
   EFI_HII_DATE            Date;
   CHAR16                  DateStr[MAX_SIZE_FOR_REDFISH_DATE];
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1674,11 +1675,13 @@ DateToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("String")
-             );
+  JsonTemp = JsonValueInitAsciiString ("String");
+  Status =   JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1697,11 +1700,13 @@ DateToJson (
       Date.Year
       );
 
+    JsonTemp = JsonValueInitUnicodeString (DateStr);
     JsonObjectSetValue (
       JsonValueGetObject (AttributeValue),
       "DefaultValue",
-      JsonValueInitUCS2String (DateStr)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 
   return EFI_SUCCESS;
@@ -1740,6 +1745,7 @@ TimeToJson (
   HII_QUESTION_DEFAULT    *CurrentDefault;
   EFI_HII_TIME            Time;
   CHAR16                  TimeStr[MAX_SIZE_FOR_REDFISH_TIME];
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1748,11 +1754,13 @@ TimeToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("String")
-             );
+  JsonTemp = JsonValueInitAsciiString ("String");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1771,11 +1779,13 @@ TimeToJson (
       Time.Second
       );
 
+    JsonTemp = JsonValueInitUnicodeString (TimeStr);
     JsonObjectSetValue (
       JsonValueGetObject (AttributeValue),
       "DefaultValue",
-      JsonValueInitUCS2String (TimeStr)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 
   return EFI_SUCCESS;
@@ -1813,6 +1823,7 @@ StringToJson (
   LIST_ENTRY              *DefaultListEntry;
   HII_QUESTION_DEFAULT    *CurrentDefault;
   CHAR16                  *DefaultString;
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1821,26 +1832,32 @@ StringToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("String")
-             );
+  JsonTemp = JsonValueInitAsciiString ("String");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.StrData.MaxSize);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "MaxLength",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.StrData.MaxSize)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.StrData.MinSize);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "MinLength",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.StrData.MinSize)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
   if (!IsListEmpty (&Statement->HiiStatement->DefaultListHead)) {
 
@@ -1856,11 +1873,13 @@ StringToJson (
                         );
     }
 
+    JsonTemp = JsonValueInitUnicodeString (DefaultString);
     JsonObjectSetValue (
       JsonValueGetObject (AttributeValue),
       "DefaultValue",
-      JsonValueInitUCS2String (DefaultString)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   }
 
   return EFI_SUCCESS;
@@ -1894,7 +1913,8 @@ PasswordToJson (
      OUT EDKII_JSON_VALUE     AttributeValue
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS          Status;
+  EDKII_JSON_VALUE    JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1903,27 +1923,32 @@ PasswordToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("Password")
-             );
+  JsonTemp = JsonValueInitAsciiString ("Password");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.PwdData.MaxSize);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "MaxLength",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.PwdData.MaxSize)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
-
+  JsonTemp = JsonValueInitNumber (Statement->HiiStatement->ExtraData.PwdData.MinSize);
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
     "MinLength",
-    JsonValueInitNumber (Statement->HiiStatement->ExtraData.PwdData.MinSize)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
   JsonObjectSetValue (
     JsonValueGetObject (AttributeValue),
@@ -1965,6 +1990,7 @@ BooleanToJson (
   EFI_STATUS              Status;
   LIST_ENTRY              *DefaultListEntry;
   HII_QUESTION_DEFAULT    *CurrentDefault;
+  EDKII_JSON_VALUE        JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (AttributeValue, EFI_INVALID_PARAMETER);
 
@@ -1973,11 +1999,13 @@ BooleanToJson (
     return Status;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (AttributeValue),
-             "Type",
-             JsonValueInitAsciiString ("Boolean")
-             );
+  JsonTemp = JsonValueInitAsciiString ("Boolean");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (AttributeValue),
+               "Type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -2386,7 +2414,7 @@ SaveAttributeValueByQuestion  (
       return EFI_INVALID_PARAMETER;
     }
 
-    ValueUcs2StrPtr = JsonValueGetUCS2String (AttributeValue);
+    ValueUcs2StrPtr = JsonValueGetUnicodeString (AttributeValue);
     if (ValueUcs2StrPtr == NULL) {
       return EFI_ABORTED;
     }
@@ -2492,10 +2520,171 @@ SaveAttributeValueByQuestion  (
 }
 
 /**
+  This function is used to save a string value into a question through keyword.
+
+  @param[in]      DevicePath                       The device path for this keyword.
+  @param[in]      Keyword                          The keyword name for this question.
+  @param[in]      StringValue                      The string value of this attribute for a certain question.
+
+  @retval  EFI_SUCCESS                             The value has been saved to this question.
+  @retval  EFI_INVALID_PARAMETER                   One or more parameters are invalid.
+  @retval  EFI_ABORTED                             Save action has been aborted.
+  @retval  Others                                  Another unexpected error occured.
+
+**/
+EFI_STATUS
+SaveStringByKeyword  (
+  IN EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+  IN CHAR16                      *Keyword,
+  IN EDKII_JSON_VALUE            StringValue
+  ) 
+{
+  EFI_STATUS    Status;
+  CHAR16        *ValueUcs2Str;
+
+  RETURN_STATUS_IF_JSON_VALUE_NOT_STRING (StringValue, EFI_INVALID_PARAMETER);
+
+  ValueUcs2Str = JsonValueGetUnicodeString (StringValue);
+  if (ValueUcs2Str == NULL) {
+    return EFI_ABORTED;
+  }
+  
+  Status = KeywordConfigSetValue (
+             DevicePath,
+             Keyword,
+             ValueUcs2Str,
+             KeywordTypeBuffer
+             );
+
+  return Status;
+}
+
+/**
+  This function is used to save a number value into a question through keyword.
+
+  @param[in]      DevicePath                       The device path for this keyword.
+  @param[in]      Keyword                          The keyword name for this question.
+  @param[in]      NumberValue                      The number value of this attribute for a certain question.
+  @param[in]      NumberValueType                  The number type of this attribute. Supported number types include:
+                                                   EFI_IFR_TYPE_NUM_SIZE_8, EFI_IFR_TYPE_NUM_SIZE_16,
+                                                   EFI_IFR_TYPE_NUM_SIZE_32, EFI_IFR_TYPE_NUM_SIZE_64
+
+  @retval  EFI_SUCCESS                             The value has been saved to this question.
+  @retval  EFI_INVALID_PARAMETER                   One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES                    There is no enough memory.
+  @retval  Others                                  Another unexpected error occured.
+
+**/
+EFI_STATUS
+SaveNumberByKeyword  (
+  IN EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+  IN CHAR16                      *Keyword,
+  IN EDKII_JSON_VALUE            NumberValue,
+  IN UINT8                       NumberValueType
+  ) 
+{
+  EFI_STATUS      Status;
+  CHAR16          *ValueUcs2Str;
+  UINT64          ValueNum;
+  KEYWORD_TYPE    KeywordType;
+
+  RETURN_STATUS_IF_JSON_VALUE_NOT_NUMBER (NumberValue, EFI_INVALID_PARAMETER);
+
+  ValueUcs2Str = AllocateZeroPool (TEM_STR_LEN * sizeof (CHAR16));
+  if (ValueUcs2Str == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  ValueNum = JsonValueGetNumber (NumberValue);
+  UnicodeSPrint (ValueUcs2Str, TEM_STR_LEN * sizeof (CHAR16), L"%ld", ValueNum);
+
+  switch (NumberValueType) {
+
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+
+      KeywordType = KeywordTypeNumeric1;
+      break;
+
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+
+      KeywordType = KeywordTypeNumeric2;
+      break;
+
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+
+      KeywordType = KeywordTypeNumeric4;
+      break;
+
+    case EFI_IFR_TYPE_NUM_SIZE_64:
+
+      KeywordType = KeywordTypeNumeric8;
+      break;
+
+    default:
+      break;
+  }
+
+  Status = KeywordConfigSetValue (
+             DevicePath,
+             Keyword,
+             ValueUcs2Str,
+             KeywordType
+             );
+
+  return Status;
+}
+
+/**
+  This function is used to save a boolean value into a question through keyword.
+
+  @param[in]      DevicePath                       The device path for this keyword.
+  @param[in]      Keyword                          The keyword name for this question.
+  @param[in]      BooleanValue                     The boolean value of this attribute for a certain question.
+
+  @retval  EFI_SUCCESS                             The value has been saved to this question.
+  @retval  EFI_INVALID_PARAMETER                   One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES                    There is no enough memory.
+  @retval  Others                                  Another unexpected error occured.
+
+**/
+EFI_STATUS
+SaveBooleanByKeyword  (
+  IN EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+  IN CHAR16                      *Keyword,
+  IN EDKII_JSON_VALUE            BooleanValue
+  ) 
+{
+  EFI_STATUS      Status;
+  CHAR16          *ValueUcs2Str;
+  BOOLEAN         ValueBool;
+
+  RETURN_STATUS_IF_JSON_VALUE_NOT_BOOLEAN (BooleanValue, EFI_INVALID_PARAMETER);
+
+  ValueUcs2Str = AllocateZeroPool (TEM_STR_LEN * sizeof (CHAR16));
+  if (ValueUcs2Str == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  ValueBool = JsonValueGetBoolean (BooleanValue);
+  if (ValueBool == TRUE) {
+    ValueUcs2Str = L"1";
+  } else {
+    ValueUcs2Str = L"0";
+  }
+
+  Status = KeywordConfigSetValue (
+             DevicePath,
+             Keyword,
+             ValueUcs2Str,
+             KeywordTypeNumeric1
+             );
+
+  return Status;
+}
+
+/**
   Each question in HII Database may be converted to an attribute for Redfish, this function is used to save
   value into a question through keyword.
 
-  Only "String" or "Integer" value can be set through keyword.
+  OrderList, Date and Time questions are not supported now.
 
   @param[in]      DevicePathStr                    The device path string for this keyword.
   @param[in]      KeywordType                      To indicate what kind of value this keyword needs to save.
@@ -2510,19 +2699,17 @@ SaveAttributeValueByQuestion  (
 
 **/
 EFI_STATUS
-SaveAttributeValueByKeyword  (
-  IN CHAR16              *DevicePathStr,
-  IN CHAR8               *KeywordType,
-  IN CHAR16              *Keyword,
-  IN EDKII_JSON_VALUE    AttributeValue
+SaveAttributeValueByKeyword (
+  IN REDFISH_STATEMENT    *Statement,
+  IN CHAR16               *DevicePathStr,
+  IN CHAR16               *Keyword,
+  IN EDKII_JSON_VALUE     AttributeValue
   )
 {
   EFI_STATUS                  Status;
-  CHAR16                      *ValueUcs2Str;
-  UINT64                      ValueNum;
   EFI_DEVICE_PATH_PROTOCOL    *DevicePath;
 
-  if (KeywordType == NULL || Keyword == NULL) {
+  if (Statement == NULL || Keyword == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -2530,55 +2717,36 @@ SaveAttributeValueByKeyword  (
   if (DevicePath == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  ValueUcs2Str = NULL;
 
-  if (AsciiStrCmp (KeywordType, "String") == 0) {
+  switch (Statement->HiiStatement->Operand) {
+  case EFI_IFR_NUMERIC_OP:
 
-    if (!JsonValueIsString (AttributeValue)) {
-      return EFI_INVALID_PARAMETER;
-    }
+    Status = SaveNumberByKeyword (DevicePath, Keyword, AttributeValue, Statement->HiiStatement->Value.Type);
+    break;
 
-    ValueUcs2Str = JsonValueGetUCS2String (AttributeValue);
-    if (ValueUcs2Str == NULL) {
-      return EFI_ABORTED;
-    }
+  case EFI_IFR_STRING_OP:
 
-    Status = KeywordConfigSetValue (
-               DevicePath,
-               Keyword,
-               ValueUcs2Str,
-               KeywordTypeBuffer
-               );
+    Status = SaveStringByKeyword (DevicePath, Keyword, AttributeValue);
+    break;
 
-  } else if (AsciiStrCmp (KeywordType, "Integer") == 0) {
+  case EFI_IFR_CHECKBOX_OP:
 
-    if (!JsonValueIsNumber (AttributeValue)) {
-      return EFI_INVALID_PARAMETER;
-    }
+    Status = SaveBooleanByKeyword (DevicePath, Keyword, AttributeValue);
+    break;
 
-    ValueUcs2Str = AllocateZeroPool (TEM_STR_LEN * sizeof (CHAR16));
-    if (ValueUcs2Str == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    ValueNum = JsonValueGetNumber (AttributeValue);
-    UnicodeSPrint (ValueUcs2Str, TEM_STR_LEN * sizeof (CHAR16), L"%ld", ValueNum);
+  case EFI_IFR_ONE_OF_OP:
 
-    Status = KeywordConfigSetValue (
-               DevicePath,
-               Keyword,
-               ValueUcs2Str,
-               KeywordTypeNumeric8
-               );
-  } else {
-    Status = EFI_UNSUPPORTED;
+    Status = SaveNumberByKeyword (DevicePath, Keyword, AttributeValue, KeywordTypeNumeric1);
+    break;
+
+  default:
+
+    return EFI_UNSUPPORTED;
   }
 
-  if (ValueUcs2Str != NULL) {
-    FreePool (ValueUcs2Str);
-  }
+  FreePool (DevicePath);
   return Status;
 }
-
 
 /**
   Publish Redfish required MapFrom Dependency for an id value equal expression dependency.
@@ -2589,6 +2757,7 @@ SaveAttributeValueByKeyword  (
   @param[in, out]     MapFromArray            MapFrom dependency array.
 
   @retval  EFI_SUCCESS                        This dependency has been published successfully.
+  @retval  EFI_OUT_OF_RESOURCES               There are no enough Memory.
   @retval  EFI_INVALID_PARAMETER              One or more parameters are invalid.
 
 **/
@@ -2599,8 +2768,10 @@ GetDependencyForEqIdVal (
   IN OUT EDKII_JSON_VALUE             MapFromArray
   )
 {
+  EFI_STATUS          Status;
   UINT64              NumValue;
   EDKII_JSON_VALUE    MapFromValue;
+  EDKII_JSON_VALUE    JsonTemp;
 
   if (ExpDes->EqIdValExp.Value.Type == EFI_IFR_TYPE_NUM_SIZE_8) {
     NumValue = ExpDes->EqIdValExp.Value.Value.u8;
@@ -2615,29 +2786,50 @@ GetDependencyForEqIdVal (
   }
 
   MapFromValue = JsonValueInitObject ();
-  JsonArrayAppendValue (JsonValueGetArray (MapFromArray), MapFromValue);
+  if (MapFromValue == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  
+  Status = JsonArrayAppendValue (JsonValueGetArray (MapFromArray), MapFromValue);
+  if (EFI_ERROR (Status)) {
 
+    JsonValueFree (MapFromValue);
+    return Status;
+  }
+
+  JsonTemp = JsonValueInitAsciiString (AttributeName);
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromAttribute",
-    JsonValueInitAsciiString (AttributeName)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
+  JsonTemp = JsonValueInitAsciiString ("CurrentValue");
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromProperty",
-    JsonValueInitAsciiString ("CurrentValue")
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
+  JsonTemp = JsonValueInitNumber (NumValue);
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromValue",
-    JsonValueInitNumber (NumValue)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
+  JsonTemp = JsonValueInitAsciiString ("EQU");
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromCondition",
-    JsonValueInitAsciiString ("EQU")
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
+  JsonValueFree (MapFromValue);
   return EFI_SUCCESS;
 }
 
@@ -2660,6 +2852,7 @@ GetDependencyForNot (
   CHAR8               *ConditionStr;
   EDKII_JSON_VALUE    MapFromValue;
   EDKII_JSON_VALUE    ConditionValue;
+  EDKII_JSON_VALUE    JsonTemp;
 
   ArrayCount = JsonArrayCount (JsonValueGetArray (MapFromArray));
   if (ArrayCount == 0) {
@@ -2678,18 +2871,31 @@ GetDependencyForNot (
   }
 
   if (AsciiStrCmp (ConditionStr, "EQU") == 0) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("NEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("NEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (AsciiStrCmp (ConditionStr, "NEQ") == 0) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("EQU"));
+
+    JsonTemp = JsonValueInitAsciiString ("EQU");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (AsciiStrCmp (ConditionStr, "GEQ") == 0) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("LSS"));
+
+    JsonTemp = JsonValueInitAsciiString ("LSS");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (AsciiStrCmp (ConditionStr, "GTR") == 0) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("LEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("LEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (AsciiStrCmp (ConditionStr, "LEQ") == 0) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("GTR"));
+
+    JsonTemp = JsonValueInitAsciiString ("GTR");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else {  //LSS
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("GEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("GEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   }
+  JsonValueFree (JsonTemp);
 
   return EFI_SUCCESS;
 }
@@ -2757,6 +2963,7 @@ GetExpressionsForCondition (
   @param[in]          SubExpDes2              The right expression to be compaired.
 
   @retval  EFI_SUCCESS                        This dependency has been published successfully.
+  @retval  EFI_OUT_OF_RESOURCES               There are no enough Memory.
   @retval  EFI_UNSUPPORTED                    This dependency was not supported by Redfish or UEFI.
 
 **/
@@ -2770,32 +2977,55 @@ GetDependencyForCondition (
   )
 {
   EDKII_JSON_VALUE    MapFromValue;
+  EDKII_JSON_VALUE    JsonTemp;
 
   MapFromValue = JsonValueInitObject ();
+  if (MapFromValue == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  JsonTemp = JsonValueInitAsciiString (AttributeName);
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromAttribute",
-    JsonValueInitAsciiString (AttributeName)
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
+
+  JsonTemp = JsonValueInitAsciiString ("CurrentValue");
   JsonObjectSetValue (
     JsonValueGetObject (MapFromValue),
     "MapFromProperty",
-    JsonValueInitAsciiString ("CurrentValue")
+    JsonTemp
     );
+  JsonValueFree (JsonTemp);
 
   if (Oprand == EFI_IFR_EQUAL_OP) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("EQU"));
+
+    JsonTemp = JsonValueInitAsciiString ("EQU");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (Oprand == EFI_IFR_NOT_EQUAL_OP) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("NEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("NEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (Oprand == EFI_IFR_GREATER_EQUAL_OP) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("GEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("GEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (Oprand == EFI_IFR_GREATER_THAN_OP) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("GTR"));
+
+    JsonTemp = JsonValueInitAsciiString ("GTR");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else if (Oprand == EFI_IFR_LESS_EQUAL_OP) {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("LEQ"));
+
+    JsonTemp = JsonValueInitAsciiString ("LEQ");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   } else {
-    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonValueInitAsciiString ("LSS"));
+
+    JsonTemp = JsonValueInitAsciiString ("LSS");
+    JsonObjectSetValue (JsonValueGetObject (MapFromValue), "MapFromCondition", JsonTemp);
   }
+  JsonValueFree (JsonTemp);
 
   if (*((UINT8*) SubExpDes2) == EFI_IFR_TRUE_OP ||
     *((UINT8*) SubExpDes2) == EFI_IFR_FALSE_OP) {
@@ -2809,42 +3039,49 @@ GetDependencyForCondition (
     *((UINT8*) SubExpDes2) == EFI_IFR_UINT8_OP ||
     *((UINT8*) SubExpDes2) == EFI_IFR_ZERO_OP) {
 
+    JsonTemp = JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u8);
     JsonObjectSetValue (
       JsonValueGetObject (MapFromValue),
       "MapFromValue",
-      JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u8)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   } else if (*((UINT8*) SubExpDes2) == EFI_IFR_UINT16_OP ||
     *((UINT8*) SubExpDes2) == EFI_IFR_VERSION_OP) {
 
+    JsonTemp = JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u16);
     JsonObjectSetValue (
       JsonValueGetObject (MapFromValue),
       "MapFromValue",
-      JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u16)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   } else if (*((UINT8*) SubExpDes2) == EFI_IFR_UINT32_OP) {
 
+    JsonTemp = JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u32);
     JsonObjectSetValue (
       JsonValueGetObject (MapFromValue),
       "MapFromValue",
-      JsonValueInitNumber (SubExpDes2->ContantExp.Value.Value.u32)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   } else if (*((UINT8*) SubExpDes2) == EFI_IFR_ONES_OP ||
     *((UINT8*) SubExpDes2) == EFI_IFR_UINT64_OP) {
 
+    JsonTemp = JsonValueInitNumber ((UINTN) SubExpDes2->ContantExp.Value.Value.u64);
     JsonObjectSetValue (
       JsonValueGetObject (MapFromValue),
       "MapFromValue",
-      JsonValueInitNumber ((UINTN) SubExpDes2->ContantExp.Value.Value.u64)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
   } else {
 
     JsonValueFree (MapFromValue);
     return EFI_UNSUPPORTED;
   }
 
-  JsonArrayAppendValue (JsonValueGetArray (MapFromArray), MapFromValue);
-  return EFI_SUCCESS;
+  return JsonArrayAppendValue (JsonValueGetArray (MapFromArray), MapFromValue);
 }
 
 /**
@@ -2883,6 +3120,7 @@ RedfishGetDependencyForExpression (
   UINTN                         ArrayCount;
   HII_DEPENDENCY_EXPRESSION*    SubExpDes1;
   HII_DEPENDENCY_EXPRESSION*    SubExpDes2;
+  EDKII_JSON_VALUE              JsonTemp;
 
   if (ExpDes == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -2959,18 +3197,23 @@ RedfishGetDependencyForExpression (
 
       MapFromValue = JsonArrayGetValue (MapFromArray, ArrayCount + 1);
       if (Oprand == EFI_IFR_AND_OP) {
+
+        JsonTemp = JsonValueInitAsciiString ("AND");
         JsonObjectSetValue (
           JsonValueGetObject (MapFromValue),
           "MapTerms",
-          JsonValueInitAsciiString ("AND")
+          JsonTemp
           );
       } else {
+
+        JsonTemp = JsonValueInitAsciiString ("OR");
         JsonObjectSetValue (
           JsonValueGetObject (MapFromValue),
           "MapTerms",
-          JsonValueInitAsciiString ("OR")
+          JsonTemp
           );
       }
+      JsonValueFree (JsonTemp);
       break;
 
     case EFI_IFR_EQUAL_OP:
@@ -3114,11 +3357,11 @@ InitRedfishForm (
   }
 
   if (FormTitleStr == NULL) {
-    RedfishForm->FormMenuName = L"";
+    RedfishForm->RedfishMenuName = L"";
   } else {
 
-    RedfishForm->FormMenuName = AllocateZeroPool (StrSize (FormTitleStr));
-    if (RedfishForm->FormMenuName == NULL) {
+    RedfishForm->RedfishMenuName = AllocateZeroPool (StrSize (FormTitleStr));
+    if (RedfishForm->RedfishMenuName == NULL) {
 
       FreePool (RedfishForm);
       return NULL;
@@ -3132,18 +3375,18 @@ InitRedfishForm (
     while (*Ptr != L'\0') {
       while (*Ptr != L' ' && *Ptr != L'\0') {
 
-        RedfishForm->FormMenuName[StrIndex ++] = *Ptr;
+        RedfishForm->RedfishMenuName[StrIndex ++] = *Ptr;
         Ptr ++;
       }
 
       if (*Ptr == L' ') {
 
-        RedfishForm->FormMenuName[StrIndex ++] = L'_';
+        RedfishForm->RedfishMenuName[StrIndex ++] = L'_';
         while (*Ptr == L' ') {
           Ptr ++;
         }
       } else {
-        RedfishForm->FormMenuName[StrIndex] = L'\0';
+        RedfishForm->RedfishMenuName[StrIndex] = L'\0';
       }
     }
   }
@@ -3312,8 +3555,13 @@ InitDevAliasTable (
   @param[in]          Statement           The question to be parsed to attribute JSON value
   @param[in]          AttributesArray     The attribute array to be appended
 
+  @retval  EFI_SUCCESS                    Device alias table has been initialized successfully.
+  @retval  EFI_UNSUPPORTED                This attribute is not supported.
+  @retval  EFI_OUT_OF_RESOURCES           System has no other memory to allocate.
+  @retval  Others                         Another unexpected error occured.
+
 **/
-VOID
+EFI_STATUS
 AttributesArrayAppendValue (
   IN REDFISH_FORMSET      *FormSet,
   IN REDFISH_FORM         *Form,
@@ -3326,8 +3574,10 @@ AttributesArrayAppendValue (
 
   Attribute = JsonValueInitObject ();
   if (Attribute == NULL) {
-    return;
+    return EFI_OUT_OF_RESOURCES;
   }
+
+  Status = EFI_UNSUPPORTED;
 
   switch (Statement->HiiStatement->Operand) {
   case EFI_IFR_NUMERIC_OP:
@@ -3337,10 +3587,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_STRING_OP:
@@ -3350,10 +3600,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_PASSWORD_OP:
@@ -3363,10 +3613,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_CHECKBOX_OP:
@@ -3376,10 +3626,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_ONE_OF_OP:
@@ -3389,10 +3639,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_ORDERED_LIST_OP:
@@ -3402,10 +3652,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_DATE_OP:
@@ -3415,10 +3665,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   case EFI_IFR_TIME_OP:
@@ -3428,10 +3678,10 @@ AttributesArrayAppendValue (
       break;
     }
 
-    JsonArrayAppendValue (
-      JsonValueGetArray (AttributesArray),
-      Attribute
-      );
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (AttributesArray),
+               Attribute
+               );
     break;
 
   default:
@@ -3439,11 +3689,8 @@ AttributesArrayAppendValue (
     break;
   }
 
-  if (EFI_ERROR (Status)) {
-    JsonValueFree (Attribute);
-  }
-
-  return;
+  JsonValueFree (Attribute);
+  return Status;
 }
 
 /**
@@ -3505,49 +3752,6 @@ GetAttributeByName (
 }
 
 /**
-  Set menu path string to a form menu. The menu path records the information of the path from root menu
-  to current menu, as "/Root_Menu/Sub_Menu/.../Current_Menu/".
-
-  @param[in]       FormMenu                          The current form menu to set menu path string.
-
-  @retval  EFI_SUCCESS                               The menu path has been set successfully.
-  @retval  EFI_NOT_FOUND                             This form menu is not found in system menu list.
-
-**/
-EFI_STATUS
-SetMenuPathToFormMenu(
-  IN REDFISH_FORM_MENU    *FormMenu
-  )
-{
-  BOOLEAN            MenuIsFound;
-  LIST_ENTRY         *ListEntry;
-  MENU_NAME_NODE*    MenuNameNode;
-  CHAR16             MenuPathTempStr[MAX_SIZE_REDFISH_MENU_LENGTH];
-
-  MenuIsFound = FALSE;
-  for (ListEntry = (&mMenuNameList)->ForwardLink; ListEntry != (&mMenuNameList); ListEntry = ListEntry->ForwardLink) {
-
-    MenuNameNode = CR (ListEntry, MENU_NAME_NODE, Link, MENU_NAME_NODE_SIGNATURE);
-    if (StrCmp (MenuNameNode->MenuName, FormMenu->MenuName) == 0) {
-
-      MenuIsFound = TRUE;
-      break;
-    }
-  }
-
-  if (!MenuIsFound) {
-    return EFI_NOT_FOUND;
-  }
-
-  CreateMenuPath (FormMenu->Parent, FormMenu->MenuPath);
-  StrCpyS (MenuPathTempStr, MAX_SIZE_REDFISH_MENU_LENGTH, FormMenu->MenuPath + 1);
-  *(MenuPathTempStr + StrLen (MenuPathTempStr) - 1) = L'\0';
-  StrCpyS (FormMenu->MenuPath, MAX_SIZE_REDFISH_MENU_LENGTH, MenuPathTempStr);
-
-  return EFI_SUCCESS;
-}
-
-/**
   Append a dependency JSON value to the end of the dependency array.
 
   Supported dependencies in UEFI include: SuppressIf, DisableIf, GrayoutIf and WarningTextIf.
@@ -3573,20 +3777,20 @@ AppendDependencyArray(
   IN EDKII_JSON_VALUE     DependenciesArray
   )
 {
-  EFI_STATUS             Status;
-  EDKII_JSON_VALUE       MapFromArray;
-  EDKII_JSON_VALUE       DependencyValue;
-  EDKII_JSON_VALUE       DependenciesItem;
-  ATTRIBUTE_NAME_NODE    *MapToNameNode;
+  EFI_STATUS               Status;
+  EDKII_JSON_VALUE         MapFromArray;
+  EDKII_JSON_VALUE         DependencyValue;
+  EDKII_JSON_VALUE         DependenciesItem;
+  ATTRIBUTE_NAME_NODE      *MapToNameNode;
+  EDKII_JSON_VALUE         JsonTemp;
+  LIST_ENTRY               *Link;
+  HII_EXPRESSION_OPCODE    *ExpressionOpCode;
 
   MapToNameNode = GetNameNodeByQuestionId (
                     FormSet->HiiFormSet,
                     &mAttributeNameNodeList,
                     Statement->HiiStatement->QuestionId
                     );
-
-  LIST_ENTRY                  *Link;
-  HII_EXPRESSION_OPCODE       *ExpressionOpCode;
 
   Link = GetFirstNode (&Expression->OpCodeListHead);
   while (!IsNull (&Expression->OpCodeListHead, Link)) {
@@ -3607,32 +3811,44 @@ AppendDependencyArray(
       "MapToValue",
       JsonValueInitBoolean (TRUE)
       );
+
+    JsonTemp = JsonValueInitAsciiString (MapToNameNode->AttributeName);
     JsonObjectSetValue (
       JsonValueGetObject (DependencyValue),
       "MapToAttribute",
-      JsonValueInitAsciiString (MapToNameNode->AttributeName)
+      JsonTemp
       );
+    JsonValueFree (JsonTemp);
 
     if (IsWarningExpression) {
+
+      JsonTemp = JsonValueInitAsciiString ("WarningText");
       JsonObjectSetValue (
         JsonValueGetObject (DependencyValue),
         "MapToProperty",
-        JsonValueInitAsciiString ("WarningText")
+        JsonTemp
         );
+      JsonValueFree (JsonTemp);
     } else {
 
       if (Expression->Type == EFI_HII_EXPRESSION_SUPPRESS_IF || Expression->Type == EFI_HII_EXPRESSION_DISABLE_IF) {
+
+        JsonTemp = JsonValueInitAsciiString ("Hidden");
         JsonObjectSetValue (
           JsonValueGetObject (DependencyValue),
           "MapToProperty",
-          JsonValueInitAsciiString ("Hidden")
+          JsonTemp
           );
+        JsonValueFree (JsonTemp);
       } else if (Expression->Type == EFI_HII_EXPRESSION_GRAY_OUT_IF) {
+
+        JsonTemp = JsonValueInitAsciiString ("GrayOut");
         JsonObjectSetValue (
           JsonValueGetObject (DependencyValue),
           "MapToProperty",
-          JsonValueInitAsciiString ("GrayOut")
+          JsonTemp
           );
+        JsonValueFree (JsonTemp);
       } else {
 
         JsonValueFree (DependencyValue);
@@ -3675,37 +3891,49 @@ AppendDependencyArray(
         "MapFrom",
         MapFromArray
         );
+      JsonValueFree (MapFromArray);
 
       DependenciesItem = JsonValueInitObject ();
       if (DependenciesItem == NULL) {
 
-        JsonValueFree (MapFromArray);
         JsonValueFree (DependencyValue);
         return EFI_OUT_OF_RESOURCES;
       }
 
-      JsonObjectSetValue (
-        JsonValueGetObject (DependenciesItem),
-        "Dependency",
-        DependencyValue
-        );
+      Status = JsonObjectSetValue (
+                 JsonValueGetObject (DependenciesItem),
+                 "Dependency",
+                 DependencyValue
+                 );
+      JsonValueFree (DependencyValue);
+      if (EFI_ERROR (Status)) {
+
+        JsonValueFree (DependenciesItem);
+        return Status;
+      }
+
+      JsonTemp = JsonValueInitAsciiString ("");
       JsonObjectSetValue (
         JsonValueGetObject (DependenciesItem),
         "DependencyFor",
-        JsonValueInitAsciiString ("")
+        JsonTemp
         );
+      JsonValueFree (JsonTemp);
+
+      JsonTemp = JsonValueInitAsciiString ("Map");
       JsonObjectSetValue (
         JsonValueGetObject (DependenciesItem),
         "Type",
-        JsonValueInitAsciiString ("Map")
+        JsonTemp
         );
+      JsonValueFree (JsonTemp);
 
-      JsonArrayAppendValue (
-        JsonValueGetArray (DependenciesArray),
-        DependenciesItem
-        );
-
-      return EFI_SUCCESS;
+      Status = JsonArrayAppendValue (
+                 JsonValueGetArray (DependenciesArray),
+                 DependenciesItem
+                 );
+      JsonValueFree (DependenciesItem);
+      return Status;
     } else {
 
       JsonValueFree (DependencyValue);
@@ -3737,9 +3965,10 @@ AppendDependencyArray(
 
 **/
 EFI_STATUS
-FindQuestionByAttributeName  (
+FindQuestion  (
   IN     LIST_ENTRY           *FormsetListLinkHead,
   IN     CHAR8                *AttributeName,
+  IN     CHAR16               *Keyword,
      OUT REDFISH_FORMSET      **FormSet,
      OUT REDFISH_FORM         **Form,
      OUT REDFISH_STATEMENT    **Statement
@@ -3757,9 +3986,11 @@ FindQuestionByAttributeName  (
     return Status;
   }
 
-  Status = GetQuestionIdByAttributeName (AttributeName, &QuestionId);
-  if (EFI_ERROR (Status)) {
-    return Status;
+  if (Keyword == NULL) {
+    Status = GetQuestionIdByAttributeName (AttributeName, &QuestionId);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
   FormsetListLink = GetFirstNode (FormsetListLinkHead);
@@ -3776,9 +4007,17 @@ FindQuestionByAttributeName  (
         while (!IsNull (&(*Form)->RedfishStatementList, StatementListLink)) {
 
           *Statement = REDFISH_STATEMENT_FROM_LINK (StatementListLink);
-          if ((*Statement)->HiiStatement->QuestionId == QuestionId) {
-            return EFI_SUCCESS;
+
+          if ((*Statement)->IsKeywordSupported) {
+            if (StrCmp (Keyword, (*Statement)->Keyword) == 0) {
+              return EFI_SUCCESS; 
+            }
+          } else {
+            if ((*Statement)->HiiStatement->QuestionId == QuestionId) {
+              return EFI_SUCCESS;
+            }
           }
+
           StatementListLink = GetNextNode (&(*Form)->RedfishStatementList, StatementListLink);
         }
         FormListLink = GetNextNode (&(*FormSet)->RedfishFormList, FormListLink);
@@ -3904,6 +4143,7 @@ SetMessageArrayToRedfishSetting (
   EDKII_JSON_VALUE    Message;
   EDKII_JSON_VALUE    RelatedProperties;
   EDKII_JSON_VALUE    FailedAttributeName;
+  EDKII_JSON_VALUE    JsonTemp;
 
   RETURN_STATUS_IF_JSON_VALUE_NOT_OBJECT (RedfishSettings, EFI_INVALID_PARAMETER);
 
@@ -3924,11 +4164,13 @@ SetMessageArrayToRedfishSetting (
 
   if (EFI_ERROR (Storage->StatusOfLastRoute)) {
 
-    Status = JsonObjectSetValue (
-               JsonValueGetObject (Message),
-               "MessageId",
-               JsonValueInitAsciiString ("Base.1.0.SettingsFailed")
-               );
+    JsonTemp = JsonValueInitAsciiString ("Base.1.0.SettingsFailed");
+    Status   = JsonObjectSetValue (
+                 JsonValueGetObject (Message),
+                 "MessageId",
+                 JsonTemp
+                 );
+    JsonValueFree (JsonTemp);
     if (EFI_ERROR (Status)) {
       goto ON_EXIT;
     }
@@ -3940,51 +4182,61 @@ SetMessageArrayToRedfishSetting (
         goto ON_EXIT;
       }
 
-      FailedAttributeName = JsonValueInitAsciiString ((CHAR8*) Storage + sizeof (HII_REDFISH_LIB_NV_STORAGE) + Storage->EtagStrSize);
+      FailedAttributeName = JsonValueInitAsciiString (
+                              (CHAR8*) Storage + sizeof (HII_REDFISH_LIB_NV_STORAGE) + Storage->EtagStrSize
+                              );
       JsonArrayAppendValue (JsonValueGetArray (RelatedProperties), FailedAttributeName);
+      JsonValueFree (FailedAttributeName);
 
       Status = JsonObjectSetValue (
                  JsonValueGetObject (Message),
                  "RelatedProperties",
                  RelatedProperties
-               );
+                 );
+      JsonValueFree (RelatedProperties);
       if (EFI_ERROR (Status)) {
-
-        JsonValueFree (RelatedProperties);
         goto ON_EXIT;
       }
     }
   } else {
 
-    Status = JsonObjectSetValue (
-               JsonValueGetObject (Message),
-               "MessageId",
-               JsonValueInitAsciiString ("Base.1.0.Success")
-               );
+    JsonTemp = JsonValueInitAsciiString ("Base.1.0.Success");
+    Status   = JsonObjectSetValue (
+                 JsonValueGetObject (Message),
+                 "MessageId",
+                 JsonTemp
+                 );
+    JsonValueFree (JsonTemp);
     if (EFI_ERROR (Status)) {
       goto ON_EXIT;
     }
 
     if (mHiiRedfishPrivateData.ResetRequired == TRUE) {
 
-      Status = JsonObjectSetValue (
-                 JsonValueGetObject (Message),
-                 "Message",
-                 JsonValueInitAsciiString ("Configuration is changed, please reset the system to take effect.")
-               );
+      JsonTemp = JsonValueInitAsciiString ("Configuration Changed, Reset system to Take Effect!");
+      Status   = JsonObjectSetValue (
+                   JsonValueGetObject (Message),
+                   "Message",
+                   JsonTemp
+                   );
+      JsonValueFree (JsonTemp);
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
+
+      JsonTemp = JsonValueInitAsciiString ("Link to perform a system reset: \\xxx\\xxx\\xxx\\xxx");
       Status = JsonObjectSetValue (
                  JsonValueGetObject (Message),
                  "Resolution",
-                 JsonValueInitAsciiString ("Link to perform a system reset: \\xxx\\xxx\\xxx\\xxx")
-               );
+                 JsonTemp
+                 );
+      JsonValueFree (JsonTemp);
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
     }
   }
+
   Status = JsonArrayAppendValue (
              JsonValueGetArray (MessagesArray),
              Message
@@ -4001,11 +4253,8 @@ SetMessageArrayToRedfishSetting (
 
 ON_EXIT:
 
-  if (EFI_ERROR (Status)) {
-
-    JsonValueFree (Message);
-    JsonValueFree (MessagesArray);
-  }
+  JsonValueFree (MessagesArray);
+  JsonValueFree (Message);
 
   return Status;
 }
@@ -4015,75 +4264,76 @@ ON_EXIT:
 
   @param[in]          RedfishFormSet     The Redfish formset this form belongs to
   @param[in]          RedfishForm        The Redfish form which contains the form needed
-  @param[in, out]     FormMenu           The Refish menu to initiallize
+  @param[in, out]     RedfishMenu        The Refish menu to initiallize
 
 **/
 VOID
-InitRedfishFormMenu (
+InitRedfishMenu (
   IN     REDFISH_FORMSET      *RedfishFormSet,
   IN     REDFISH_FORM         *RedfishForm,
-  IN OUT REDFISH_FORM_MENU    *FormMenu
+  IN OUT REDFISH_MENU         *RedfishMenu
   )
 {
-  FormMenu->IsHidden   = FALSE;
-  FormMenu->IsReadOnly = FALSE;
-  FormMenu->FormId     = RedfishForm->HiiForm->FormId;
-  CopyGuid (&FormMenu->FormSetGuid, &RedfishFormSet->HiiFormSet->Guid);
+  CopyGuid (&RedfishMenu->FormSetGuid, &RedfishFormSet->HiiFormSet->Guid);
+  RedfishMenu->FormId     = RedfishForm->HiiForm->FormId;
+  RedfishMenu->IsHidden   = FALSE;
+  RedfishMenu->IsReadOnly = FALSE;
+  RedfishMenu->IsRootMenu = RedfishForm->IsRootForm;
+  RedfishMenu->IsRestMenu = RedfishForm->IsRest;
 
-  FormMenu->DisplayName = NULL;
+  RedfishMenu->DisplayName = NULL;
   if (RedfishForm->HiiForm->FormTitle != 0) {
-    FormMenu->DisplayName = HiiGetString (
-                              RedfishFormSet->HiiFormSet->HiiHandle,
-                              RedfishForm->HiiForm->FormTitle,
-                              NULL
+    RedfishMenu->DisplayName = HiiGetString (
+                                 RedfishFormSet->HiiFormSet->HiiHandle,
+                                 RedfishForm->HiiForm->FormTitle,
+                                 NULL
+                                 );
+    if (RedfishMenu->DisplayName == NULL) {
+      RedfishMenu->DisplayName = L"";
+    }
+  } else {
+    RedfishMenu->DisplayName = L"";
+  }
+
+  if (StrLen (RedfishForm->RedfishMenuName) != 0 && 
+    StrCmp (RedfishForm->RedfishMenuName, L"_") != 0) {
+
+    RedfishMenu->MenuName = AllocateCopyPool (
+                              StrSize (RedfishForm->RedfishMenuName),
+                              RedfishForm->RedfishMenuName
                               );
-  }
-  if (FormMenu->DisplayName == NULL) {
-    FormMenu->DisplayName = L"";
-  }
-
-  if (StrLen (RedfishForm->FormMenuName) != 0 && StrCmp (RedfishForm->FormMenuName, L"_") != 0) {
-
-    FormMenu->MenuName = AllocateCopyPool (
-                           StrSize (RedfishForm->FormMenuName),
-                           RedfishForm->FormMenuName
-                           );
-    if (FormMenu->MenuName == NULL) {
-      return;
+    if (RedfishMenu->MenuName == NULL) {
+      RedfishMenu->MenuName = L"";
     }
 
-    UnicodeSPrint (FormMenu->MenuPath,
-      MAX_SIZE_REDFISH_MENU_LENGTH,
-      L"/%s/",
-      RedfishForm->FormMenuName
-      );
-
   } else {
-    FormMenu->MenuName = L"";
+    RedfishMenu->MenuName = L"";
   }
+
+  RedfishMenu->ChildCount = 0;
 }
 
 /**
-  Get the count of Redfish forms in the whole system.
+  Get the count of Redfish Menus in the whole system.
 
-  Redfish form is a structure contains some Redfish required information over HII form.
+  Redfish Menu is a structure contains some Redfish required information over HII form.
 
   @return the count of Redfish forms.
 
 **/
 UINTN
-GetSystemFormMenuCount (
+GetSystemRedfishMenuCount (
   VOID
   )
 {
-  UINT16                     FormMenuListCount;
+  UINT16                     MenuListCount;
   LIST_ENTRY                 *FormsetListLinkHead;
   LIST_ENTRY                 *FormsetListLink;
   REDFISH_FORMSET            *FormSet;
   LIST_ENTRY                 *FormListLink;
   REDFISH_FORM               *Form;
 
-  FormMenuListCount = 0;
+  MenuListCount = 0;
 
   FormsetListLinkHead = &mHiiRedfishPrivateData.RedfishFormSetList;
   FormsetListLink = GetFirstNode (FormsetListLinkHead);
@@ -4096,12 +4346,12 @@ GetSystemFormMenuCount (
       Form = REDFISH_FORM_FROM_LINK (FormListLink);
       FormListLink = GetNextNode (&FormSet->RedfishFormList, FormListLink);
 
-      FormMenuListCount ++;
+      MenuListCount ++;
     }
     FormsetListLink = GetNextNode (FormsetListLinkHead, FormsetListLink);
   }
 
-  return FormMenuListCount;
+  return MenuListCount;
 }
 
 /**
@@ -4111,20 +4361,22 @@ GetSystemFormMenuCount (
   For each form in HII databse, there is a path form root form to it. This function is to link
   all forms to their parent forms in system.
 
-  @param[in]          FormMenuList                The list of Redfish form menus
-  @param[in]          FormMenuListCount           The count of Redfish form menus in system
+  @param[in]          MenuList                The list of Redfish form menus
+  @param[in]          MenuListCount           The count of Redfish form menus in system
 
 **/
 VOID
-LinkSystemRedfishFormMenu (
-  IN REDFISH_FORM_MENU    *FormMenuList,
-  IN UINTN                FormMenuListCount
+LinkSystemRedfishMenus (
+  IN REDFISH_MENU    *MenuList,
+  IN UINTN           MenuListCount
   )
 {
-  REDFISH_FORM_MENU       *TempFormMenu;
-  REDFISH_FORM_MENU       *CurrentFormMenu;
-  REDFISH_FORM_MENU       *ParentFormMenu;
-  UINTN                   FormMenuListIndex;
+  REDFISH_MENU            *TempMenu;
+  REDFISH_MENU            *TempChildMenu;
+  REDFISH_MENU            *CurrentMenu;
+  REDFISH_MENU            *ChildMenu;
+  UINTN                   MenuListIndex;
+
   EFI_IFR_TYPE_VALUE *    Value;
   LIST_ENTRY              *FormsetListLinkHead;
   LIST_ENTRY              *FormsetListLink;
@@ -4133,7 +4385,13 @@ LinkSystemRedfishFormMenu (
   REDFISH_FORM            *Form;
   LIST_ENTRY              *StatementListLink;
   REDFISH_STATEMENT       *Statement;
+  UINTN                   ChildIndex;
+  UINTN                   ChangeCount;
+  UINTN                   CurrentDepth;
 
+  //
+  // Link all Menus through EFI_IFR_REF_OP
+  //
   FormsetListLinkHead = &mHiiRedfishPrivateData.RedfishFormSetList;
   FormsetListLink = GetFirstNode (FormsetListLinkHead);
   while (!IsNull (FormsetListLinkHead, FormsetListLink)) {
@@ -4152,63 +4410,139 @@ LinkSystemRedfishFormMenu (
 
         Statement         = REDFISH_STATEMENT_FROM_LINK (StatementListLink);
         StatementListLink = GetNextNode (&Form->RedfishStatementList, StatementListLink);
-        if (Statement->HiiStatement->Operand == EFI_IFR_REF_OP) {
+        if (Statement->HiiStatement->Operand != EFI_IFR_REF_OP) {
+          continue;
+        }
+        
+        Value = &Statement->HiiStatement->Value.Value;
+        if (!IsZeroGuid (&Value->ref.FormSetGuid)) {
+          continue;
+        }
 
-          Value = &Statement->HiiStatement->Value.Value;
-          if (IsZeroGuid (&Value->ref.FormSetGuid)) {
+        CurrentMenu = NULL;
+        ChildMenu   = NULL;
 
-            CurrentFormMenu = NULL;
-            ParentFormMenu  = NULL;
-            for (FormMenuListIndex = 0; FormMenuListIndex < FormMenuListCount; FormMenuListIndex ++) {
+        for (MenuListIndex = 0; MenuListIndex < MenuListCount; MenuListIndex ++) {
 
-              TempFormMenu = FormMenuList + FormMenuListIndex;
-              if (CompareGuid (&TempFormMenu->FormSetGuid, &FormSet->HiiFormSet->Guid) == TRUE &&
-                TempFormMenu->FormId == Value->ref.FormId &&
-                CurrentFormMenu == NULL) {
+          TempMenu = MenuList + MenuListIndex;
+          
+          if (CompareGuid (&TempMenu->FormSetGuid, &FormSet->HiiFormSet->Guid) == TRUE &&
+            TempMenu->FormId == Form->HiiForm->FormId && CurrentMenu == NULL) {
 
-                CurrentFormMenu = TempFormMenu;
-              }
+            CurrentMenu = TempMenu;
+          }
+          if (CompareGuid (&TempMenu->FormSetGuid, &FormSet->HiiFormSet->Guid) == TRUE &&
+            TempMenu->FormId == Value->ref.FormId && ChildMenu == NULL) {
 
-              if (CompareGuid (&TempFormMenu->FormSetGuid, &FormSet->HiiFormSet->Guid) == TRUE &&
-                TempFormMenu->FormId == Form->HiiForm->FormId &&
-                ParentFormMenu == NULL) {
-
-                ParentFormMenu = TempFormMenu;
-              }
-
-              if (CurrentFormMenu != NULL && ParentFormMenu != NULL) {
-
-                CurrentFormMenu->Parent = ParentFormMenu;
-                break;
-              }
-            }
-          } else {
-
-            CurrentFormMenu = NULL;
-            ParentFormMenu  = NULL;
-            for (FormMenuListIndex = 0; FormMenuListIndex < FormMenuListCount; FormMenuListIndex ++) {
-
-              TempFormMenu = FormMenuList + FormMenuListIndex;
-              if (CompareGuid (&TempFormMenu->FormSetGuid, &Value->ref.FormSetGuid) == TRUE &&
-                CurrentFormMenu == NULL) {
-
-                CurrentFormMenu = FormMenuList + FormMenuListIndex;
-              }
-
-              if (CompareGuid (&TempFormMenu->FormSetGuid, &FormSet->HiiFormSet->Guid) == TRUE &&
-                TempFormMenu->FormId == Form->HiiForm->FormId &&
-                ParentFormMenu == NULL) {
-
-                ParentFormMenu = FormMenuList + FormMenuListIndex;
-              }
-
-              if (CurrentFormMenu != NULL && ParentFormMenu != NULL) {
-
-                CurrentFormMenu->Parent = ParentFormMenu;
-                break;
-              }
+            if (TempMenu->IsRootMenu == TRUE) {
+            
+              //
+              // FormSet Root Menu Shouldn't be a child
+              //
+              break;
+            } else {
+              ChildMenu = TempMenu;
             }
           }
+
+          if (CurrentMenu != NULL && ChildMenu != NULL && 
+            CurrentMenu->ChildCount < MAX_COUNT_REDIFHS_MENU_CHILD) {
+
+            for (ChildIndex = 0; ChildIndex < CurrentMenu->ChildCount; ChildIndex ++) {
+              if (CurrentMenu->ChildList[ChildIndex] == ChildMenu) {
+                break;
+              }
+            }
+
+            if (ChildIndex == CurrentMenu->ChildCount) {
+
+              CurrentMenu->ChildList[CurrentMenu->ChildCount] = ChildMenu;
+              CurrentMenu->ChildCount ++;
+            }
+
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  //
+  // Generate Menu Path for all linked Menus
+  //
+  CurrentDepth = 1;
+  do {
+
+    ChangeCount = 0;
+    for (MenuListIndex = 0; MenuListIndex < MenuListCount; MenuListIndex ++) {
+
+      TempMenu = MenuList + MenuListIndex;
+      
+      if (CurrentDepth == 1) {
+
+        //
+        // Find All Root Menus
+        //
+        if (TempMenu->IsRootMenu) {
+
+          TempMenu->MenuDepth = 1;
+          UnicodeSPrint (
+            TempMenu->MenuPath, 
+            MAX_SIZE_REDFISH_MENU_LENGTH,
+            L"./.../%s",
+            TempMenu->MenuName
+            );
+          ChangeCount ++;
+        }
+      } else {
+
+        if (TempMenu->MenuDepth == CurrentDepth - 1) {
+
+          for (ChildIndex = 0; ChildIndex < TempMenu->ChildCount; ChildIndex ++) {
+
+            TempChildMenu = TempMenu->ChildList[ChildIndex];
+
+            if (TempChildMenu->MenuDepth == 0) {
+
+              TempChildMenu->MenuDepth = CurrentDepth;
+              UnicodeSPrint (
+                TempChildMenu->MenuPath, 
+                MAX_SIZE_REDFISH_MENU_LENGTH,
+                L"%s/%s",
+                TempMenu->MenuPath,
+                TempChildMenu->MenuName
+                );
+              ChangeCount ++;
+            }
+          }
+        }
+      }
+    }
+
+    CurrentDepth ++;
+  } while (ChangeCount != 0);
+
+  //
+  // Generate Menu Path for all independent Menus
+  //
+  for (MenuListIndex = 0; MenuListIndex < MenuListCount; MenuListIndex ++) {
+  
+    TempMenu = MenuList + MenuListIndex;
+    if (TempMenu->IsRootMenu) {
+
+      for (ChildIndex = 0; ChildIndex < MenuListCount; ChildIndex ++) {
+
+        TempChildMenu = MenuList + ChildIndex;
+        if (TempChildMenu->MenuDepth == 0 &&
+          CompareGuid (&TempMenu->FormSetGuid, &TempChildMenu->FormSetGuid)) {
+
+          UnicodeSPrint (
+            TempChildMenu->MenuPath, 
+            MAX_SIZE_REDFISH_MENU_LENGTH,
+            L"%s/.../%s",
+            TempMenu->MenuPath,
+            TempChildMenu->MenuName
+            );
         }
       }
     }
@@ -4257,11 +4591,11 @@ GetAttributeValue (
 
     UefiDevicePath = JsonObjectGetValue (JsonValueGetObject (Attribute), "UefiDevicePath");
     RETURN_STATUS_IF_JSON_VALUE_NOT_STRING (UefiDevicePath, EFI_INVALID_PARAMETER);
-    DevStr = JsonValueGetUCS2String (UefiDevicePath);
+    DevStr = JsonValueGetUnicodeString (UefiDevicePath);
 
     UefiKeywordName = JsonObjectGetValue (JsonValueGetObject (Attribute), "UefiKeywordName");
     RETURN_STATUS_IF_JSON_VALUE_NOT_STRING (UefiKeywordName, EFI_INVALID_PARAMETER);
-    KeywordStr = JsonValueGetUCS2String (UefiKeywordName);
+    KeywordStr = JsonValueGetUnicodeString (UefiKeywordName);
 
     Status = GetAttributeValueFromKeywordConfig (
                DevStr,
@@ -4316,11 +4650,7 @@ SetStringAttributeValue (
   }
   CopyMem (TempStr, AttributeValue, Length);
 
-  StrValue = JsonValueInitUCS2String (TempStr);
-  if (StrValue == NULL) {
-    return;
-  }
-
+  StrValue = JsonValueInitUnicodeString (TempStr);
   AttributeName = JsonObjectGetValue (JsonValueGetObject (Attribute), "AttributeName");
   RETURN_IF_JSON_VALUE_NOT_STRING (AttributeName);
 
@@ -4329,6 +4659,7 @@ SetStringAttributeValue (
     JsonValueGetAsciiString (AttributeName),
     StrValue
     );
+  JsonValueFree (StrValue);
 
   FreePool (TempStr);
 }
@@ -4396,6 +4727,7 @@ SetNumberAttributeValue (
     JsonValueGetAsciiString (AttributeName),
     NumberValue
     );
+  JsonValueFree (NumberValue);
 
   return;
 }
@@ -4451,9 +4783,10 @@ SetTimeToRedfishSettings (
   IN HII_REDFISH_LIB_NV_STORAGE    *Storage
   )
 {
-  EFI_STATUS    Status;
-  CHAR8         TimeStr[sizeof("yyyy-mm-ddThh:mm:ss+00:00")];
-  CHAR8         TimeZoneStr[sizeof("+00:00")];
+  EFI_STATUS        Status;
+  CHAR8             TimeStr[sizeof("yyyy-mm-ddThh:mm:ss+00:00")];
+  CHAR8             TimeZoneStr[sizeof("+00:00")];
+  EDKII_JSON_VALUE  JsonTemp;
 
   if (Storage->TimeOfLastRoute.TimeZone > 0) {
     AsciiSPrint (
@@ -4487,11 +4820,14 @@ SetTimeToRedfishSettings (
     TimeZoneStr
     );
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (RedfishSettings),
-             "Time",
-             JsonValueInitAsciiString (TimeStr)
-             );
+  JsonTemp = JsonValueInitAsciiString (TimeStr);
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (RedfishSettings),
+               "Time",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
+
   return Status;
 }
 
@@ -4541,18 +4877,19 @@ SaveAttributeValue  (
   Form      = NULL;
   Statement = NULL;
 
-  if (!IsKeywordSupported) {
+  Status = FindQuestion (
+             &mHiiRedfishPrivateData.RedfishFormSetList,
+             AttributeName,
+             Keyword,
+             &FormSet,
+             &Form,
+             &Statement
+             );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    Status = FindQuestionByAttributeName (
-               &mHiiRedfishPrivateData.RedfishFormSetList,
-               AttributeName,
-               &FormSet,
-               &Form,
-               &Statement
-               );
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  if (!IsKeywordSupported) {
 
     Status = SaveAttributeValueByQuestion (
                FormSet,
@@ -4563,8 +4900,8 @@ SaveAttributeValue  (
   } else {
 
     Status = SaveAttributeValueByKeyword (
+               Statement,
                DevPathStr,
-               KeywordType,
                Keyword,
                AttributeValue
                );

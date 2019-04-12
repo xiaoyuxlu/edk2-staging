@@ -361,6 +361,7 @@ CreatePayloadToPatchBootOrder (
   EDKII_JSON_VALUE              JsonArray;
   EDKII_JSON_VALUE              JsonObjectBoot;
   EDKII_JSON_VALUE              JsonObjectForPatch;
+  EDKII_JSON_VALUE              JsonTemp;
 
   if (BootOrderPayload == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -396,23 +397,22 @@ CreatePayloadToPatchBootOrder (
   for (Index = 0; Index < OptionCount; Index++) {
     OptionNumber = OptionOrder[Index];
     AsciiSPrint (OptionName, sizeof (OptionName), "Boot%04x", OptionNumber);
+
+    JsonTemp = JsonValueInitAsciiString (OptionName);
     Status = JsonArrayAppendValue (
                JsonArray,
-               JsonValueInitAsciiString (OptionName)
+               JsonTemp
                );
+    JsonValueFree (JsonTemp);
     if (EFI_ERROR (Status)) {
       goto ON_ERROR;
     }
   }
 
-  FreePool (OptionOrder);
-
   Status = JsonObjectSetValue (JsonObjectBoot, "BootOrder", JsonArray);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
-
-
 
   JsonObjectForPatch = JsonValueInitObject ();
   if (JsonObjectForPatch == NULL) {
@@ -425,12 +425,17 @@ CreatePayloadToPatchBootOrder (
     goto ON_ERROR;
   }
 
-
-
   *BootOrderPayload = RedfishCreatePayload (JsonObjectForPatch, RedfishService);
+
+  FreePool (OptionOrder);
+  JsonValueFree (JsonArray);
+  JsonValueFree (JsonObjectBoot);
+  JsonValueFree (JsonObjectForPatch);
+
   return (*BootOrderPayload != NULL) ? EFI_SUCCESS : EFI_DEVICE_ERROR;
 
 ON_ERROR:
+
   if (OptionOrder != NULL) {
     FreePool (OptionOrder);
   }
@@ -468,9 +473,10 @@ CreatePayloadToPatchOverrideEnabled (
   OUT   REDFISH_PAYLOAD                       *OverrideEnabledPayload
   )
 {
-  EFI_STATUS                    Status;
-  EDKII_JSON_VALUE              JsonObjectBoot = NULL;
-  EDKII_JSON_VALUE              JsonObjectForPatch = NULL;
+  EFI_STATUS          Status;
+  EDKII_JSON_VALUE    JsonObjectBoot = NULL;
+  EDKII_JSON_VALUE    JsonObjectForPatch = NULL;
+  EDKII_JSON_VALUE    JsonTemp;
 
   if ((StatusStr == NULL) || (OverrideEnabledPayload == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -494,21 +500,35 @@ CreatePayloadToPatchOverrideEnabled (
     goto ON_ERROR;
   }
 
-  JsonObjectSetValue (
-    JsonObjectBoot,
-    "BootSourceOverrideEnabled",
-    JsonValueInitAsciiString(StatusStr)
-    );
+  JsonTemp = JsonValueInitAsciiString(StatusStr);
+  Status = JsonObjectSetValue (
+             JsonObjectBoot,
+             "BootSourceOverrideEnabled",
+             JsonTemp
+             );
+  JsonValueFree (JsonTemp);
+  if (EFI_ERROR (Status)) {
+    goto ON_ERROR;
+  }  
 
-  JsonObjectSetValue (JsonObjectForPatch, "Boot", JsonObjectBoot);
+  Status = JsonObjectSetValue (JsonObjectForPatch, "Boot", JsonObjectBoot);
+  if (EFI_ERROR (Status)) {
+    goto ON_ERROR;
+  }
 
   *OverrideEnabledPayload = RedfishCreatePayload (JsonObjectForPatch, RedfishService);
+
+  JsonValueFree (JsonObjectBoot);
+  JsonValueFree (JsonObjectForPatch);
+
   return (*OverrideEnabledPayload != NULL) ? EFI_SUCCESS : EFI_DEVICE_ERROR;
 
 ON_ERROR:
+
   if (JsonObjectBoot != NULL) {
     JsonValueFree (JsonObjectBoot);
   }
+
   if (JsonObjectForPatch != NULL) {
     JsonValueFree (JsonObjectForPatch);
   }
@@ -541,6 +561,7 @@ CreateBootOptionPayload (
   CHAR16               *DevicePathStr;
   EFI_STATUS           Status;
   UINTN                Count;
+  EDKII_JSON_VALUE     JsonTemp;
 
   if ((BootOption == NULL) || (BootOptionPayload == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -556,67 +577,83 @@ CreateBootOptionPayload (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "@odata.type",
-             JsonValueInitAsciiString ("#BootOption.v1_0_0.BootOption")
-             );
+  JsonTemp = JsonValueInitAsciiString ("#BootOption.v1_0_0.BootOption");
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "@odata.type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "Name",
-             JsonValueInitAsciiString ("Boot Option")
-             );
+  JsonTemp = JsonValueInitAsciiString ("Boot Option");
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "Name",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "Description",
-             JsonValueInitAsciiString ("UEFI Boot Option")
-             );
+  JsonTemp = JsonValueInitAsciiString ("UEFI Boot Option");
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "Description",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "BootOptionReference",
-             JsonValueInitAsciiString (BootOptRef)
-             );
+  JsonTemp = JsonValueInitAsciiString (BootOptRef);
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "BootOptionReference",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "Id",
-             JsonValueInitAsciiString (BootOptRef)
-             );
+  JsonTemp = JsonValueInitAsciiString (BootOptRef);
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "Id",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
-  Status = JsonObjectSetValue (
-             BootOptionJson,
-             "DisplayName",
-             JsonValueInitUCS2String (BootOption->Description)
-             );
+  JsonTemp = JsonValueInitUnicodeString (BootOption->Description);
+  Status   = JsonObjectSetValue (
+               BootOptionJson,
+               "DisplayName",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
 
   DevicePathStr = ConvertDevicePathToText (BootOption->FilePath, TRUE, FALSE);
   if (DevicePathStr != NULL) {
-    Status = JsonObjectSetValue (
-               BootOptionJson,
-               "UefiDevicePath",
-               JsonValueInitUCS2String (DevicePathStr)
-              );
+
+    JsonTemp = JsonValueInitUnicodeString (DevicePathStr);
+    Status   = JsonObjectSetValue (
+                 BootOptionJson,
+                 "UefiDevicePath",
+                 JsonTemp
+                 );
+    JsonValueFree (JsonTemp);
+
     FreePool (DevicePathStr);
     if (EFI_ERROR (Status)) {
       goto ON_ERROR;
@@ -624,6 +661,7 @@ CreateBootOptionPayload (
   }
 
   *BootOptionPayload = RedfishCreatePayload (BootOptionJson, RedfishService);
+  JsonValueFree (BootOptionJson);
   if (*BootOptionPayload == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
   } else {
@@ -631,6 +669,7 @@ CreateBootOptionPayload (
   }
 
 ON_ERROR:
+
   if (BootOptionJson != NULL) {
     JsonValueFree (BootOptionJson);
   }

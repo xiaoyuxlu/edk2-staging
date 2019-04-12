@@ -28,6 +28,7 @@
 
   @retval  EFI_SUCCESS              Json object is extracted correctly.
   @retval  EFI_INVALID_PARAMETER    One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES     There are no enough Memory.
   @retval  EFI_BUFFER_TOO_SMALL     DataSize is too small for the result. DataSize has been updated with the required size.
   @return  Other                    Failed to extract the Json object.
 
@@ -48,6 +49,7 @@ HiiRedfishExtractBiosJson (
 
   @retval  EFI_SUCCESS              Json object is extracted correctly.
   @retval  EFI_INVALID_PARAMETER    One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES     There are no enough Memory.
   @retval  EFI_BUFFER_TOO_SMALL     DataSize is too small for the result. DataSize has been updated with the required size.
   @return  Other                    Failed to extract the Json object.
 

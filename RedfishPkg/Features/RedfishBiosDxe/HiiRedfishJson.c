@@ -43,9 +43,9 @@ HiiRedfishInit (
   UINT32               Index;
   EFI_HII_HANDLE       *HiiHandles;
   EFI_GUID             ZeroGuid;
-
   REDFISH_FORMSET      *RedfishFormSet;
   HII_FORMSET          *HiiFormSet;
+  BOOLEAN              IsFormSetRoot;
   REDFISH_FORM         *RedfishForm;
   HII_FORM             *HiiForm;
   LIST_ENTRY           *HiiFormLink;
@@ -103,6 +103,11 @@ HiiRedfishInit (
       continue;
     }
 
+    //
+    // The first Form in each FormSet is a root Form
+    //
+    IsFormSetRoot = TRUE;
+
     HiiFormLink = GetFirstNode (&HiiFormSet->FormListHead);
     while (!IsNull (&HiiFormSet->FormListHead, HiiFormLink)) {
 
@@ -132,6 +137,11 @@ HiiRedfishInit (
         InsertTailList (&RedfishForm->RedfishStatementList, &RedfishStatement->Link);
       }
 
+      if (IsFormSetRoot) {
+
+        RedfishForm->IsRootForm = TRUE;
+        IsFormSetRoot = FALSE;
+      }
       InsertTailList (&RedfishFormSet->RedfishFormList, &RedfishForm->Link);
     }
 
@@ -247,6 +257,7 @@ GenerateBiosJsonObj (
   EDKII_JSON_VALUE              RedfishSettings;
   EDKII_JSON_VALUE              SettingsObject;
   HII_REDFISH_LIB_NV_STORAGE    *Storage;
+  EDKII_JSON_VALUE              JsonTemp;
 
   if (RedfishJson == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -279,8 +290,8 @@ GenerateBiosJsonObj (
   AttributeSet = JsonValueInitObject ();
   if (AttributeSet == NULL) {
 
-    Status = EFI_OUT_OF_RESOURCES;
-    goto ON_EXIT;
+    JsonValueFree (Bios);
+    return EFI_OUT_OF_RESOURCES;
   }
 
   GenerateAttributeSetForBios (RedfishJson->AttributeRegistry, AttributeSet);
@@ -289,10 +300,16 @@ GenerateBiosJsonObj (
              JsonValueGetObject (Bios),
              "Attributes",
              AttributeSet);
+  JsonValueFree (AttributeSet);
   if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
+
+    JsonValueFree (Bios);
+    return Status;
   }
 
+  RedfishJson->Bios = Bios;
+
+  Storage = NULL;
   //
   // Create "Settings" property.
   //
@@ -303,20 +320,13 @@ GenerateBiosJsonObj (
     goto ON_EXIT;
   }
 
-  Status = JsonObjectSetValue (
-           JsonValueGetObject (Bios),
-           "@Redfish.Settings",
-           RedfishSettings
-           );
-  if (EFI_ERROR (Status)) {
-    goto ON_EXIT;
-  }
-
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (RedfishSettings),
-             "@odata.type",
-             JsonValueInitAsciiString ("#Settings.v1_0_4.Settings")
-             );
+  JsonTemp = JsonValueInitAsciiString ("#Settings.v1_0_4.Settings");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (RedfishSettings),
+               "@odata.type",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_EXIT;
   }
@@ -328,20 +338,23 @@ GenerateBiosJsonObj (
     goto ON_EXIT;
   }
 
-  Status = JsonObjectSetValue (
-             JsonValueGetObject (RedfishSettings),
-             "SettingsObject",
-             SettingsObject
-             );
+  JsonTemp = JsonValueInitAsciiString ("/redfish/v1/Systems/2M220101SL/Bios/Settings");
+  Status   = JsonObjectSetValue (
+               JsonValueGetObject (SettingsObject),
+               "@odata.id",
+               JsonTemp
+               );
+  JsonValueFree (JsonTemp);
   if (EFI_ERROR (Status)) {
     goto ON_EXIT;
   }
 
   Status = JsonObjectSetValue (
-             JsonValueGetObject (SettingsObject),
-             "@odata.id",
-             JsonValueInitAsciiString ("/redfish/v1/Systems/2M220101SL/Bios/Settings")
+             JsonValueGetObject (RedfishSettings),
+             "SettingsObject",
+             SettingsObject
              );
+  JsonValueFree (SettingsObject);
   if (EFI_ERROR (Status)) {
     goto ON_EXIT;
   }
@@ -362,13 +375,18 @@ GenerateBiosJsonObj (
       goto ON_EXIT;
     }
 
+    //
     // ETag
+    //
     if (Storage->EtagStrSize != 0) {
-      Status = JsonObjectSetValue (
-                 JsonValueGetObject (RedfishSettings),
-                 "ETag",
-                 JsonValueInitAsciiString ((CHAR8*) Storage + sizeof (HII_REDFISH_LIB_NV_STORAGE))
-                 );
+
+      JsonTemp = JsonValueInitAsciiString ((CHAR8*) Storage + sizeof (HII_REDFISH_LIB_NV_STORAGE));
+      Status   = JsonObjectSetValue (
+                   JsonValueGetObject (RedfishSettings),
+                   "ETag",
+                   JsonTemp
+                   );
+      JsonValueFree (JsonTemp);
       if (EFI_ERROR (Status)) {
         goto ON_EXIT;
       }
@@ -378,22 +396,26 @@ GenerateBiosJsonObj (
     if (EFI_ERROR (Status)) {
       goto ON_EXIT;
     }
-
-    FreePool (Storage);
   }
 
-  RedfishJson->Bios            = Bios;
-  RedfishJson->Attributes      = AttributeSet;
-  RedfishJson->RedfishSettings = RedfishSettings;
+  Status = JsonObjectSetValue (
+             JsonValueGetObject (Bios),
+             "@Redfish.Settings",
+             RedfishSettings
+             );
 
 ON_EXIT:
 
-  if (EFI_ERROR (Status)) {
+  if (JsonValueIsObject (RedfishSettings)) {
+    JsonValueFree (RedfishSettings);
+  }
 
-    JsonValueFree (Bios);
-    if (Storage != NULL) {
-      FreePool (Storage);
-    }
+  if (JsonValueIsObject (SettingsObject)) {
+    JsonValueFree (SettingsObject);
+  }
+
+  if (Storage != NULL) {
+    FreePool (Storage);
   }
 
   return Status;
@@ -417,37 +439,42 @@ GenerateMenuObjForRegistry (
   EFI_STATUS           Status;
   EDKII_JSON_VALUE     MenuArray;
   EDKII_JSON_VALUE     MenuValue;
-  REDFISH_FORM_MENU    *FormMenuList;
-  REDFISH_FORM_MENU    *TempFormMenu;
-  UINTN                FormMenuListCount;
-  UINT16               FormMenuListIndex;
+  REDFISH_MENU         *MenuList;
+  REDFISH_MENU         *TempMenu;
+  UINTN                MenuListCount;
+  UINT16               MenuListIndex;
   LIST_ENTRY           *FormsetListLink;
   REDFISH_FORMSET      *FormSet;
   LIST_ENTRY           *FormListLink;
   REDFISH_FORM         *Form;
+  EDKII_JSON_VALUE     JsonTemp;
 
-  FormMenuListCount = GetSystemFormMenuCount ();
-  if (FormMenuListCount == 0) {
+  MenuListCount = GetSystemRedfishMenuCount ();
+  if (MenuListCount == 0) {
     return;
   }
-  FormMenuList = AllocateZeroPool (sizeof (REDFISH_FORM_MENU) * FormMenuListCount);
-  if (FormMenuList == NULL) {
+
+  MenuList = AllocateZeroPool (sizeof (REDFISH_MENU) * MenuListCount);
+  if (MenuList == NULL) {
     return;
   }
 
   MenuArray = JsonValueInitArray ();
   if (MenuArray == NULL) {
 
-    FreePool (FormMenuList);
+    FreePool (MenuList);
     return;
   }
-  JsonObjectSetValue (
-    JsonValueGetObject (RegistryEntries),
-    "Menus",
-    MenuArray
-    );
+  Status = JsonObjectSetValue (
+             JsonValueGetObject (RegistryEntries),
+             "Menus",
+             MenuArray
+             );
+  if (EFI_ERROR (Status)) {
+    goto ON_EXIT;
+  }
 
-  FormMenuListIndex = 0;
+  MenuListIndex     = 0;
   FormsetListLink   = GetFirstNode (&mHiiRedfishPrivateData.RedfishFormSetList);
   while (!IsNull (&mHiiRedfishPrivateData.RedfishFormSetList, FormsetListLink)) {
 
@@ -459,66 +486,78 @@ GenerateMenuObjForRegistry (
 
       Form         = REDFISH_FORM_FROM_LINK (FormListLink);
       FormListLink = GetNextNode (&FormSet->RedfishFormList, FormListLink);
-
-      InitRedfishFormMenu (FormSet, Form, FormMenuList + FormMenuListIndex);
-      FormMenuListIndex ++;
+      InitRedfishMenu (FormSet, Form, MenuList + MenuListIndex);
+      MenuListIndex ++;
     }
   }
 
-  LinkSystemRedfishFormMenu (FormMenuList, FormMenuListCount);
+  LinkSystemRedfishMenus (MenuList, MenuListCount);
 
-  for (FormMenuListIndex = 0; FormMenuListIndex < FormMenuListCount; FormMenuListIndex ++) {
+  for (MenuListIndex = 0; MenuListIndex < MenuListCount; MenuListIndex ++) {
 
-    TempFormMenu = FormMenuList + FormMenuListIndex;
-    if (StrLen (TempFormMenu->MenuPath) > 0) {
-
-      Status = SetMenuPathToFormMenu (TempFormMenu);
-      if (EFI_ERROR (Status)) {
-        continue;
-      }
-
-      MenuValue = JsonValueInitObject ();
-      if (MenuValue == NULL) {
-
-        FreePool (FormMenuList);
-        JsonValueFree (MenuArray);
-        return;
-      }
-
-      JsonArrayAppendValue (
-        JsonValueGetArray (MenuArray),
-        MenuValue
-        );
-
-      JsonObjectSetValue (
-        JsonValueGetObject (MenuValue),
-        "DisplayName",
-        JsonValueInitUCS2String (TempFormMenu->DisplayName)
-        );
-      JsonObjectSetValue (
-        JsonValueGetObject (MenuValue),
-        "MenuPath",
-        JsonValueInitUCS2String (TempFormMenu->MenuPath)
-        );
-      JsonObjectSetValue (
-        JsonValueGetObject (MenuValue),
-        "MenuName",
-        JsonValueInitUCS2String (TempFormMenu->MenuName)
-        );
-      JsonObjectSetValue (
-        JsonValueGetObject (MenuValue),
-        "Hidden",
-        JsonValueInitBoolean (TempFormMenu->IsHidden)
-        );
-      JsonObjectSetValue (
-        JsonValueGetObject (MenuValue),
-        "ReadOnly",
-        JsonValueInitBoolean (TempFormMenu->IsReadOnly)
-        );
+    TempMenu = MenuList + MenuListIndex;
+    if (!TempMenu->IsRestMenu) {
+      continue;
     }
+
+    MenuValue = JsonValueInitObject ();
+    if (MenuValue == NULL) {
+      goto ON_EXIT;
+    }
+
+    Status = JsonArrayAppendValue (
+               JsonValueGetArray (MenuArray),
+               MenuValue
+               );
+    if (EFI_ERROR (Status)) {
+
+      JsonValueFree (MenuValue);
+      continue;
+    }
+
+    JsonTemp = JsonValueInitUnicodeString (TempMenu->DisplayName);
+    JsonObjectSetValue (
+      JsonValueGetObject (MenuValue),
+      "DisplayName",
+      JsonTemp
+      );
+    JsonValueFree (JsonTemp);
+
+    JsonTemp = JsonValueInitUnicodeString (TempMenu->MenuPath);
+    JsonObjectSetValue (
+      JsonValueGetObject (MenuValue),
+      "MenuPath",
+      JsonTemp
+      );
+    JsonValueFree (JsonTemp);
+
+    JsonTemp = JsonValueInitUnicodeString (TempMenu->MenuName);
+    JsonObjectSetValue (
+      JsonValueGetObject (MenuValue),
+      "MenuName",
+      JsonTemp
+      );
+    JsonValueFree (JsonTemp);
+
+    JsonObjectSetValue (
+      JsonValueGetObject (MenuValue),
+      "Hidden",
+      JsonValueInitBoolean (TempMenu->IsHidden)
+      );
+
+    JsonObjectSetValue (
+      JsonValueGetObject (MenuValue),
+      "ReadOnly",
+      JsonValueInitBoolean (TempMenu->IsReadOnly)
+      );
+
+    JsonValueFree (MenuValue);
   }
 
-  FreePool (FormMenuList);
+ON_EXIT:
+
+  JsonValueFree (MenuArray);
+  FreePool (MenuList);
 }
 
 /**
@@ -546,7 +585,6 @@ GenerateDependencyObjForRegistry  (
   LIST_ENTRY                 *StatementListLink;
   REDFISH_STATEMENT          *Statement;
   LIST_ENTRY                 *Link;
-
   HII_EXPRESSION_LIST        *ExpressionList;
   HII_EXPRESSION             *Expression;
   UINTN                      ExpressionIndex;
@@ -629,6 +667,8 @@ GenerateDependencyObjForRegistry  (
       }
     }
   }
+
+  JsonValueFree (DependenciesArray);
 }
 
 /**
@@ -708,17 +748,22 @@ GenerateAttributesObjForRegistry  (
         if (((Statement->HiiStatement->QuestionFlags & EFI_IFR_FLAG_REST_STYLE) != EFI_IFR_FLAG_REST_STYLE) && !IsRestFormSet) {
           continue;
         }
+        
+        Status = AttributesArrayAppendValue (
+                   FormSet,
+                   Form,
+                   Statement,
+                   AttributesArray
+                   );
 
-        AttributesArrayAppendValue (
-          FormSet,
-          Form,
-          Statement,
-          AttributesArray
-          );
+        if (!EFI_ERROR (Status) && !Form->IsRest) {
+          Form->IsRest = TRUE;
+        }
       }
     }
   }
 
+  JsonValueFree (AttributesArray);
   return Status;
 }
 
@@ -768,11 +813,17 @@ GenerateAttributeRegistryJsonObj (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  JsonObjectSetValue (
-    JsonValueGetObject (AttributeRegistry),
-    "RegistryEntries",
-    RegistryEntries
-    );
+  Status = JsonObjectSetValue (
+             JsonValueGetObject (AttributeRegistry),
+             "RegistryEntries",
+             RegistryEntries
+             );
+  if (EFI_ERROR (Status)) {
+
+    JsonValueFree (RegistryEntries);
+    JsonValueFree (AttributeRegistry);
+    return Status;
+  }
 
   RedfishJson->AttributeRegistry = AttributeRegistry;
   RedfishJson->RegistryEntries   = RegistryEntries;
@@ -794,6 +845,7 @@ GenerateAttributeRegistryJsonObj (
 
   @retval  EFI_SUCCESS              Json object is extracted correctly.
   @retval  EFI_INVALID_PARAMETER    One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES     There are no enough Memory.
   @retval  EFI_BUFFER_TOO_SMALL     DataSize is too small for the result. DataSize has been updated with the required size.
   @return  Other                    Failed to extract the Json object.
 
@@ -811,21 +863,28 @@ HiiRedfishExtractBiosJson (
     return EFI_INVALID_PARAMETER;
   }
 
-  //if (mHiiRedfishPrivateData.JsonData.Bios == NULL) {
+  if (mHiiRedfishPrivateData.JsonData.Bios == NULL) {
     Status = GenerateBiosJsonObj (&mHiiRedfishPrivateData.JsonData);
     if (EFI_ERROR (Status)) {
       return Status;
     }
-  //}
+  }
 
   Text = JsonToText (mHiiRedfishPrivateData.JsonData.Bios);
+  if (Text == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   if (*DataSize < AsciiStrSize (Text)) {
+
+    FreePool (Text);
     *DataSize = AsciiStrSize (Text);
     return EFI_BUFFER_TOO_SMALL;
   }
 
   *DataSize = AsciiStrSize (Text);
   CopyMem (Data, Text, *DataSize);
+  FreePool (Text);
 
   return EFI_SUCCESS;
 }
@@ -841,6 +900,7 @@ HiiRedfishExtractBiosJson (
 
   @retval  EFI_SUCCESS              Json object is extracted correctly.
   @retval  EFI_INVALID_PARAMETER    One or more parameters are invalid.
+  @retval  EFI_OUT_OF_RESOURCES     There are no enough Memory.
   @retval  EFI_BUFFER_TOO_SMALL     DataSize is too small for the result. DataSize has been updated with the required size.
   @return  Other                    Failed to extract the Json object.
 
@@ -866,13 +926,20 @@ HiiRedfishExtractAttributeRegistryJson (
   }
 
   Text = JsonToText (mHiiRedfishPrivateData.JsonData.AttributeRegistry);
+  if (Text == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   if (*DataSize < AsciiStrSize (Text)) {
+
+    FreePool (Text);
     *DataSize = AsciiStrSize (Text);
     return EFI_BUFFER_TOO_SMALL;
   }
 
   *DataSize = AsciiStrSize (Text);
   CopyMem (Data, Text, *DataSize);
+  FreePool (Text);
 
   return EFI_SUCCESS;
 }
@@ -969,10 +1036,10 @@ HiiRedfishRouteBiosSettingsJson (
     }
 
     KeywordValue    = JsonObjectGetValue (JsonValueGetObject (AttributeEntry), "UefiKeywordName");
-    KeywordNameStr  = JsonValueGetUCS2String (KeywordValue);
+    KeywordNameStr  = JsonValueGetUnicodeString (KeywordValue);
 
     DevicePathValue = JsonObjectGetValue (JsonValueGetObject (AttributeEntry), "UefiDevicePath");
-    DevicePathStr   = JsonValueGetUCS2String (DevicePathValue);
+    DevicePathStr   = JsonValueGetUnicodeString (DevicePathValue);
 
     TypeValue       = JsonObjectGetValue (JsonValueGetObject (AttributeEntry), "Type");
 
@@ -1012,6 +1079,7 @@ HiiRedfishRouteBiosSettingsJson (
       }
     }
   }
+  FreePool (KeyArray);
 
   Status = RedfishSaveRouteResult (Status, EtagStr, AttributeName);
   return Status;
