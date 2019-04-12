@@ -479,7 +479,7 @@ InitializeFitMicrocodeInfo (
     MicrocodeFmpPrivate->FitMicrocodeEntryCount = 0;
   }
 
-  FitPointer = *(UINT64 *) (UINTN) FIT_POINTER_ADDRESS;
+  FitPointer = *(UINT64 *) (UINTN) PcdGet64 (PcdFitPointerAddress);
   if ((FitPointer == 0) ||
       (FitPointer == 0xFFFFFFFFFFFFFFFF) ||
       (FitPointer == 0xEEEEEEEEEEEEEEEE)) {

@@ -28,7 +28,7 @@
 #define FIT_TYPE_2F_JMP_DEBUG_POLICY        0x2F
 #define FIT_TYPE_7F_SKIP                    0x7F
 
-#define FIT_POINTER_ADDRESS                 0xFFFFFFC0 ///< Fixed address at 4G - 40h
+#define FIT_ALIGNMENT                       16
 
 #define FIT_TYPE_VERSION                    0x0100
 

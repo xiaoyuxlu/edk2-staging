@@ -42,6 +42,7 @@
 
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
+  FitLib|IntelSiliconPkg/Library/PeiFirmwareInterfaceTableLib/PeiFirmwareInterfaceTableLib.inf
 
 [LibraryClasses.common.DXE_DRIVER]
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
