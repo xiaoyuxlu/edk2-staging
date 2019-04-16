@@ -196,20 +196,22 @@ CreateEsrtEntry (
       // VERSION 3 supports last attempt values
       //
       if (FmpVersion >= 3) {
-        Entry->LastAttemptVersion =
-          MIN (
-            FmpImageInfoBuf->LastAttemptVersion,
-            Entry->LastAttemptVersion
-            );
         //
         // Update the ESRT entry with the last attempt status and last attempt
         // version from the first FMP instance whose last attempt status is not
-        // SUCCESS.
+        // SUCCESS.  If all FMP instances are SUCCESS, then set version to the 
+        // smallest value from all FMP instances.
         //
         if (Entry->LastAttemptStatus == LAST_ATTEMPT_STATUS_SUCCESS) {
           if (FmpImageInfoBuf->LastAttemptStatus != LAST_ATTEMPT_STATUS_SUCCESS) {
             Entry->LastAttemptStatus = FmpImageInfoBuf->LastAttemptStatus;
             Entry->LastAttemptVersion = FmpImageInfoBuf->LastAttemptVersion;
+          } else {
+            Entry->LastAttemptVersion =
+              MIN (
+                FmpImageInfoBuf->LastAttemptVersion,
+                Entry->LastAttemptVersion
+                );
           }
         }
       }
