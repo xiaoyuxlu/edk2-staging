@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Peach xmlns="http://peachfuzzer.com/2012/Peach" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://peachfuzzer.com/2012/Peach ../peach.xsd">
+  
+  <!-- Define our file format DDL -->
+
+  <DataModel name="USB_CONFIG_DESCRIPTOR">
+    <Number name="Length" size="8" value="09" valueType="hex"/>
+    <Number name="DescriptorType" size="8" value="02" valueType="hex" mutable="false"/>
+    <Number name="TotalLength" size="16" value="0022" valueType="hex"/>
+    <Number name="NumInterfaces" size="8" value="01" valueType="hex" mutable="false"/>
+    <Number name="ConfigurationValue" size="8" value="01" valueType="hex" mutable="false"/>
+    <Number name="Configuration" size="8" value="00" valueType="hex" mutable="false"/>
+    <Number name="Attributes" size="8" value="A0" valueType="hex" mutable="false"/>
+    <Number name="MaxPower" size="8" value="32" valueType="hex" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="USB_INTERFACE_DESCRIPTOR">
+    <Number name="Length" size="8" value="09" valueType="hex"/>
+    <Number name="DescriptorType" size="8" value="04" valueType="hex" mutable="false"/>
+    <Number name="InterfaceNumber" size="8" value="00" valueType="hex" mutable="false"/>
+    <Number name="AlternateSetting" size="8" value="00" valueType="hex" mutable="false"/>
+    <Number name="NumEndpoints" size="8" value="01" valueType="hex" mutable="false"/>
+    <Number name="InterfaceClass" size="8" value="03" valueType="hex" mutable="false"/>
+    <Number name="InterfaceSubClass" size="8" value="01" valueType="hex" mutable="false"/>
+    <Number name="InterfaceProtocol" size="8" value="01" valueType="hex" mutable="false"/>
+    <Number name="Interface" size="8" value="00" valueType="hex" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="EFI_USB_HID_CLASS_DESCRIPTOR">
+    <Number name="DescriptorType" size="8" value="22" valueType="hex" mutable="false"/>
+    <Number name="DescriptorLength" size="16" value="0041" valueType="hex"/>
+  </DataModel>
+
+  <DataModel name="EFI_USB_HID_DESCRIPTOR">
+    <Number name="Length" size="8" value="09" valueType="hex"/>
+    <Number name="DescriptorType" size="8" value="21" valueType="hex" mutable="false"/>
+    <Number name="BcdHID" size="16" value="0110" valueType="hex" mutable="false"/>
+    <Number name="CountryCode" size="8" value="00" valueType="hex" mutable="false"/>
+    <Number name="NumDescriptors" size="8" value="01" valueType="hex"/>
+    <Block ref="EFI_USB_HID_CLASS_DESCRIPTOR"/>
+  </DataModel>
+
+  <DataModel name="USB_ENDPOINT_DESCRIPTOR">
+    <Number name="Length" size="8" value="07" valueType="hex"/>
+    <Number name="DescriptorType" size="8" value="05" valueType="hex" mutable="false"/>
+    <Number name="EndpointAddress" size="8" value="81" valueType="hex" mutable="false"/>
+    <Number name="Attributes" size="8" value="03" valueType="hex" mutable="false"/>
+    <Number name="MaxPacketSize" size="16" value="0008" valueType="hex" mutable="false"/>
+    <Number name="Interval" size="8" value="0A" valueType="hex" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="FULL_USB_CONFIG_DESCRIPTOR">
+    <Block ref="USB_CONFIG_DESCRIPTOR"/>
+    <Block ref="USB_INTERFACE_DESCRIPTOR"/>
+    <Block ref="EFI_USB_HID_DESCRIPTOR"/>
+    <Block ref="USB_ENDPOINT_DESCRIPTOR"/>
+  </DataModel>
+
+  <!-- Define a simple state machine that will write the file and 
+    then launch a program using the FileWriter and DebuggerLaucher publishers -->
+  <StateModel name="State" initialState="Initial">
+    <State name="Initial">
+      
+      <!-- Write out contents of file.  The publisher attribute matches 
+      the name we provide for the publisher in the Test section. -->
+      <Action type="output">
+        <DataModel ref="FULL_USB_CONFIG_DESCRIPTOR" />
+      </Action>
+      
+      <!-- Close file -->
+      <Action type="close" />
+      
+      <!-- Launch the file consumer -->
+      <Action type="call" method="ScoobySnacks" publisher="Peach.Agent"/>
+      
+    </State>
+  </StateModel>
+  
+  <!-- Setup windows agent that will monitor for faults -->
+  <Agent name="WinAgent">
+    <Monitor class="WindowsDebugger">
+      <Param name="CommandLine" value="TestModule fuzzfile.bin"/>
+    </Monitor>
+      
+  </Agent>
+    
+  <!-- Setup linux agent that will monitor for faults -->
+  <Agent name="LinuxAgent">
+    <Monitor class="LinuxDebugger">
+      <Param name="Executable" value="TestModule" />
+      <Param name="Arguments" value="fuzzfile.bin" />
+    </Monitor>
+      
+  </Agent>
+    
+  <Test name="Default">
+    <Agent ref="WinAgent" platform='windows'/>
+    <Agent ref="LinuxAgent" platform="linux"/>
+    <StateModel ref="State"/>
+    
+    <!-- Configure our publisher with correct filename to write too -->
+    <Publisher class="File">
+      <Param name="FileName" value="fuzzfile.bin" />
+    </Publisher>
+
+    <!-- Configure a logger to store collected information -->
+    <Logger class="Filesystem">
+      <Param name="Path" value="logtest" />
+    </Logger>
+  </Test>
+  
+</Peach>
+<!-- end -->

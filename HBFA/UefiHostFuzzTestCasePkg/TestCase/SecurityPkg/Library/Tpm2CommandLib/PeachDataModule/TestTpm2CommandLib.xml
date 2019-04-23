@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Peach xmlns="http://peachfuzzer.com/2012/Peach" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://peachfuzzer.com/2012/Peach ../peach.xsd">
+  
+  <!-- Define our file format DDL -->
+
+  <DataModel name="TPM2_RESPONSE_HEADER">
+    <Number name="tag" size="16" value="8002" valueType="hex" endian="big" mutable="false"/>
+    <Number name="paramSize" size="32" value="00000056" valueType="hex" endian="big"/>
+    <Number name="responseCode" size="32" value="00000000" valueType="hex" endian="big" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="TPMT_HA">
+    <Number name="hashAlg" size="16" value="000B" valueType="hex" endian="big" mutable="false"/>
+    <Blob name="digest" length="32" value="0000000000000000000000000000000000000000000000000000000000000000" valueType="hex" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="TPML_DIGEST_VALUES">
+    <Number name="count" size="32" value="00000100" valueType="hex" endian="big"/>
+    <Block name="digests" maxOccurs="256">
+      <Block ref="TPMT_HA"/>
+    </Block>
+  </DataModel>
+
+  <DataModel name="TPMS_AUTH_RESPONSE">
+    <Blob name="dummy" length="10" value="00000000000000000000" valueType="hex" mutable="false"/>
+  </DataModel>
+
+  <DataModel name="TPM2_PCR_EVENT_RESPONSE">
+    <Block ref="TPM2_RESPONSE_HEADER"/>
+    <Number name="ParameterSize" size="32" value="00000056" valueType="hex" endian="big"/>
+    <Block ref="TPML_DIGEST_VALUES"/>
+    <Block ref="TPMS_AUTH_RESPONSE"/>
+  </DataModel>
+
+  <!-- Define a simple state machine that will write the file and 
+    then launch a program using the FileWriter and DebuggerLaucher publishers -->
+  <StateModel name="State" initialState="Initial">
+    <State name="Initial">
+      
+      <!-- Write out contents of file.  The publisher attribute matches 
+      the name we provide for the publisher in the Test section. -->
+      <Action type="output">
+        <DataModel ref="TPM2_PCR_EVENT_RESPONSE" />
+      </Action>
+      
+      <!-- Close file -->
+      <Action type="close" />
+      
+      <!-- Launch the file consumer -->
+      <Action type="call" method="ScoobySnacks" publisher="Peach.Agent"/>
+      
+    </State>
+  </StateModel>
+  
+  <!-- Setup windows agent that will monitor for faults -->
+  <Agent name="WinAgent">
+    <Monitor class="WindowsDebugger">
+      <Param name="CommandLine" value="TestModule fuzzfile.bin"/>
+    </Monitor>
+        
+  </Agent>
+  
+  <!-- Setup linux agent that will monitor for faults -->
+  <Agent name="LinuxAgent">
+    <Monitor class="LinuxDebugger">
+      <Param name="Executable" value="TestModule" />
+      <Param name="Arguments" value="fuzzfile.bin" />
+    </Monitor>
+        
+  </Agent>
+    
+  <Test name="Default">
+    <Agent ref="WinAgent" platform='windows'/>
+    <Agent ref="LinuxAgent" platform="linux"/>
+    <StateModel ref="State"/>
+    
+    <!-- Configure our publisher with correct filename to write too -->
+    <Publisher class="File">
+      <Param name="FileName" value="fuzzfile.bin" />
+    </Publisher>
+
+    <!-- Configure a logger to store collected information -->
+    <Logger class="Filesystem">
+      <Param name="Path" value="logtest" />
+    </Logger>
+  </Test>
+  
+</Peach>
+<!-- end -->

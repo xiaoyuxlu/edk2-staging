@@ -1,0 +1,21 @@
+## @file  UefiHostCryptoPkg.dec
+#
+# Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = UefiHostCryptoPkg
+  PACKAGE_GUID                   = C6962998-CC6A-4B55-AE6E-B2D7C01BB2C7
+  PACKAGE_VERSION                = 0.1
+
+[Includes.common]
+
+
+[Includes.Common.Private]
+  Library/Include
+  Library/OpensslLib/openssl/include
+  Library/OpensslLib/openssl/crypto/include
+

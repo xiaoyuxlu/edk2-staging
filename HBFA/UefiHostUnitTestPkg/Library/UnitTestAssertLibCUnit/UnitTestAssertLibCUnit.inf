@@ -1,0 +1,25 @@
+## @file
+#
+# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION     = 0x00010017
+  BASE_NAME       = UnitTestAssertLibCUnit
+  FILE_GUID       = 598262B8-80E9-4ABE-B299-B28FB0A0CBA1
+  VERSION_STRING  = 1.0
+  MODULE_TYPE     = BASE
+  LIBRARY_CLASS   = UnitTestAssertLib
+
+[LibraryClasses]
+  BaseMemoryLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UnitTestPkg/UnitTestPkg.dec
+  UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec
+
+[Sources]
+  UnitTestAssertLib.c
