@@ -1,7 +1,7 @@
 # Introduction
 
-This branch is evaluation version of [**Host-based Firmware Analyzer (HBFA)**](https://firmware.intel.com/sites/default/files/Intel_UsingHBFAtoImprovePlatformResiliency.pdf).
-This branch owner: Brian Richardson <[brian.richardson@intel.com](mailto:brian.richardson@intel.com)>, Chris Wu <[chris.wu@intel.com](mailto:chris.wu@intel.com)>, Jiewen Yao <[jiewen.yao@intel.com](mailto:jiewen.yao@intel.com)>, Vincent J. Zimmer <[vincent.zimmer@intel.com](mailto:vincent.zimmer@intel.com)>
+This branch is evaluation version of [**Host-based Firmware Analyzer (HBFA)**](https://firmware.intel.com/sites/default/files/Intel_UsingHBFAtoImprovePlatformResiliency.pdf).  
+This branch owner: Jiewen Yao <[jiewen.yao@intel.com](mailto:jiewen.yao@intel.com)>, Chris Wu <[chris.wu@intel.com](mailto:chris.wu@intel.com)>, Tengfen Sun <[tengfen.sun@intel.com](mailto:tengfen.sun@intel.com)>
 
 Computer platform firmware is a critical element in the root-of-trust. Firmware developers need a robust tool set to analyze and test firmware components, enabling detection of security issues prior to platform integration and helping to reduce validation costs. HBFA allows developers to run open source advanced tools, such as fuzz testing, symbolic execution, and address sanitizers in a system environment.
 
