@@ -155,8 +155,13 @@ IsCapsuleOnDiskMode (
 }
 
 /**
-  Gets capsule images and capsule names from relocated capsule buffer.
-  Create Capsule hob & Capsule Name Str Hob for each Capsule.
+  Gets capsule images from relocated capsule buffer.
+  Create Capsule hob for each Capsule.
+
+  Caution: This function may receive untrusted input.
+  Capsule-on-Disk Temp Relocation image is external input, so this function
+  will validate Capsule-on-Disk Temp Relocation image to make sure the content 
+  is read within the buffer.
 
   @param[in]  Buffer pointer to the relocated capsule.
   @param[in]  Total size of the relocated capsule.
@@ -196,17 +201,13 @@ RetrieveRelocatedCapsule (
   //
   // Overflow check
   //
-  if (MAX_ADDRESS - (UINTN)TotalImageSize <= sizeof(UINT64) ||
-      RelocCapsuleTotalSize != (UINTN)(TotalImageSize + sizeof(UINT64)) ||
-      (MAX_ADDRESS - (PHYSICAL_ADDRESS)RelocCapsuleBuf) <= (UINTN)TotalImageSize) {
+  if (MAX_ADDRESS - TotalImageSize <= sizeof(UINT64) ||
+      (UINT64)RelocCapsuleTotalSize != TotalImageSize + sizeof(UINT64) ||
+      (UINTN)(MAX_ADDRESS - (PHYSICAL_ADDRESS)(UINTN)RelocCapsuleBuf) <= TotalImageSize) {
     return EFI_INVALID_PARAMETER;
   }
 
   CapsuleDataBufEnd = RelocCapsuleBuf + TotalImageSize;
-
-  if ((MAX_ADDRESS - (PHYSICAL_ADDRESS)CapsuleDataBufEnd) <= 0) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   //
   // TempCapsule file integrity Check over Capsule Header to ensure no data corruption in NV Var & Relocation storage
@@ -215,7 +216,8 @@ RetrieveRelocatedCapsule (
 
   while (CapsulePtr < CapsuleDataBufEnd) {
     if ((CapsuleDataBufEnd - CapsulePtr) < sizeof(EFI_CAPSULE_HEADER) ||
-        (MAX_ADDRESS - (PHYSICAL_ADDRESS)CapsulePtr) < ((EFI_CAPSULE_HEADER *)CapsulePtr)->CapsuleImageSize
+        ((EFI_CAPSULE_HEADER *)CapsulePtr)->CapsuleImageSize < sizeof(EFI_CAPSULE_HEADER) ||
+        (UINTN)(MAX_ADDRESS - (PHYSICAL_ADDRESS)(UINTN)CapsulePtr) < ((EFI_CAPSULE_HEADER *)CapsulePtr)->CapsuleImageSize
         ) {
       break;
     }
