@@ -199,7 +199,7 @@ RetrieveRelocatedCapsule (
   RelocCapsuleBuf += sizeof(UINT64);
 
   //
-  // Overflow check
+  // TempCaspule file length check
   //
   if (MAX_ADDRESS - TotalImageSize <= sizeof(UINT64) ||
       (UINT64)RelocCapsuleTotalSize != TotalImageSize + sizeof(UINT64) ||
@@ -210,7 +210,7 @@ RetrieveRelocatedCapsule (
   CapsuleDataBufEnd = RelocCapsuleBuf + TotalImageSize;
 
   //
-  // TempCapsule file integrity Check over Capsule Header to ensure no data corruption in NV Var & Relocation storage
+  // TempCapsule file integrity check over Capsule Header to ensure no data corruption in NV Var & Relocation storage
   //
   CapsulePtr = RelocCapsuleBuf;
 
