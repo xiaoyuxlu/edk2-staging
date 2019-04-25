@@ -1966,7 +1966,7 @@
   #  The file must be in the root directory.
   #  The file name must be the 8.3 format.
   #  The PCD data must be in UNICODE format.
-  # @Prompt Recover file name in PEI phase
+  # @Prompt Capsule On Disk Temp Relocation file name in PEI phase
   gEfiMdeModulePkgTokenSpaceGuid.PcdCoDRelocationFileName|L"TempCod.tmp"|VOID*|0x30001048
 
   ## This PCD hold a list GUIDs for the ImageTypeId to indicate the
@@ -1980,15 +1980,31 @@
   # @Prompt The address mask when memory encryption is enabled.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask|0x0|UINT64|0x30001047
 
-  ## Specify if Capsule On Disk feature is supported
-  # @Prompt If Capsule On Disk feature is supported.
+  ## Capsule On Disk is to deliver capsules via files on Mass Storage device.<BR><BR>
+  #  This PCD indicates if the Capsule On Disk is supported.<BR>
+  #   TRUE  - Capsule On Disk is supported.<BR>
+  #   FALSE - Capsule On Disk is not supported.<BR><BR>
+  #  Note:<BR>
+  #    a) If PcdCapsuleInRamSupport = TRUE, Load Capsule On Disk image out of TCB, and reuse
+  #       Capsule In Ram to deliver capsule.<BR>
+  #    b) If PcdCapsuleInRamSupport = FALSE, Relocate Capsule On Disk image to RootDir out
+  #       of TCB, and reuse FatPei to load capsules from external storage.
+  # @Prompt Enable Capsule On Disk support.
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleOnDiskSupport|FALSE|BOOLEAN|0x0000002d
 
-  ## Specify if Capsule On RAM feature is supported
-  # @Prompt If Capsule On RAM feature is supported.
+  ## Capsule In Ram is to use memory to deliver the capsules that will be processed after system
+  #  reset.<BR><BR>
+  #  This PCD indicates if the Capsule In Ram is supported.<BR>
+  #   TRUE  - Capsule In Ram is supported.<BR>
+  #   FALSE - Capsule In Ram is not supported.
+  # @Prompt Enable Capsule In Ram support.
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleInRamSupport|TRUE|BOOLEAN|0x0000002e
 
-  gEfiMdeModulePkgTokenSpaceGuid.PcdCodRelocationDevPath|{0xFF, 0xFF, 0xFF, 0xFF}|VOID*|0x0000002f
+  ## Full device path of plaform specific device to store Capsule On Disk temp relocation file.<BR>
+  #  If this PCD is set, Capsule On Disk temp relocation file will be stored in the device specified
+  #  by this PCD, instead of the EFI System Partition that stores capsule image file.
+  # @Prompt Capsule On Disk relocation device path.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdCodRelocationDevPath|{0xFF}|VOID*|0x0000002f
 
 [PcdsPatchableInModule]
   ## Specify memory size with page number for PEI code when
