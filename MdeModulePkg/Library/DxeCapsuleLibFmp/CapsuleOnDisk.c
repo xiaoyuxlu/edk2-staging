@@ -1366,7 +1366,6 @@ CoDRelocateCapsule(
   UINT8                           *CapsuleDataBuf;
   UINT8                           *CapsulePtr;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
-  UINTN                           DefRelocationDevPath;
   EFI_FILE_HANDLE                 RootDir;
   EFI_FILE_HANDLE                 TempCodFile;
   UINTN                           TempCodFileSize;
@@ -1396,8 +1395,7 @@ CoDRelocateCapsule(
   //
   // 2. Connect platform special dev path or Use EFI System Partition as relocation device
   //
-  DefRelocationDevPath = 0xFFFFFFFF;
-  if (0 != CompareMem(PcdGetPtr(PcdCodRelocationDevPath), &DefRelocationDevPath, sizeof(UINT32))) {
+  if (PcdGetSize(PcdCodRelocationDevPath) > sizeof(EFI_DEVICE_PATH_PROTOCOL)) {
     Status = EfiBootManagerConnectDevicePath ((EFI_DEVICE_PATH *)PcdGetPtr(PcdCodRelocationDevPath), &TempHandle);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "RelocateCapsule: EfiBootManagerConnectDevicePath Status - 0x%x\n", Status));
@@ -1442,7 +1440,7 @@ CoDRelocateCapsule(
       DEBUG ((DEBUG_INFO, "RelocateCapsule: No simple file system protocol found.\n"));
       Status = EFI_NOT_FOUND;
     }
-  } 
+  }
 
   Status = gBS->HandleProtocol(Handle, &gEfiBlockIoProtocolGuid, (VOID **)&BlockIo);
   if (EFI_ERROR(Status) || BlockIo->Media->ReadOnly) {
