@@ -1223,6 +1223,7 @@ CoDCheckCapsuleOnDiskFlag(
 
 **/
 EFI_STATUS
+EFIAPI
 CoDClearCapsuleOnDiskFlag(
   VOID
   )
@@ -1282,7 +1283,6 @@ CoDClearCapsuleOnDiskFlag(
 
 **/
 EFI_STATUS
-EFIAPI
 CoDCheckCapsuleRelocationInfo(
   OUT BOOLEAN *CapsuleRelocInfo
   )

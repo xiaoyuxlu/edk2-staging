@@ -116,6 +116,7 @@ ProcessCapsules (
 
 **/
 BOOLEAN
+EFIAPI
 CoDCheckCapsuleOnDiskFlag(
   VOID
   );
@@ -128,32 +129,8 @@ CoDCheckCapsuleOnDiskFlag(
 
 **/
 EFI_STATUS
-CoDClearCapsuleOnDiskFlag(
-  VOID
-  );
-
-/**
-
-  This routine is called to clear CapsuleOnDisk flags including OsIndications and BootNext variable
-
-  @retval EFI_SUCCESS   Capsule On Disk flags are cleared
-
-**/
-EFI_STATUS
 EFIAPI
-CoDCheckCapsuleRelocationInfo(
-  OUT BOOLEAN *CapsuleRelocInfo
-  );
-
-/**
-  This routine is called to clear CapsuleOnDisk Relocation Info variable.
-  Total Capsule On Disk length is recorded in this variable
-
-  @retval EFI_SUCCESS   Capsule On Disk flags are cleared
-
-**/
-EFI_STATUS
-CoDClearCapsuleRelocationInfo(
+CoDClearCapsuleOnDiskFlag(
   VOID
   );
 
@@ -181,29 +158,6 @@ CoDRelocateCapsule(
   );
 
 /**
-  The function is called by Get Relocate Capsule on Disk from EFI system partition to a platform-specific
-  NV storage device producing BlockIo protocol.  Relocation device path is identified by PcdCodRelocationDevPath.
-  The connection logic in this function assumes it is a full device path.
-
-  Caution:
-    Retrieve relocated capsule is done by TCB. Therefore, the relocation device connection happens within TCB.
-    TCB must be immutable and attack surface must be small. Partition and FAT driver are not included in TCB.
-    Platform should configure FULL physical device path without logic Partition device path node.
-    A example is 
-      PciRoot(0x0) \ Pci(0x1D,0x0) \ USB(0x0,0x0) \ USB(0x3, 0x0)
-
-  @retval TRUE   All capsule images are processed.
-
-**/
-EFI_STATUS
-EFIAPI
-CoDRetrieveRelocatedCapsule (
-  IN  UINTN                MaxRetry,
-  OUT EFI_PHYSICAL_ADDRESS **CapsuleBufPtr,
-  OUT UINTN                *CapsuleNum
-  );
-
-/**
   For the plattforms that support Capsule On Ram, reuse the Capsule On Ram to deliver capsule.
 
   @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
@@ -218,14 +172,13 @@ CoDReUseCapsuleOnRam (
   UINTN    MaxRetry
   );
 
-
 /**
   Remove the temp file from the root of EFI System Partition.
 
   @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
                                      devices like USB can get enumerated.
 
-  @retval EFI_SUCCESS   Deliver capsule through Capsule On Ram successfully.
+  @retval EFI_SUCCESS   Remove the temp file successfully.
 
 **/
 EFI_STATUS

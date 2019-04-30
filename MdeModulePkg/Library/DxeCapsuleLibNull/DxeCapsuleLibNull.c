@@ -1,7 +1,7 @@
 /** @file
   Null Dxe Capsule Library instance does nothing and returns unsupport status.
 
-Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2007 - 2019, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -91,3 +91,97 @@ ProcessCapsules (
   return EFI_UNSUPPORTED;
 }
 
+
+/**
+  This routine is called to check if CapsuleOnDisk flag in OsIndications Variable
+  is enabled.
+
+  @retval TRUE     Flag is enabled
+  @retval FALSE    Flag is not enabled
+
+**/
+BOOLEAN
+EFIAPI
+CoDCheckCapsuleOnDiskFlag(
+  VOID
+  )
+{
+  return FALSE;
+}
+
+/**
+  This routine is called to clear CapsuleOnDisk flags including OsIndications and BootNext variable
+
+  @retval EFI_SUCCESS   All Capsule On Disk flags are cleared
+
+**/
+EFI_STATUS
+EFIAPI
+CoDClearCapsuleOnDiskFlag(
+  VOID
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Relocate Capsule on Disk from EFI system partition to a platform-specific NV storage device
+  with BlockIo protocol.  Relocation device path, identified by PcdCodRelocationDevPath, must
+  be a full device path.
+  Device enumeration like USB costs time, user can input MaxRetry to tell function to retry.
+  Function will stall 100ms between each retry.
+
+  Side Effects:
+    Content corruption. Block IO write directly touches low level write. Orignal partitions, file systems 
+    of the relocation device will be corrupted.
+
+  @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
+                                     devices like USB can get enumerated.
+
+  @retval EFI_SUCCESS   Capsule on Disk images are sucessfully relocated to the platform-specific device.
+
+**/
+EFI_STATUS
+EFIAPI
+CoDRelocateCapsule(
+  UINTN     MaxRetry
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  For the plattforms that support Capsule On Ram, reuse the Capsule On Ram to deliver capsule.
+
+  @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
+                                     devices like USB can get enumerated.
+
+  @retval EFI_SUCCESS   Deliver capsule through Capsule On Ram successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+CoDReUseCapsuleOnRam (
+  UINTN    MaxRetry
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Remove the temp file from the root of EFI System Partition.
+
+  @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
+                                     devices like USB can get enumerated.
+
+  @retval EFI_SUCCESS   Remove the temp file successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+CoDRemoveTempFile (
+  UINTN    MaxRetry
+  )
+{
+  return EFI_UNSUPPORTED;
+}

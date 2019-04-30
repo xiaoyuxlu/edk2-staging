@@ -36,6 +36,18 @@
 #include <IndustryStandard/WindowsUxCapsule.h>
 
 /**
+  This routine is called to clear CapsuleOnDisk Relocation Info variable.
+  Total Capsule On Disk length is recorded in this variable
+
+  @retval EFI_SUCCESS   Capsule On Disk flags are cleared
+
+**/
+EFI_STATUS
+CoDClearCapsuleRelocationInfo(
+  VOID
+  );
+
+/**
   Get current capsule last variable index.
 
   @return Current capsule last variable index.
