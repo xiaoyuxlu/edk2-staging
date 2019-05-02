@@ -60,6 +60,10 @@ One of the design goals for UEFI Redfish solution is to provide a scalable imple
 
    * Nt32Pkg - 1) Enable UEFI Redfish feature in NT32 platform. 2) Fix TLS build error with CryptoPkg from edk2-stable201811 tag.
 
+## Delivery of FW authentication information to UEFI Redfish
+The platform using this Redfish solution need to have a platform driver to install Redfish Credential Protocol (see RedfishPkg/Include/Protocol/RedfishCredential.h) to allow UEFI firmware to get firmware-BMC authentication credential for use, instead of using the “RedfishFWCredentials” variable defined in DSP0270, in order to avoid storing the firmware-BMC authentication credential into any insecure storage. 
+
+The EFI_REDFISH_CREDENTIAL_PROTOCOL.StopService() is defined to notify BMC Redfish service to stop provide configuration service to this platform. This interface shall be called when the platform is about to leave an safe UEFI environment. Upon receiving such notification, the BMC shall stop providing the authentication credential to UEFI firmware, close all existing Redfish session with the original credential, and reject any further Redfish login request from UEFI firmware until next platform reset.
 
 ## Promote to edk2 Trunk
 If a subset feature or a bug fix in this staging branch could meet below requirement, it could be promoted to edk2 trunk and removed from this staging branch:
