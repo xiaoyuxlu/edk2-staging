@@ -41,6 +41,7 @@
   PeiServicesLib
   ReportStatusCodeLib
   CpuExceptionHandlerLib
+  CpuDebugDumpLib
   MpInitLib
   BaseMemoryLib
   CpuLib
