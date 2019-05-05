@@ -8,7 +8,7 @@ UEFI Redfish is an efficient and secure solution for end users to remote control
 
 One of the design goals for UEFI Redfish solution is to provide a scalable implementation which allow users to easily add/remove/modify each independent Redfish configure features (RedfishBiosDxe & RedfishBootInfoDxe). This is done by extracting the generic logic to a single UEFI driver model driver (RedfishConfigDxe), and several library instances (DxeRedfishLib & BaseJsonLib).
 
-![UEFI Redfish Driver Layout](https://github.com/tianocore/edk2-staging/tree/UEFI_Redfish/Images/RedfishDriverStack.png)
+![UEFI Redfish Driver Layout](https://github.com/tianocore/edk2-staging/blob/UEFI_Redfish/Images/RedfishDriverStack.png?raw=true)
 
 #### Supported Features
   * Protocols
