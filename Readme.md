@@ -8,6 +8,8 @@ UEFI Redfish is an efficient and secure solution for end users to remote control
 
 One of the design goals for UEFI Redfish solution is to provide a scalable implementation which allow users to easily add/remove/modify each independent Redfish configure features (RedfishBiosDxe & RedfishBootInfoDxe). This is done by extracting the generic logic to a single UEFI driver model driver (RedfishConfigDxe), and several library instances (DxeRedfishLib & BaseJsonLib).
 
+![UEFI Redfish Driver Layout](https://github.com/tianocore/edk2-staging/tree/UEFI_Redfish/Images/RedfishDriverStack.png)
+
 #### Supported Features
   * Protocols
     * EFI RestEx Service Binding Protocol
@@ -61,7 +63,7 @@ One of the design goals for UEFI Redfish solution is to provide a scalable imple
    * Nt32Pkg - 1) Enable UEFI Redfish feature in NT32 platform. 2) Fix TLS build error with CryptoPkg from edk2-stable201811 tag.
 
 ## Delivery of FW authentication information to UEFI Redfish
-The platform using this Redfish solution need to have a platform driver to install Redfish Credential Protocol (see RedfishPkg/Include/Protocol/RedfishCredential.h) to allow UEFI firmware to get firmware-BMC authentication credential for use, instead of using the “RedfishFWCredentials” variable defined in DSP0270, in order to avoid storing the firmware-BMC authentication credential into any insecure storage. 
+The platform using this Redfish solution need to have a platform driver to install Redfish Credential Protocol (see RedfishPkg/Include/Protocol/RedfishCredential.h) to allow UEFI firmware to get firmware-BMC authentication credential for use, instead of using the “RedfishFWCredentials” variable defined in DSP0270, in order to avoid storing the firmware-BMC authentication credential into any insecure storage.
 
 The EFI_REDFISH_CREDENTIAL_PROTOCOL.StopService() is defined to notify BMC Redfish service to stop provide configuration service to this platform. This interface shall be called when the platform is about to leave an safe UEFI environment. Upon receiving such notification, the BMC shall stop providing the authentication credential to UEFI firmware, close all existing Redfish session with the original credential, and reject any further Redfish login request from UEFI firmware until next platform reset.
 
