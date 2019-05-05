@@ -505,6 +505,7 @@ ProcessTheseCapsules (
   ESRT_MANAGEMENT_PROTOCOL    *EsrtManagement;
   UINT16                      EmbeddedDriverCount;
   BOOLEAN                     ResetRequired;
+  CHAR16                      *CapsuleName;
 
   REPORT_STATUS_CODE(EFI_PROGRESS_CODE, (EFI_SOFTWARE | PcdGet32(PcdStatusCodeSubClassCapsule) | PcdGet32(PcdCapsuleStatusCodeProcessCapsulesBegin)));
 
@@ -540,10 +541,11 @@ ProcessTheseCapsules (
   //
   for (Index = 0; Index < mCapsuleTotalNumber; Index++) {
     CapsuleHeader = (EFI_CAPSULE_HEADER*) mCapsulePtr [Index];
+    CapsuleName = (mCapsuleNamePtr == NULL) ? NULL : mCapsuleNamePtr[Index];
     if (CompareGuid (&CapsuleHeader->CapsuleGuid, &gWindowsUxCapsuleGuid)) {
       DEBUG ((DEBUG_INFO, "ProcessThisCapsuleImage (Ux) - 0x%x\n", CapsuleHeader));
       DEBUG ((DEBUG_INFO, "Display logo capsule is found.\n"));
-      Status = ProcessThisCapsuleImage (CapsuleHeader, mCapsuleNamePtr[Index], NULL);
+      Status = ProcessThisCapsuleImage (CapsuleHeader, CapsuleName, NULL);
       mCapsuleStatusArray [Index] = EFI_SUCCESS;
       DEBUG((DEBUG_INFO, "ProcessThisCapsuleImage (Ux) - %r\n", Status));
       break;
@@ -561,6 +563,7 @@ ProcessTheseCapsules (
       continue;
     }
     CapsuleHeader = (EFI_CAPSULE_HEADER*) mCapsulePtr [Index];
+    CapsuleName = (mCapsuleNamePtr == NULL) ? NULL : mCapsuleNamePtr[Index];
     if (!CompareGuid (&CapsuleHeader->CapsuleGuid, &gWindowsUxCapsuleGuid)) {
       //
       // Call capsule library to process capsule image.
@@ -581,7 +584,7 @@ ProcessTheseCapsules (
       if ((!FirstRound) || (EmbeddedDriverCount == 0)) {
         DEBUG((DEBUG_INFO, "ProcessThisCapsuleImage - 0x%x\n", CapsuleHeader));
         ResetRequired = FALSE;
-        Status = ProcessThisCapsuleImage (CapsuleHeader, mCapsuleNamePtr[Index], &ResetRequired);
+        Status = ProcessThisCapsuleImage (CapsuleHeader, CapsuleName, &ResetRequired);
         mCapsuleStatusArray [Index] = Status;
         DEBUG((DEBUG_INFO, "ProcessThisCapsuleImage - %r\n", Status));
 
