@@ -44,6 +44,7 @@
   HobLib
   BaseMemoryLib
   MemoryAllocationLib
+  ReportStatusCodeLib
 
 [Ppis]
   gEdkiiPeiCapsuleOnDiskPpiGuid           ## PRODUCES

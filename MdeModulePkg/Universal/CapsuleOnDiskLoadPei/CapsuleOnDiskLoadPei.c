@@ -47,6 +47,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/CapsuleLib.h>
+#include <Library/ReportStatusCodeLib.h>
 
 /**
   Loads a DXE capsule from some media into memory and updates the HOB table
@@ -351,6 +352,12 @@ LoadCapsuleOnDisk (
                );
     DEBUG ((DEBUG_ERROR, "LoadCapsuleOnDisk - LocateRecoveryPpi (%d) - %r\n", Instance, Status));
     if (EFI_ERROR (Status)) {
+      if (Instance == 0) {
+        REPORT_STATUS_CODE (
+          EFI_ERROR_CODE | EFI_ERROR_MAJOR,
+          (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_RECOVERY_PPI_NOT_FOUND)
+          );
+      }
       break;
     }
     NumberRecoveryCapsules = 0;
@@ -407,6 +414,13 @@ LoadCapsuleOnDisk (
       Status = RetrieveRelocatedCapsule(CapsuleBuffer, CapsuleSize);
 
       break;
+    }
+
+    if (EFI_ERROR (Status)) {
+      REPORT_STATUS_CODE (
+        EFI_ERROR_CODE | EFI_ERROR_MAJOR,
+        (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_NO_RECOVERY_CAPSULE)
+        );
     }
 
     return Status;
