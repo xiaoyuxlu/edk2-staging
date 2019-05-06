@@ -361,13 +361,13 @@ GetEfiSysPartitionFromActiveBootOption(
     BootOptionNum = 1;
     Status = GetBootOptionByNumber(**LoadOptionNumber, &BootOptionBuf);
     if (EFI_ERROR(Status)) {
-      DEBUG ((EFI_D_ERROR, "GetBootOptionByIndex Failed %x! No BootOption available for connection\n", Status));
+      DEBUG ((DEBUG_ERROR, "GetBootOptionByIndex Failed %x! No BootOption available for connection\n", Status));
       return Status;
     }
   } else {
     Status = GetBootOptionInOrder(&BootOptionBuf, &BootOptionNum);
     if (EFI_ERROR(Status)) {
-      DEBUG ((EFI_D_ERROR, "GetBootOptionInOrder Failed %x! No BootOption available for connection\n", Status));
+      DEBUG ((DEBUG_ERROR, "GetBootOptionInOrder Failed %x! No BootOption available for connection\n", Status));
       return Status;
     }
   }
@@ -807,12 +807,12 @@ GetFileImageInAlphabetFromDir(
              &FileCount
              );
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_ERROR, "GetFileInfoListInAlphabetFromDir Failed!\n"));
+    DEBUG ((DEBUG_ERROR, "GetFileInfoListInAlphabetFromDir Failed!\n"));
     goto EXIT;
   }
 
   if (FileCount == 0) {
-    DEBUG ((EFI_D_ERROR, "No file found in Dir!\n"));
+    DEBUG ((DEBUG_ERROR, "No file found in Dir!\n"));
     Status = EFI_NOT_FOUND;
     goto EXIT;
   }
@@ -951,12 +951,12 @@ RemoveFileFromDir(
              &FileCount
              );
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_ERROR, "GetFileInfoListInAlphabetFromDir Failed!\n"));
+    DEBUG ((DEBUG_ERROR, "GetFileInfoListInAlphabetFromDir Failed!\n"));
     goto EXIT;
   }
 
   if (FileCount == 0) {
-    DEBUG ((EFI_D_ERROR, "No file found in Dir!\n"));
+    DEBUG ((DEBUG_ERROR, "No file found in Dir!\n"));
     Status = EFI_NOT_FOUND;
     goto EXIT;
   }
@@ -1398,7 +1398,7 @@ RelocateCapsuleToDisk(
   if (PcdGetSize(PcdCodRelocationDevPath) > sizeof(EFI_DEVICE_PATH_PROTOCOL)) {
     Status = EfiBootManagerConnectDevicePath ((EFI_DEVICE_PATH *)PcdGetPtr(PcdCodRelocationDevPath), &TempHandle);
     if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "RelocateCapsule: EfiBootManagerConnectDevicePath Status - 0x%x\n", Status));
+      DEBUG ((DEBUG_ERROR, "RelocateCapsule: EfiBootManagerConnectDevicePath Status - 0x%x\n", Status));
       goto EXIT;
     }
 
@@ -1414,7 +1414,7 @@ RelocateCapsuleToDisk(
                     &HandleBuffer
                     );
     if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "RelocateCapsule: LocateHandleBuffer Status - 0x%x\n", Status));
+      DEBUG ((DEBUG_ERROR, "RelocateCapsule: LocateHandleBuffer Status - 0x%x\n", Status));
       goto EXIT;
     }
 
@@ -1437,7 +1437,7 @@ RelocateCapsuleToDisk(
     FreePool(HandleBuffer);
 
     if (Index == NumberOfHandles) {
-      DEBUG ((DEBUG_INFO, "RelocateCapsule: No simple file system protocol found.\n"));
+      DEBUG ((DEBUG_ERROR, "RelocateCapsule: No simple file system protocol found.\n"));
       Status = EFI_NOT_FOUND;
     }
   }
@@ -1683,16 +1683,16 @@ RelocateCapsuleToRam (
   TotalStringSize  = 0;
 
   //
-  // 1. Load all Capsule On Disks in to memory
+  // 1. Load all Capsule On Disks into memory
   //
   Status = GetAllCapsuleOnDisk (MaxRetry, &CapsuleOnDiskBuf, &CapsuleOnDiskNum, &Handle, NULL);
   if (EFI_ERROR (Status) || CapsuleOnDiskNum == 0) {
-    DEBUG ((DEBUG_INFO, "GetAllCapsuleOnDisk Status - 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "GetAllCapsuleOnDisk Status - 0x%x\n", Status));
     return EFI_NOT_FOUND;
   }
 
   //
-  // 2. Add a capsule for Capsule File name strings
+  // 2. Add a capsule for Capsule file name strings
   //
   CapsuleBuffer = AllocateZeroPool ((CapsuleOnDiskNum + 1) * sizeof (VOID *));
   if (CapsuleBuffer == NULL) {

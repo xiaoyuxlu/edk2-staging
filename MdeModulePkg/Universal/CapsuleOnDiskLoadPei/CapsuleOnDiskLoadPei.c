@@ -148,7 +148,7 @@ IsCapsuleOnDiskMode (
                                   );
 
   if (EFI_ERROR (Status) || Size != sizeof(BOOLEAN) || CodRelocInfo != TRUE) {
-    DEBUG (( EFI_D_ERROR, "Error Get CodRelocationInfo variable %r!\n", Status));
+    DEBUG (( DEBUG_ERROR, "Error Get CodRelocationInfo variable %r!\n", Status));
     return FALSE;
   }
 
@@ -341,7 +341,7 @@ LoadCapsuleOnDisk (
   EFI_GUID                            CapsuleType;
   VOID                                *CapsuleBuffer;
 
-  DEBUG((DEBUG_INFO | DEBUG_LOAD, "Load Capsule On Disk Entry\n"));
+  DEBUG ((DEBUG_INFO | DEBUG_LOAD, "Load Capsule On Disk Entry\n"));
 
   for (Instance = 0; ; Instance++) {
     Status = PeiServicesLocatePpi (
@@ -350,7 +350,7 @@ LoadCapsuleOnDisk (
                NULL,
                (VOID **)&DeviceRecoveryPpi
                );
-    DEBUG ((DEBUG_ERROR, "LoadCapsuleOnDisk - LocateRecoveryPpi (%d) - %r\n", Instance, Status));
+    DEBUG ((DEBUG_INFO, "LoadCapsuleOnDisk - LocateRecoveryPpi (%d) - %r\n", Instance, Status));
     if (EFI_ERROR (Status)) {
       if (Instance == 0) {
         REPORT_STATUS_CODE (
@@ -366,7 +366,7 @@ LoadCapsuleOnDisk (
                                   DeviceRecoveryPpi,
                                   &NumberRecoveryCapsules
                                   );
-    DEBUG ((DEBUG_ERROR, "LoadCapsuleOnDisk - GetNumberRecoveryCapsules (%d) - %r\n", NumberRecoveryCapsules, Status));
+    DEBUG ((DEBUG_INFO, "LoadCapsuleOnDisk - GetNumberRecoveryCapsules (%d) - %r\n", NumberRecoveryCapsules, Status));
     if (EFI_ERROR (Status)) {
       continue;
     }
@@ -380,7 +380,7 @@ LoadCapsuleOnDisk (
                                     &CapsuleSize,
                                     &CapsuleType
                                     );
-      DEBUG ((DEBUG_ERROR, "LoadCapsuleOnDisk - GetRecoveryCapsuleInfo (%d - %x) - %r\n", CapsuleInstance, CapsuleSize, Status));
+      DEBUG ((DEBUG_INFO, "LoadCapsuleOnDisk - GetRecoveryCapsuleInfo (%d - %x) - %r\n", CapsuleInstance, CapsuleSize, Status));
       if (EFI_ERROR (Status)) {
         break;
       }
@@ -402,7 +402,7 @@ LoadCapsuleOnDisk (
                                     FeaturePcdGet(PcdFrameworkCompatibilitySupport) ? CapsuleInstance - 1 : CapsuleInstance,
                                     CapsuleBuffer
                                     );
-      DEBUG ((DEBUG_ERROR, "LoadCapsuleOnDisk - LoadRecoveryCapsule (%d) - %r\n", CapsuleInstance, Status));
+      DEBUG ((DEBUG_INFO, "LoadCapsuleOnDisk - LoadRecoveryCapsule (%d) - %r\n", CapsuleInstance, Status));
       if (EFI_ERROR (Status)) {
         FreePages (CapsuleBuffer, EFI_SIZE_TO_PAGES(CapsuleSize));
         break;
