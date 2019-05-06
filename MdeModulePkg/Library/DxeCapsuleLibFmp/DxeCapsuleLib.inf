@@ -68,6 +68,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleStatusCodeUpdateFirmwareSuccess   ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleStatusCodeUpdateFirmwareFailed    ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleStatusCodeResettingSystem         ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleInRamSupport                      ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleOnDiskSupport                     ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCodRelocationDevPath                     ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCoDRelocationFileName                    ## CONSUMES

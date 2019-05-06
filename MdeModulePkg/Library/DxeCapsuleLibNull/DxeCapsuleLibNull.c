@@ -125,20 +125,25 @@ CoDClearCapsuleOnDiskFlag(
 }
 
 /**
-  Relocate Capsule on Disk from EFI system partition to a platform-specific NV storage device
-  with BlockIo protocol.  Relocation device path, identified by PcdCodRelocationDevPath, must
-  be a full device path.
+  Relocate Capsule on Disk from EFI system partition. 
+
+  Two solution to deliver Capsule On Disk:
+  Solution A: If PcdCapsuleInRamSupport is enabled, relocate Capsule On Disk to memory and call UpdateCapsule().
+  Solution B: If PcdCapsuleInRamSupport is disabled, relocate Capsule On Disk to a platform-specific NV storage
+  device with BlockIo protocol.
+
   Device enumeration like USB costs time, user can input MaxRetry to tell function to retry.
   Function will stall 100ms between each retry.
 
   Side Effects:
-    Content corruption. Block IO write directly touches low level write. Orignal partitions, file systems 
-    of the relocation device will be corrupted.
+    Capsule Delivery Supported Flag in OsIndication variable and BootNext variable will be cleared.
+    Solution B: Content corruption. Block IO write directly touches low level write. Orignal partitions, file
+  systems of the relocation device will be corrupted.
 
   @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
                                      devices like USB can get enumerated.
 
-  @retval EFI_SUCCESS   Capsule on Disk images are sucessfully relocated to the platform-specific device.
+  @retval EFI_SUCCESS   Capsule on Disk images are sucessfully relocated.
 
 **/
 EFI_STATUS
@@ -151,25 +156,9 @@ CoDRelocateCapsule(
 }
 
 /**
-  For the plattforms that support Capsule On Ram, reuse the Capsule On Ram to deliver capsule.
-
-  @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
-                                     devices like USB can get enumerated.
-
-  @retval EFI_SUCCESS   Deliver capsule through Capsule On Ram successfully.
-
-**/
-EFI_STATUS
-EFIAPI
-CoDReUseCapsuleOnRam (
-  UINTN    MaxRetry
-  )
-{
-  return EFI_UNSUPPORTED;
-}
-
-/**
   Remove the temp file from the root of EFI System Partition.
+  Device enumeration like USB costs time, user can input MaxRetry to tell function to retry.
+  Function will stall 100ms between each retry.
 
   @param[in]    MaxRetry             Max Connection Retry. Stall 100ms between each connection try to ensure
                                      devices like USB can get enumerated.
