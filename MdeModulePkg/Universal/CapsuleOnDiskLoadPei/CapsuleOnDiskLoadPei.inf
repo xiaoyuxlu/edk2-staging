@@ -63,6 +63,7 @@
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdRecoveryFileName                      ## PRODUCES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCoDRelocationFileName                 ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleMax                            ## CONSUMES
 
 [depex]
   gEfiPeiBootInCapsuleOnDiskModePpiGuid 

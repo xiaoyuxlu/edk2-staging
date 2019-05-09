@@ -184,6 +184,9 @@ RetrieveRelocatedCapsule (
   UINT8                    *CapsulePtr;
   UINT32                   CapsuleSize;
   UINT64                   TotalImageSize;
+  UINTN                    CapsuleNum;
+
+  CapsuleNum = 0;
 
   //
   // Temp file contains at least 2 capsule (including 1 capsule name capsule) & 1 UINT64
@@ -223,9 +226,18 @@ RetrieveRelocatedCapsule (
       break;
     }
     CapsulePtr += ((EFI_CAPSULE_HEADER *)CapsulePtr)->CapsuleImageSize;
+    CapsuleNum ++;
   }
 
   if (CapsulePtr != CapsuleDataBufEnd) {
+    Status = EFI_INVALID_PARAMETER;
+    goto EXIT;
+  }
+
+  //
+  // Capsule count must be less than PcdCapsuleMax, avoid building too many CvHobs to occupy all the free space in HobList.
+  //
+  if (CapsuleNum > PcdGet16 (PcdCapsuleMax)) {
     Status = EFI_INVALID_PARAMETER;
     goto EXIT;
   }
