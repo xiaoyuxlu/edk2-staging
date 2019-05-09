@@ -343,8 +343,8 @@ ValidateCapsuleNameCapsuleIntegrity (
   )
 {
   UINT8                    *CapsuleNamePtr;
+  UINT8                    *CapsuleNameBufStart;
   UINT8                    *CapsuleNameBufEnd;
-  UINT8                    *CapsulePtr;
   UINTN                    Index;
   UINTN                    StringSize;
   EFI_PHYSICAL_ADDRESS     *CapsuleNameBuf;
@@ -353,24 +353,30 @@ ValidateCapsuleNameCapsuleIntegrity (
     return NULL;
   }
 
-  *CapsuleNameNum = 0;
-  Index = 0;
-
   //
-  // In case the capsule name strings are not aligned on a 16-bit boundary,
-  // copy them to new allocated memory.
+  // Total string size must be even.
   //
-  CapsulePtr = AllocatePool (CapsuleHeader->CapsuleImageSize);
-  if (CapsulePtr == NULL) {
+  if (((CapsuleHeader->CapsuleImageSize - CapsuleHeader->HeaderSize) & BIT0) != 0) {
     return NULL;
   }
 
-  CopyMem (CapsulePtr, CapsuleHeader, CapsuleHeader->CapsuleImageSize);
-  CapsuleNamePtr = CapsulePtr + CapsuleHeader->HeaderSize;
-  CapsuleNameBufEnd = CapsulePtr + CapsuleHeader->CapsuleImageSize;
+  *CapsuleNameNum = 0;
+  Index = 0;
+  CapsuleNameBufStart = (UINT8 *) CapsuleHeader + CapsuleHeader->HeaderSize;
 
+  //
+  // If strings are not aligned on a 16-bit boundary, reallocate memory for it.
+  //
+  if (((UINTN) CapsuleNameBufStart & BIT0) != 0) {
+    CapsuleNameBufStart = AllocateCopyPool (CapsuleHeader->CapsuleImageSize - CapsuleHeader->HeaderSize, CapsuleNameBufStart);
+  }
+
+  CapsuleNameBufEnd = CapsuleNameBufStart + CapsuleHeader->CapsuleImageSize - CapsuleHeader->HeaderSize;
+
+  CapsuleNamePtr = CapsuleNameBufStart;
   while (CapsuleNamePtr < CapsuleNameBufEnd) {
-    CapsuleNamePtr += StrnSizeS ((CHAR16 *) CapsuleNamePtr, CapsuleHeader->CapsuleImageSize);
+    StringSize= StrnSizeS ((CHAR16 *) CapsuleNamePtr, (CapsuleNameBufEnd - CapsuleNamePtr)/sizeof(CHAR16));
+    CapsuleNamePtr += StringSize;
     (*CapsuleNameNum) ++;
   }
 
@@ -378,19 +384,23 @@ ValidateCapsuleNameCapsuleIntegrity (
   // Integrity check.
   //
   if (CapsuleNamePtr != CapsuleNameBufEnd) {
-    FreePool (CapsulePtr);
+    if (CapsuleNameBufStart != (UINT8 *)CapsuleHeader + CapsuleHeader->HeaderSize) {
+      FreePool (CapsuleNameBufStart);
+    }
     return NULL;
   }
 
   CapsuleNameBuf = AllocatePool (*CapsuleNameNum * sizeof (EFI_PHYSICAL_ADDRESS));
   if (CapsuleNameBuf == NULL) {
-    FreePool (CapsulePtr);
+    if (CapsuleNameBufStart != (UINT8 *)CapsuleHeader + CapsuleHeader->HeaderSize) {
+      FreePool (CapsuleNameBufStart);
+    }
     return NULL;
   }
 
-  CapsuleNamePtr = CapsulePtr + CapsuleHeader->HeaderSize;
+  CapsuleNamePtr = CapsuleNameBufStart;
   while (CapsuleNamePtr < CapsuleNameBufEnd) {
-    StringSize= StrnSizeS ((CHAR16 *) CapsuleNamePtr, CapsuleHeader->CapsuleImageSize);
+    StringSize= StrnSizeS ((CHAR16 *) CapsuleNamePtr, (CapsuleNameBufEnd - CapsuleNamePtr)/sizeof(CHAR16));
     CapsuleNameBuf[Index] = (EFI_PHYSICAL_ADDRESS) CapsuleNamePtr;
     CapsuleNamePtr += StringSize;
     Index ++;
