@@ -1508,11 +1508,14 @@
   #   TRUE  - Capsule On Disk is supported.<BR>
   #   FALSE - Capsule On Disk is not supported.<BR>
   #  If platform does not use this feature, this PCD should be set to FALSE.<BR><BR>
-  #  Note:<BR>
+  #  Two sulotions to deliver Capsule On Disk:<BR>
   #    a) If PcdCapsuleInRamSupport = TRUE, Load Capsule On Disk image out of TCB, and reuse
   #       Capsule In Ram to deliver capsule.<BR>
   #    b) If PcdCapsuleInRamSupport = FALSE, Relocate Capsule On Disk image to RootDir out
-  #       of TCB, and reuse FatPei to load capsules from external storage.
+  #       of TCB, and reuse FatPei to load capsules from external storage.<BR>
+  #  Note:<BR>
+  #    If Both Capsule In Ram and Capsule On Disk are provisioned at the same time, the Capsule 
+  #  On Disk will be bypassed.
   # @Prompt Enable Capsule On Disk support.
   gEfiMdeModulePkgTokenSpaceGuid.PcdCapsuleOnDiskSupport|FALSE|BOOLEAN|0x0000002d
 
