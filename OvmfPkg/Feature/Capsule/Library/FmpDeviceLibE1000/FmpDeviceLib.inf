@@ -37,7 +37,6 @@
   UefiRuntimeServicesTableLib
   DevicePathLib
   UefiLib
-  FmpPayloadHeaderLib
 
 [Protocols]
   gEfiDevicePathProtocolGuid
