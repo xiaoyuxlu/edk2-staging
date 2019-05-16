@@ -1790,8 +1790,10 @@ CoDRelocateCapsule(
   // If Capsule In Ram is supported, delivery capsules through memory
   //
   if (PcdGetBool (PcdCapsuleInRamSupport)) {
+    DEBUG ((DEBUG_INFO, "Capsule In Ram is supported, call gRT->UpdateCapsule().\n"));
     return RelocateCapsuleToRam (MaxRetry);
   } else {
+    DEBUG ((DEBUG_INFO, "Reallcoate all Capsule on Disks to %s in RootDir.\n", (CHAR16 *)PcdGetPtr(PcdCoDRelocationFileName)));
     return RelocateCapsuleToDisk (MaxRetry);
   }
 }
