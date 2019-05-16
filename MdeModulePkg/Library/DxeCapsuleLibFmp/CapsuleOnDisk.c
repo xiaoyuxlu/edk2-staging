@@ -119,7 +119,7 @@ SplitFileNameExtension (
   UINTN Index;
   UINTN StringLen;
 
-  StringLen = StrLen(FileName);
+  StringLen = StrnLenS(FileName, MAX_FILE_NAME_SIZE);
   for (Index = StringLen; Index > 0 && FileName[Index] != L'.'; Index--);
 
   //
@@ -129,13 +129,13 @@ SplitFileNameExtension (
     FileNameExtension[0] = L'\0';
     Index = StringLen;
   } else {
-    StrCpy(FileNameExtension, &FileName[Index+1]);
+    StrCpyS(FileNameExtension, MAX_FILE_NAME_SIZE, &FileName[Index+1]);
   }
 
   //
   // Copy First file name
   //
-  StrnCpy(FileNameFirst, FileName, Index);
+  StrnCpyS(FileNameFirst, MAX_FILE_NAME_SIZE, FileName, Index);
   FileNameFirst[Index] = L'\0';
 }
 
@@ -312,7 +312,7 @@ GetEfiSysPartitionFromDevPath(
     // Search for simple file system on this handler
     //
     if (!EFI_ERROR(Status)) {
-      Status = gBS->HandleProtocol(Handle, &gEfiSimpleFileSystemProtocolGuid, &Fs);
+      Status = gBS->HandleProtocol(Handle, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
       if (!EFI_ERROR(Status)) {
         *FsHandle = Handle;
         return EFI_SUCCESS;
@@ -605,7 +605,7 @@ GetFileInfoListInAlphabetFromDir(
       goto EXIT;
     }
     NewFileInfoEntry->Signature = FILE_INFO_SIGNATURE;
-    NewFileInfoEntry->FileInfo  = AllocateCopyPool(FileInfo->Size, FileInfo);
+    NewFileInfoEntry->FileInfo  = AllocateCopyPool((UINTN) FileInfo->Size, FileInfo);
     if (NewFileInfoEntry->FileInfo == NULL) {
       FreePool(NewFileInfoEntry);
       Status = EFI_OUT_OF_RESOURCES;
@@ -1020,7 +1020,7 @@ GetAllCapsuleOnDisk(
   OUT IMAGE_INFO                       **CapsulePtr,
   OUT UINTN                            *CapsuleNum,
   OUT EFI_HANDLE                       *FsHandle,
-  OUT INT16                            *LoadOptionNumber
+  OUT UINT16                            *LoadOptionNumber
   )
 {
   EFI_STATUS                       Status;
@@ -1040,7 +1040,7 @@ GetAllCapsuleOnDisk(
     return Status;
   }
 
-  Status = gBS->HandleProtocol(*FsHandle, &gEfiSimpleFileSystemProtocolGuid, &Fs);
+  Status = gBS->HandleProtocol(*FsHandle, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
   if (EFI_ERROR(Status)) {
     return Status;
   }
@@ -1368,7 +1368,7 @@ RelocateCapsuleToDisk(
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Fs;
   EFI_FILE_HANDLE                 RootDir;
   EFI_FILE_HANDLE                 TempCodFile;
-  UINTN                           TempCodFileSize;
+  UINT64                          TempCodFileSize;
   EFI_DEVICE_PATH                 *TempDevicePath;
   BOOLEAN                         RelocationInfo;
   UINT16                          LoadOptionNumber;
@@ -1497,7 +1497,7 @@ RelocateCapsuleToDisk(
     goto EXIT;
   }
 
-  CapsuleDataBuf = AllocatePool(TempCodFileSize);
+  CapsuleDataBuf = AllocatePool((UINTN) TempCodFileSize);
   if (CapsuleDataBuf == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
@@ -1512,7 +1512,7 @@ RelocateCapsuleToDisk(
   // Line up all the Capsule on Disk and write to relocation disk at one time. It could save some time in disk write
   //
   for (Index = 0, CapsulePtr = CapsuleDataBuf + sizeof(UINT64); Index < CapsuleOnDiskNum; Index++) {
-    CopyMem(CapsulePtr, CapsuleOnDiskBuf[Index].ImageAddress, CapsuleOnDiskBuf[Index].FileInfo->FileSize);
+    CopyMem(CapsulePtr, CapsuleOnDiskBuf[Index].ImageAddress, (UINTN) CapsuleOnDiskBuf[Index].FileInfo->FileSize);
     CapsulePtr += CapsuleOnDiskBuf[Index].FileInfo->FileSize;
   }
 
@@ -1571,7 +1571,7 @@ RelocateCapsuleToDisk(
   //
   // Always write at the begining of TempCap file
   //
-  DataSize = TempCodFileSize;
+  DataSize = (UINTN) TempCodFileSize;
   Status = TempCodFile->Write(
                           TempCodFile,
                           &DataSize,
@@ -1708,7 +1708,7 @@ RelocateCapsuleToRam (
 
   for (Index = 0; Index < CapsuleOnDiskNum; Index++) {
     CapsuleBuffer[Index] = (VOID *)(UINTN) CapsuleOnDiskBuf[Index].ImageAddress;
-    CapsuleSize[Index] = CapsuleOnDiskBuf[Index].FileInfo->FileSize;
+    CapsuleSize[Index] = (UINTN) CapsuleOnDiskBuf[Index].FileInfo->FileSize;
     TotalStringSize += StrSize (CapsuleOnDiskBuf[Index].FileInfo->FileName);
   }
 
@@ -1849,7 +1849,7 @@ CoDRemoveTempFile (
     return Status;
   }
 
-  Status = gBS->HandleProtocol(FsHandle, &gEfiSimpleFileSystemProtocolGuid, &Fs);
+  Status = gBS->HandleProtocol(FsHandle, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
   if (EFI_ERROR(Status)) {
     return Status;
   }

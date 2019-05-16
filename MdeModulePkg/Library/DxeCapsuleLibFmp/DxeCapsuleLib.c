@@ -401,7 +401,7 @@ ValidateCapsuleNameCapsuleIntegrity (
   CapsuleNamePtr = CapsuleNameBufStart;
   while (CapsuleNamePtr < CapsuleNameBufEnd) {
     StringSize= StrnSizeS ((CHAR16 *) CapsuleNamePtr, (CapsuleNameBufEnd - CapsuleNamePtr)/sizeof(CHAR16));
-    CapsuleNameBuf[Index] = (EFI_PHYSICAL_ADDRESS) CapsuleNamePtr;
+    CapsuleNameBuf[Index] = (EFI_PHYSICAL_ADDRESS)(UINTN) CapsuleNamePtr;
     CapsuleNamePtr += StringSize;
     Index ++;
   }
