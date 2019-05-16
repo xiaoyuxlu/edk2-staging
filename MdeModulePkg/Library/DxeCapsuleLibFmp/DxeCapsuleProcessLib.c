@@ -234,6 +234,7 @@ InitCapsulePtr (
   CapsuleNameNumber             = 0;
   CapsuleNameTotalNumber        = 0;
   CapsuleNameCapsuleTotalNumber = 0;
+  CapsuleNameCapsulePtr         = NULL;
 
   //
   // Find all capsule images from hob
@@ -341,7 +342,9 @@ InitCapsulePtr (
     mCapsuleNamePtr = NULL;
   }
 
-  FreePool (CapsuleNameCapsulePtr);
+  if (CapsuleNameCapsulePtr != NULL) {
+    FreePool (CapsuleNameCapsulePtr);
+  }
 }
 
 /**
