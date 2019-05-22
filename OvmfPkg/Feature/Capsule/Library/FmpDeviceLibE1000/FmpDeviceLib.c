@@ -24,6 +24,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/DevicePath.h>
 #include <Protocol/PciIo.h>
 
+#include <IndustryStandard/Pci.h>
+
 #define E1000_FMP_PAYLOAD_SIZE  sizeof (E1000_FMP_PAYLOAD)
 
 typedef struct {
@@ -131,6 +133,7 @@ FmpDeviceSetContext (
 {
   EFI_STATUS                            Status;
   E1000_FMP_DEVICE_LIB_PRIVATE_CONTEXT  *E1000Device;
+  PCI_TYPE00                            PciHeader;
 
   if (Handle == NULL) {
     E1000Device = (E1000_FMP_DEVICE_LIB_PRIVATE_CONTEXT  *)(*Context);
@@ -173,10 +176,52 @@ FmpDeviceSetContext (
       FreePool (E1000Device);
       return EFI_INVALID_PARAMETER;
     }
-    E1000Device->HardwareInstance = (UINT64)CalculateCrc32 (
-                                              E1000Device->DevicePath,
-                                              GetDevicePathSize (E1000Device->DevicePath)
-                                              );
+
+    //
+    // Zero a PCI Header and fill in Vendor IDs and Device IDs.
+    //
+    ZeroMem (&PciHeader, sizeof (PciHeader));
+    E1000Device->PciIo->Pci.Read (
+                              E1000Device->PciIo,
+                              EfiPciIoWidthUint16,
+                              PCI_VENDOR_ID_OFFSET,
+                              1,
+                              &PciHeader.Hdr.VendorId
+                              );
+    E1000Device->PciIo->Pci.Read (
+                              E1000Device->PciIo,
+                              EfiPciIoWidthUint16,
+                              PCI_DEVICE_ID_OFFSET,
+                              1,
+                              &PciHeader.Hdr.DeviceId
+                              );
+    E1000Device->PciIo->Pci.Read (
+                              E1000Device->PciIo,
+                              EfiPciIoWidthUint16,
+                              PCI_SVID_OFFSET,
+                              1,
+                              &PciHeader.Device.SubsystemVendorID
+                              );
+    E1000Device->PciIo->Pci.Read (
+                              E1000Device->PciIo,
+                              EfiPciIoWidthUint16,
+                              PCI_SID_OFFSET,
+                              1,
+                              &PciHeader.Device.SubsystemID
+                              );
+    //
+    // Build 64-bit Hardware Instance from CRC32 of PciHeader and CRC32 of
+    // the device path.  This provides a unique value based on the slot the
+    // PCI device is located and the Vendor/Device IDs
+    //
+    E1000Device->HardwareInstance = (UINT64)CalculateCrc32 (&PciHeader, sizeof (PciHeader));
+    E1000Device->HardwareInstance = LShiftU64 (E1000Device->HardwareInstance, 32);
+    E1000Device->HardwareInstance = E1000Device->HardwareInstance |
+                                    (UINT64)CalculateCrc32 (
+                                      E1000Device->DevicePath,
+                                      GetDevicePathSize (E1000Device->DevicePath)
+                                      );
+
     E1000Device->PayloadVariableName = CatSPrint (NULL, L"Payload%016lx", E1000Device->HardwareInstance);
 
     *Context = E1000Device;
