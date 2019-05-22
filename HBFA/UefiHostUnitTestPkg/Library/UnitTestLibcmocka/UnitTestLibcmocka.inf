@@ -17,12 +17,14 @@
   BaseLib
   MemoryAllocationLib
   OsServiceLib
+  CmockaLib
 
 [Packages]
   MdePkg/MdePkg.dec
   UnitTestPkg/UnitTestPkg.dec
   UefiHostTestPkg/UefiHostTestPkg.dec
   UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec
+  CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec
 
 [Sources]
   UnitTestLib.c

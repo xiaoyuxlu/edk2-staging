@@ -1,77 +1,26 @@
 How to run cmocka for UEFI code.
 =========================
-0) download CMake (http://www.cmake.org/)
+1) install cmocka
+  Cmocka repository was added as one submodule of HBFA project.
+  The user can use the following commands to clone both main HBFA repo and Cmocka submodule:
+  Add the "--recursive" flag to the git clone command:
+  $ git clone --recursive <HBFA_REPO_URL>
+or
+  Manually initialize and update the submodules after the clone operation on main project:
+  $ git clone <HBFA_REPO_URL>
+  $ git submodule update --init --recursive
 
-1) install cmocka-1.1.5
-Part A: Install cmocka in linux
-1.1 download cmocka-1.1.5.tar.xz (https://cmocka.org/) and unzip it ($tar xJvf cmocka-1.1.5.tar.xz)
-1.2 build
-  $ cd cmocka-1.1.5
-  $ mkdir build
-  $ cd build
-  $ export CFLAGS=-m32
-  $ export CXXFLAGS=-m32
-  $ cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug -D WITH_STATIC_LIB=ON ..
-  $ make
-  $ sudo sh -c "echo '<...>/cmocka-1.1.5/build/src' >> /etc/ld.so.conf"
-  $ sudo ldconfig 
-  $ cd ..
-  $ mkdir build64
-  $ cd build64
-  $ export CFLAGS=-m64
-  $ export CXXFLAGS=-m64
-  $ cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug -D WITH_STATIC_LIB=ON ..
-  $ make
-  $ sudo sh -c "echo '<...>/cmocka-1.1.5/build64/src' >> /etc/ld.so.conf"
-  $ sudo ldconfig 
-
-  the lib is at ./src/libcmocka-static.a, ./src/libcmocka.so
-
-1.3 export CMOCKA_INC_PATH=<...>/cmocka-1.1.5/include
-    export CMOCKA_LIB_PATH=<...>/cmocka-1.1.5/build/src
-    export CMOCKA_LIB_PATH_64=<...>/cmocka-1.1.5/build64/src
-    export CMOCKA_LIB_NAME=cmocka[-static]
-    export CMOCKA_LIB_NAME_64=cmocka[-static]
-
-Part B: Install cmocka in windows
-1.1 download cmocka-1.1.5 from https://cmocka.org/, and unzip cmocka-1.1.5.tar.xz
-1.2 open visual studio dev command prompt, to go 
-    cd <...>\cmocka-1.1.5\
-    mkdir build
-    cd build
-    cmake -G "Visual Studio 14 2015" -D WITH_STATIC_LIB=ON ..
-
-    mkdir build64
-    cd build64
-    cmake -G "Visual Studio 14 2015 Win64" -D WITH_STATIC_LIB=ON ..
-
-1.3 load solution at cmocka.sln, and build the solution.
-    or type:
-    devenv cmocka.sln /Build [Debug|Release] /Project cmocka[-static]
-
-    static lib can be found at:
-    cmocka-1.1.5\[build|build64]\src\[Debug|Release]\cmocka-static.lib
-
-    dynamic lib can be found at: 
-    cmocka-1.1.5\[build|build64]\src\[Debug|Release]\cmocka.[lib|dll]
-
-1.4 set CMOCKA_INC_PATH=<...>\cmocka-1.1.5\include
-    set CMOCKA_LIB_PATH=<...>\cmocka-1.1.5\build\src\[Debug|Release]
-    set CMOCKA_LIB_PATH_64=<...>\cmocka-1.1.5\build64\src\[Debug|Release]
-    set CMOCKA_LIB_NAME=cmocka[-static].lib
-    set CMOCKA_LIB_NAME_64=cmocka[-static].lib
-
-1.5 add env path, only for dynamic lib build
-    Add %CMOCKA_LIB_PATH% to %PATH%, for IA32 run.
-    Add %CMOCKA_LIB_PATH_64% to %PATH%, for X64 run.
+  And use the following combined commands to pull the remote submodule updates
+(e.g. Updating the new supported Cmocka release tag):
+  $ git pull --recurse-submodules && git submodule update --recursive
 
 2) run sample code (Basic Mode)
 Part A: Build in Linux
-    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t GCC5 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA --disable-include-path-check
+    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t GCC5 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA
     <...>/Build/UefiHostUnitTestCasePkg/DEBUG_GCC5/X64/TestBaseSafeIntLib
 
 Part B: Build in Windows
-    build -p UefiHostUnitTestCasePkg\UefiHostUnitTestCasePkg.dsc -a X64 -t VS2015x86 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA --disable-include-path-check
+    build -p UefiHostUnitTestCasePkg\UefiHostUnitTestCasePkg.dsc -a X64 -t VS2015x86 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA
     <...>\Build\UefiHostUnitTestCasePkg\DEBUG_VS2015x86\X64\TestBaseSafeIntLib.exe  
 
 You may see below. Have fun
@@ -108,12 +57,12 @@ Int Safe Lib Unit Test Application v0.1
   set environment variable: CMOCKA_XML_FILE=<test.xml>
 
   Build in Linux
-    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t GCC5 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA -DUNIT_TEST_XML_MODE --disable-include-path-check
+    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t GCC5 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA -DUNIT_TEST_XML_MODE
     export CMOCKA_XML_FILE=TestBaseSafeIntLib.X64.xml
     ./Build/UefiHostUnitTestCasePkg/DEBUG_GCC5/X64/TestBaseSafeIntLib
 
   Build in Windows
-    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t VS2015x86 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA -DUNIT_TEST_XML_MODE --disable-include-path-check
+    build -p UefiHostUnitTestCasePkg/UefiHostUnitTestCasePkg.dsc -a X64 -t VS2015x86 -DUNIT_TEST_FRAMEWORK_MODE=CMOCKA -DUNIT_TEST_XML_MODE
     set CMOCKA_XML_FILE=TestBaseSafeIntLib.X64.xml
     <...>\Build\UefiHostUnitTestCasePkg\DEBUG_VS2015x86\X64\TestBaseSafeIntLib.exe
 
