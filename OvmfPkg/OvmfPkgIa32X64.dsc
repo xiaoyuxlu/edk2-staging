@@ -990,4 +990,8 @@
 
   MdeModulePkg/Universal/EsrtFmpDxe/EsrtFmpDxe.inf
   MdeModulePkg/Application/CapsuleApp/CapsuleApp.inf
+  FmpDevicePkg/CapsuleUpdatePolicyDxe/CapsuleUpdatePolicyDxe.inf{
+    <LibraryClasses>
+      CapsuleUpdatePolicyLib|FmpDevicePkg/Library/CapsuleUpdatePolicyLibNull/CapsuleUpdatePolicyLibNull.inf
+  }
 !endif

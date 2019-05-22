@@ -41,7 +41,7 @@
       #
       # Platform specific capsule policy library
       #
-      CapsuleUpdatePolicyLib|FmpDevicePkg/Library/CapsuleUpdatePolicyLibNull/CapsuleUpdatePolicyLibNull.inf
+      CapsuleUpdatePolicyLib|FmpDevicePkg/Library/CapsuleUpdatePolicyLibOnProtocol/CapsuleUpdatePolicyLibOnProtocol.inf
       #
       # Device specific library that processes a capsule and updates the FW storage device
       #
