@@ -60,15 +60,11 @@
   gEfiPeiVirtualBlockIo2PpiGuid                 ## SOMETIMES_CONSUMES PPI_NOTIFY
   gEfiPeiDeviceRecoveryModulePpiGuid            ## SOMETIMES_PRODUCES
 
-
-[FeaturePcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFrameworkCompatibilitySupport         ## CONSUMES
-
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdRecoveryFileName         ## CONSUMES
 
 [Depex]
-  gEfiPeiMemoryDiscoveredPpiGuid AND gEfiPeiBootInRecoveryModePpiGuid
+  gEfiPeiMemoryDiscoveredPpiGuid
 
 [UserExtensions.TianoCore."ExtraFiles"]
   FatPeiExtra.uni
