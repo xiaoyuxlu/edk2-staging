@@ -17,7 +17,7 @@
       #
       # Unicode name string that is used to populate FMP Image Descriptor for this capsule update module
       #
-      gFmpDevicePkgTokenSpaceGuid.PcdFmpDeviceImageIdName|L"Sample Firmware Device"
+      gFmpDevicePkgTokenSpaceGuid.PcdFmpDeviceImageIdName|L"Blue Sample Firmware Device"
 
       #
       # ESRT and FMP Lowest Support Version for this capsule update module
