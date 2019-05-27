@@ -1,3 +1,6 @@
 [submodule "HBFA/CmockaHostUnitTestPkg/Library/CmockaLib/cmocka"]
 	path = HBFA/CmockaHostUnitTestPkg/Library/CmockaLib/cmocka
 	url = https://git.cryptomilk.org/projects/cmocka.git
+[submodule "HBFA/UefiHostCryptoPkg/Library/OpensslLib/openssl"]
+	path = HBFA/UefiHostCryptoPkg/Library/OpensslLib/openssl
+	url = https://github.com/openssl/openssl
