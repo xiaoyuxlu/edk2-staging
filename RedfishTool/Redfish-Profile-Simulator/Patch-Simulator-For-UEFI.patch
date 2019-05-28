@@ -1,0 +1,2245 @@
+From 88e2b4583c3fcedb62883c1857328c6c5a6879f9 Mon Sep 17 00:00:00 2001
+From: Wang Fan <fan.wang@intel.com>
+Date: Mon, 27 May 2019 15:02:01 +0800
+Subject: [Patch] RedfishToolPkg: Update Redfish Profile Simulator to support
+ UEFI
+
+Signed-off-by: Wang Fan <fan.wang@intel.com>
+---
+ .../redfish/v1/$metadata/index.xml                 |   6 +-
+ .../index.json                                     |  16 ++
+ .../redfish/v1/Registries/index.json               |  14 ++
+ .../v1/Systems/2M220100SL/Bios/Settings/index.json |  31 ++++
+ .../redfish/v1/Systems/2M220100SL/Bios/index.json  | 202 +++++++++++++++++++++
+ .../redfish/v1/Systems/2M220100SL/index.json       |   7 +-
+ .../v1/Systems/2M220101SL/Bios/Settings/index.json |  13 ++
+ .../redfish/v1/Systems/2M220101SL/Bios/index.json  |  17 ++
+ .../v1/Systems/2M220101SL/BootOptions/index.json   |  10 +
+ .../LogServices/SEL/Entries/1/index.json           |  28 +++
+ .../LogServices/SEL/Entries/2/index.json           |  28 +++
+ .../2M220101SL/LogServices/SEL/Entries/index.json  |  64 +++++++
+ .../Systems/2M220101SL/LogServices/SEL/index.json  |  27 +++
+ .../v1/Systems/2M220101SL/LogServices/index.json   |  15 ++
+ .../redfish/v1/Systems/2M220101SL/index.json       |  79 ++++++++
+ .../v1/Systems/2M220102SL/Bios/Settings/index.json |  31 ++++
+ .../redfish/v1/Systems/2M220102SL/Bios/index.json  | 202 +++++++++++++++++++++
+ .../LogServices/SEL/Entries/1/index.json           |  28 +++
+ .../LogServices/SEL/Entries/2/index.json           |  28 +++
+ .../2M220102SL/LogServices/SEL/Entries/index.json  |  64 +++++++
+ .../Systems/2M220102SL/LogServices/SEL/index.json  |  27 +++
+ .../v1/Systems/2M220102SL/LogServices/index.json   |  15 ++
+ .../redfish/v1/Systems/2M220102SL/index.json       |  73 ++++++++
+ .../redfish/v1/Systems/index.json                  |  10 +-
+ MockupData/SimpleOcpServerV1/redfish/v1/index.json |   7 +-
+ redfishProfileSimulator.py                         | 101 +++++++++--
+ v1sim/network.py                                   |  11 +-
+ v1sim/redfishURIs.py                               | 163 ++++++++++++-----
+ v1sim/registry.py                                  |  14 ++
+ v1sim/resource.py                                  |  30 ++-
+ v1sim/systems.py                                   | 106 +++++++++--
+ 31 files changed, 1372 insertions(+), 95 deletions(-)
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Registries/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/Settings/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/Settings/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/BootOptions/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/Settings/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/index.json
+ create mode 100644 MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/index.json
+ create mode 100644 v1sim/registry.py
+
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/$metadata/index.xml b/MockupData/SimpleOcpServerV1/redfish/v1/$metadata/index.xml
+index 07dfcc2..ced2464 100644
+--- a/MockupData/SimpleOcpServerV1/redfish/v1/$metadata/index.xml
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/$metadata/index.xml
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+-<!-- Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.-->
++<!-- Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.-->
+ <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+ 
+   <edmx:Reference Uri="http://redfish.dmtf.org/schemas/v1/ServiceRoot_v1.xml">
+     <edmx:Include Namespace="ServiceRoot"/>
+     <edmx:Include Namespace="ServiceRoot.v1_0_2"/>
+@@ -19,10 +19,14 @@
+   </edmx:Reference>
+   <edmx:Reference Uri="http://redfish.dmtf.org/schemas/v1/ComputerSystem_v1.xml">
+     <edmx:Include Namespace="ComputerSystem"/>
+     <edmx:Include Namespace="ComputerSystem.v1_1_0"/>
+   </edmx:Reference>
++  <edmx:Reference Uri="http://redfish.dmtf.org/schemas/v1/Bios_v1.xml">
++    <edmx:Include Namespace="Bios"/>
++    <edmx:Include Namespace="Bios.v1_0_2"/>
++  </edmx:Reference>
+   <edmx:Reference Uri="http://redfish.dmtf.org/schemas/v1/ComputerSystemCollection_v1.xml">
+     <edmx:Include Namespace="ComputerSystemCollection"/>
+   </edmx:Reference>
+   <edmx:Reference Uri="http://redfish.dmtf.org/schemas/v1/EthernetInterface_v1.xml">
+     <edmx:Include Namespace="EthernetInterface"/>
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0/index.json
+new file mode 100644
+index 0000000..b73152f
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0/index.json
+@@ -0,0 +1,16 @@
++{
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent.",
++    "@odata.type": "#AttributeRegistry.v1_0_0.AttributeRegistry",
++    "@odata.id": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Description": "This registry defines a representation of BIOS Attribute instances (UEFI configuration keyword).",
++    "Id": "BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Language": "en",
++    "Name": "BIOS Attribute Registry",
++    "OwningEntity": "Intel",
++    "RegistryVersion": "1.0.0",
++    "RegistryEntries": {
++        "Attributes": [],
++        "Menus": [],
++        "Dependencies": []
++    }
++}
+\ No newline at end of file
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Registries/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Registries/index.json
+new file mode 100644
+index 0000000..a79f51e
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Registries/index.json
+@@ -0,0 +1,14 @@
++{
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent.",
++    "@odata.context": "/redfish/v1/$metadata#MessageRegistryFileCollection.MessageRegistryFileCollection",
++    "@odata.id": "/redfish/v1/Registries",
++    "@odata.type": "#MessageRegistryFileCollection.MessageRegistryFileCollection",
++    "Name": "Registry File Collection",
++    "Description": "Registry Repository",
++    "Members@odata.count": 1,
++    "Members": [
++        {
++            "@odata.id": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0"
++        }
++    ]
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/Settings/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/Settings/index.json
+new file mode 100644
+index 0000000..39ed542
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/Settings/index.json
+@@ -0,0 +1,31 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "SD",
++    "Name": "BIOS Configuration Pending Settings",
++    "Description": "BIOS Configuration Pending Settings. These settings will be applied on next system reboot.",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {
++        "ns_Dev9_iSCSIInitiatorName": "iqn.test.init",
++        "ns_Dev9_iSCSIMacAddr": "8C:DC:D4:26:C9:74",
++        "ns_Dev9_iSCSIAddAttempts": "attempt:2",
++        "ns_Dev9_iSCSIAttemptName2": "Attempt 2",
++        "ns_Dev9_iSCSIBootEnable2": 1,
++        "ns_Dev9_iSCSIIpAddressType2": 0,
++        "ns_Dev9_iSCSIConnectRetry2": 5,
++        "ns_Dev9_iSCSIConnectTimeout2": 300,
++        "ns_Dev9_iSCSIISID2": "0CDCD4654321",
++        "ns_Dev9_iSCSIInitiatorIpAddress2": "192.168.111.101",
++        "ns_Dev9_iSCSIInitiatorNetmask2": "255.255.255.0",
++        "ns_Dev9_iSCSIInitiatorGateway2": "192.168.111.1",
++        "ns_Dev9_iSCSITargetTcpPort2": 3260,
++        "ns_Dev9_iSCSITargetName2": "iqn.2016-06:067",
++        "ns_Dev9_iSCSITargetIpAddress2": "192.168.111.1",
++        "ns_Dev9_iSCSILUN2": "0",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSIAuthenticationMethod2": 0,
++        "ns_Dev9_iSCSIChapType2": 0
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220100SL/Bios/Settings",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/index.json
+new file mode 100644
+index 0000000..35dbb74
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/Bios/index.json
+@@ -0,0 +1,202 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "Bios",
++    "Name": "BIOS Configuration Current Settings",
++    "Description": "BIOS Configuration Current Settings",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {
++        "ns_Dev9_iSCSIInitiatorName": "iqn.test.init",
++        "ns_Dev9_iSCSIMacAddr": "8C:DC:D4:26:C9:74",
++        "ns_Dev9_iSCSIAttemptOrder": "",
++        "ns_Dev9_iSCSIAddAttempts": "",
++        "ns_Dev9_iSCSIDeleteAttempts": "",
++        "ns_Dev9_iSCSIDisplayAttemptList": "Attempt:2 ",
++        "ns_Dev9_iSCSIAttemptName1": "",
++        "ns_Dev9_iSCSIBootEnable1": 0,
++        "ns_Dev9_iSCSIIpAddressType1": 0,
++        "ns_Dev9_iSCSIConnectRetry1": 0,
++        "ns_Dev9_iSCSIConnectTimeout1": 0,
++        "ns_Dev9_iSCSIISID1": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP1": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress1": "",
++        "ns_Dev9_iSCSIInitiatorNetmask1": "",
++        "ns_Dev9_iSCSIInitiatorGateway1": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP1": 0,
++        "ns_Dev9_iSCSITargetTcpPort1": 0,
++        "ns_Dev9_iSCSITargetName1": "",
++        "ns_Dev9_iSCSITargetIpAddress1": "",
++        "ns_Dev9_iSCSILUN1": "",
++        "ns_Dev9_iSCSIAuthenticationMethod1": 0,
++        "ns_Dev9_iSCSIChapType1": 0,
++        "ns_Dev9_iSCSIChapUsername1": "",
++        "ns_Dev9_iSCSIChapSecret1": "",
++        "ns_Dev9_iSCSIReverseChapUsername1": "",
++        "ns_Dev9_iSCSIReverseChapSecret1": "",
++        "ns_Dev9_iSCSIAttemptName2": "Attempt 2",
++        "ns_Dev9_iSCSIBootEnable2": 0,
++        "ns_Dev9_iSCSIIpAddressType2": 0,
++        "ns_Dev9_iSCSIConnectRetry2": 5,
++        "ns_Dev9_iSCSIConnectTimeout2": 300,
++        "ns_Dev9_iSCSIISID2": "0CDCD4654321",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress2": "192.168.1.188",
++        "ns_Dev9_iSCSIInitiatorNetmask2": "255.255.255.0",
++        "ns_Dev9_iSCSIInitiatorGateway2": "192.168.1.177",
++        "ns_Dev9_iSCSITargetInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSITargetTcpPort2": 3260,
++        "ns_Dev9_iSCSITargetName2": "iqn.test.target",
++        "ns_Dev9_iSCSITargetIpAddress2": "192.168.1.155",
++        "ns_Dev9_iSCSILUN2": "1",
++        "ns_Dev9_iSCSIAuthenticationMethod2": 0,
++        "ns_Dev9_iSCSIChapType2": 0,
++        "ns_Dev9_iSCSIChapUsername2": "",
++        "ns_Dev9_iSCSIChapSecret2": "",
++        "ns_Dev9_iSCSIReverseChapUsername2": "",
++        "ns_Dev9_iSCSIReverseChapSecret2": "",
++        "ns_Dev9_iSCSIAttemptName3": "",
++        "ns_Dev9_iSCSIBootEnable3": 0,
++        "ns_Dev9_iSCSIIpAddressType3": 0,
++        "ns_Dev9_iSCSIConnectRetry3": 0,
++        "ns_Dev9_iSCSIConnectTimeout3": 0,
++        "ns_Dev9_iSCSIISID3": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP3": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress3": "",
++        "ns_Dev9_iSCSIInitiatorNetmask3": "",
++        "ns_Dev9_iSCSIInitiatorGateway3": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP3": 0,
++        "ns_Dev9_iSCSITargetTcpPort3": 0,
++        "ns_Dev9_iSCSITargetName3": "",
++        "ns_Dev9_iSCSITargetIpAddress3": "",
++        "ns_Dev9_iSCSILUN3": "",
++        "ns_Dev9_iSCSIAuthenticationMethod3": 0,
++        "ns_Dev9_iSCSIChapType3": 0,
++        "ns_Dev9_iSCSIChapUsername3": "",
++        "ns_Dev9_iSCSIChapSecret3": "",
++        "ns_Dev9_iSCSIReverseChapUsername3": "",
++        "ns_Dev9_iSCSIReverseChapSecret3": "",
++        "ns_Dev9_iSCSIAttemptName4": "",
++        "ns_Dev9_iSCSIBootEnable4": 0,
++        "ns_Dev9_iSCSIIpAddressType4": 0,
++        "ns_Dev9_iSCSIConnectRetry4": 0,
++        "ns_Dev9_iSCSIConnectTimeout4": 0,
++        "ns_Dev9_iSCSIISID4": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP4": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress4": "",
++        "ns_Dev9_iSCSIInitiatorNetmask4": "",
++        "ns_Dev9_iSCSIInitiatorGateway4": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP4": 0,
++        "ns_Dev9_iSCSITargetTcpPort4": 0,
++        "ns_Dev9_iSCSITargetName4": "",
++        "ns_Dev9_iSCSITargetIpAddress4": "",
++        "ns_Dev9_iSCSILUN4": "",
++        "ns_Dev9_iSCSIAuthenticationMethod4": 0,
++        "ns_Dev9_iSCSIChapType4": 0,
++        "ns_Dev9_iSCSIChapUsername4": "",
++        "ns_Dev9_iSCSIChapSecret4": "",
++        "ns_Dev9_iSCSIReverseChapUsername4": "",
++        "ns_Dev9_iSCSIReverseChapSecret4": "",
++        "ns_Dev9_iSCSIAttemptName5": "",
++        "ns_Dev9_iSCSIBootEnable5": 0,
++        "ns_Dev9_iSCSIIpAddressType5": 0,
++        "ns_Dev9_iSCSIConnectRetry5": 0,
++        "ns_Dev9_iSCSIConnectTimeout5": 0,
++        "ns_Dev9_iSCSIISID5": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP5": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress5": "",
++        "ns_Dev9_iSCSIInitiatorNetmask5": "",
++        "ns_Dev9_iSCSIInitiatorGateway5": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP5": 0,
++        "ns_Dev9_iSCSITargetTcpPort5": 0,
++        "ns_Dev9_iSCSITargetName5": "",
++        "ns_Dev9_iSCSITargetIpAddress5": "",
++        "ns_Dev9_iSCSILUN5": "",
++        "ns_Dev9_iSCSIAuthenticationMethod5": 0,
++        "ns_Dev9_iSCSIChapType5": 0,
++        "ns_Dev9_iSCSIChapUsername5": "",
++        "ns_Dev9_iSCSIChapSecret5": "",
++        "ns_Dev9_iSCSIReverseChapUsername5": "",
++        "ns_Dev9_iSCSIReverseChapSecret5": "",
++        "ns_Dev9_iSCSIAttemptName6": "",
++        "ns_Dev9_iSCSIBootEnable6": 0,
++        "ns_Dev9_iSCSIIpAddressType6": 0,
++        "ns_Dev9_iSCSIConnectRetry6": 0,
++        "ns_Dev9_iSCSIConnectTimeout6": 0,
++        "ns_Dev9_iSCSIISID6": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP6": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress6": "",
++        "ns_Dev9_iSCSIInitiatorNetmask6": "",
++        "ns_Dev9_iSCSIInitiatorGateway6": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP6": 0,
++        "ns_Dev9_iSCSITargetTcpPort6": 0,
++        "ns_Dev9_iSCSITargetName6": "",
++        "ns_Dev9_iSCSITargetIpAddress6": "",
++        "ns_Dev9_iSCSILUN6": "",
++        "ns_Dev9_iSCSIAuthenticationMethod6": 0,
++        "ns_Dev9_iSCSIChapType6": 0,
++        "ns_Dev9_iSCSIChapUsername6": "",
++        "ns_Dev9_iSCSIChapSecret6": "",
++        "ns_Dev9_iSCSIReverseChapUsername6": "",
++        "ns_Dev9_iSCSIReverseChapSecret6": "",
++        "ns_Dev9_iSCSIAttemptName7": "",
++        "ns_Dev9_iSCSIBootEnable7": 0,
++        "ns_Dev9_iSCSIIpAddressType7": 0,
++        "ns_Dev9_iSCSIConnectRetry7": 0,
++        "ns_Dev9_iSCSIConnectTimeout7": 0,
++        "ns_Dev9_iSCSIISID7": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP7": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress7": "",
++        "ns_Dev9_iSCSIInitiatorNetmask7": "",
++        "ns_Dev9_iSCSIInitiatorGateway7": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP7": 0,
++        "ns_Dev9_iSCSITargetTcpPort7": 0,
++        "ns_Dev9_iSCSITargetName7": "",
++        "ns_Dev9_iSCSITargetIpAddress7": "",
++        "ns_Dev9_iSCSILUN7": "",
++        "ns_Dev9_iSCSIAuthenticationMethod7": 0,
++        "ns_Dev9_iSCSIChapType7": 0,
++        "ns_Dev9_iSCSIChapUsername7": "",
++        "ns_Dev9_iSCSIChapSecret7": "",
++        "ns_Dev9_iSCSIReverseChapUsername7": "",
++        "ns_Dev9_iSCSIReverseChapSecret7": "",
++        "ns_Dev9_iSCSIAttemptName8": "",
++        "ns_Dev9_iSCSIBootEnable8": 0,
++        "ns_Dev9_iSCSIIpAddressType8": 0,
++        "ns_Dev9_iSCSIConnectRetry8": 0,
++        "ns_Dev9_iSCSIConnectTimeout8": 0,
++        "ns_Dev9_iSCSIISID8": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP8": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress8": "",
++        "ns_Dev9_iSCSIInitiatorNetmask8": "",
++        "ns_Dev9_iSCSIInitiatorGateway8": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP8": 0,
++        "ns_Dev9_iSCSITargetTcpPort8": 0,
++        "ns_Dev9_iSCSITargetName8": "",
++        "ns_Dev9_iSCSITargetIpAddress8": "",
++        "ns_Dev9_iSCSILUN8": "",
++        "ns_Dev9_iSCSIAuthenticationMethod8": 0,
++        "ns_Dev9_iSCSIChapType8": 0,
++        "ns_Dev9_iSCSIChapUsername8": "",
++        "ns_Dev9_iSCSIChapSecret8": "",
++        "ns_Dev9_iSCSIReverseChapUsername8": "",
++        "ns_Dev9_iSCSIReverseChapSecret8": ""
++    },
++    "@Redfish.Settings": {
++        "@odata.type": "#Settings.v1_0_4.Settings",
++        "ETag": "someetag",
++        "Messages": [
++            {
++                "MessageId": "Base.1.0.SettingsFailed",
++                "RelatedProperties": [
++                    "#/Attributes/BootMode"
++                ]
++            }
++        ],
++        "SettingsObject": {
++            "@odata.id": "/redfish/v1/Systems/2M220100SL/Bios/Settings"
++        },
++        "Time": "2012-03-07T14:44.30-05:00"
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220100SL/Bios",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/index.json
+index 195daa9..68df7e8 100644
+--- a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/index.json
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220100SL/index.json
+@@ -8,11 +8,11 @@
+     "Model": "YellowCat1000",
+     "SerialNumber": "2M220100SL",
+     "SKU": "",
+     "PartNumber": "",
+     "Description": "Catfish Implementation Recipe of simple scale-out monolithic server",
+-    "UUID": "00000000-0000-0000-0000-000000000000",
++    "UUID": "badfaced-aaaa-beef-1313-131313131313",
+     "HostName": "catfishHostname",
+     "PowerState": "On",
+     "BiosVersion": "X00.1.2.3.4(build-23)",
+     "Status": {
+         "State": "Enabled",
+@@ -32,10 +32,13 @@
+             "BiosSetup",
+             "UefiTarget",
+             "UefiHttp"
+         ]
+     },
++    "Bios": {
++        "@odata.id": "/redfish/v1/Systems/2M220100SL/Bios"
++    },
+     "LogServices": {
+         "@odata.id": "/redfish/v1/Systems/2M220100SL/LogServices"
+     },
+     "Links": {
+         "Chassis": [
+@@ -64,7 +67,7 @@
+             ]
+         }
+     },
+     "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+     "@odata.id": "/redfish/v1/Systems/2M220100SL",
+-    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+ }
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/Settings/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/Settings/index.json
+new file mode 100644
+index 0000000..39f24a9
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/Settings/index.json
+@@ -0,0 +1,13 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "SD",
++    "Name": "BIOS Configuration Pending Settings",
++    "Description": "BIOS Configuration Pending Settings. These settings will be applied on next system reboot.",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {
++        "xUEFIns_Dev0006_iSCSIInitiatorName": "iqn.test.init"
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/Bios/Settings",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+\ No newline at end of file
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/index.json
+new file mode 100644
+index 0000000..f1fb950
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/Bios/index.json
+@@ -0,0 +1,17 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "Bios",
++    "Name": "BIOS Configuration Current Settings",
++    "Description": "BIOS Configuration Current Settings.",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {},
++    "@Redfish.Settings": {
++        "@odata.type": "#Settings.v1_0_4.Settings",
++        "SettingsObject": {
++            "@odata.id": "/redfish/v1/Systems/2M220101SL/Bios/Settings"
++        }
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/Bios",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent."
++}
+\ No newline at end of file
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/BootOptions/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/BootOptions/index.json
+new file mode 100644
+index 0000000..9538896
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/BootOptions/index.json
+@@ -0,0 +1,10 @@
++{
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent.",
++    "@odata.context": "/redfish/v1/$metadata#BootOptionCollection.BootOptionCollection",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/BootOptions",
++    "@odata.type": "#BootOptionCollection.BootOptionCollection",
++    "Name": "UEFI Boot Options Collection",
++    "Members@odata.count": 0,
++    "Members": [
++    ]
++}
+\ No newline at end of file
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1/index.json
+new file mode 100644
+index 0000000..47a0c80
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1/index.json
+@@ -0,0 +1,28 @@
++{
++    "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++    "Id": "1",
++    "Name": "Log Entry 1",
++    "EntryType": "SEL",
++    "OemRecordFormat": "CompanyX",
++    "RecordId": 1,
++    "Severity": "Critical",
++    "Created": "2012-03-07T14:44",
++    "EntryCode": "Assert",
++    "SensorType": "Temperature",
++    "SensorNumber": 1,
++    "Message": "Message for Event, Description for SEL, OEM depends",
++    "MessageId": "Event.1.0.TempAssert",
++    "MessageArgs": [
++        "ArrayOfMessageArgs"
++    ],
++    "Links": {
++        "OriginOfCondition": {
++            "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++        },
++        "Oem": {}
++    },
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2/index.json
+new file mode 100644
+index 0000000..37ee6fe
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2/index.json
+@@ -0,0 +1,28 @@
++{
++    "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++    "Id": "2",
++    "Name": "Log Entry 2",
++    "EntryType": "SEL",
++    "OEMRecordFormat": "CompanyX",
++    "RecordId": 2,
++    "Severity": "Critical",
++    "Created": "2012-03-07T14:45",
++    "EntryCode": "Assert",
++    "SensorType": "Temperature",
++    "SensorNumber": 2,
++    "Message": "Message for Event, Description for SEL, OEM depends",
++    "MessageId": "Event.1.0.TempAssert",
++    "MessageArgs": [
++        "ArrayOfMessageArgs"
++    ],
++    "Links": {
++        "OriginOfCondition": {
++            "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++        },
++        "Oem": {}
++    },
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/index.json
+new file mode 100644
+index 0000000..c6a0d80
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/index.json
+@@ -0,0 +1,64 @@
++{
++    "@odata.type": "#LogEntryCollection.LogEntryCollection",
++    "Name": "Log Service Collection",
++    "Description": "Collection of Logs for this System",
++    "Members@odata.count": 2,
++    "Members": [
++        {
++            "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++            "Id": "1",
++            "Name": "Log Entry 1",
++            "EntryType": "SEL",
++            "OemRecordFormat": "CompanyX",
++            "RecordId": 1,
++            "Severity": "Critical",
++            "Created": "2012-03-07T14:44",
++            "EntryCode": "Assert",
++            "SensorType": "Temperature",
++            "Number": 1,
++            "Message": "Message for Event, Description for SEL, OEM depends",
++            "MessageId": "Event.1.0.TempAssert",
++            "MessageArgs": [
++                "ArrayOfMessageArgs"
++            ],
++            "Links": {
++                "OriginOfCondition": {
++                    "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++                },
++                "Oem": {}
++            },
++            "Oem": {},
++            "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/1"
++        },
++        {
++            "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++            "Id": "2",
++            "Name": "Log Entry 2",
++            "EntryType": "SEL",
++            "OEMRecordFormat": "CompanyX",
++            "RecordId": 2,
++            "Severity": "Critical",
++            "Created": "2012-03-07T14:45",
++            "EntryCode": "Assert",
++            "SensorType": "Temperature",
++            "Number": 2,
++            "Message": "Message for Event, Description for SEL, OEM depends",
++            "MessageId": "Event.1.0.TempAssert",
++            "MessageArgs": [
++                "ArrayOfMessageArgs"
++            ],
++            "Links": {
++                "OriginOfCondition": {
++                    "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++                },
++                "Oem": {}
++            },
++            "Oem": {},
++            "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries/2"
++        }
++    ],
++    "@odata.nextLink": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries?$skiptoken=2",
++    "@odata.context": "/redfish/v1/$metadata#LogEntryCollection.LogEntryCollection",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/index.json
+new file mode 100644
+index 0000000..91ca4d7
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/SEL/index.json
+@@ -0,0 +1,27 @@
++{
++    "@odata.type": "#LogService.v1_0_2.LogService",
++    "Id": "SEL",
++    "Name": "System Log Service",
++    "MaxNumberOfRecords": 1000,
++    "OverWritePolicy": "WrapsWhenFull",
++    "DateTime": "2015-03-13T04:14:33+06:00",
++    "DateTimeLocalOffset": "+06:00",
++    "ServiceEnabled": true,
++    "Status": {
++        "State": "Enabled",
++        "Health": "OK"
++    },
++    "Oem": {},
++    "Actions": {
++        "#LogService.ClearLog": {
++            "target": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Actions/LogService.Reset"
++        },
++        "Oem": {}
++    },
++    "Entries": {
++        "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL/Entries"
++    },
++    "@odata.context": "/redfish/v1/$metadata#LogService.LogService",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL",
++    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/index.json
+new file mode 100644
+index 0000000..6be0b40
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/LogServices/index.json
+@@ -0,0 +1,15 @@
++{
++    "@odata.type": "#LogServiceCollection.LogServiceCollection",
++    "Name": "Log Service Collection",
++    "Description": "Collection of Logs for this System",
++    "Members@odata.count": 1,
++    "Members": [
++        {
++            "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices/SEL"
++        }
++    ],
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogServiceCollection.LogServiceCollection",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices",
++    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/index.json
+new file mode 100644
+index 0000000..16288a7
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220101SL/index.json
+@@ -0,0 +1,79 @@
++{
++    "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
++    "Id": "2M220101SL",
++    "Name": "Catfish System",
++    "SystemType": "Physical",
++    "AssetTag": "CATFISHASSETTAG",
++    "Manufacturer": "CatfishManufacturer",
++    "Model": "YellowCat1000",
++    "SerialNumber": "2M220101SL",
++    "SKU": "",
++    "PartNumber": "",
++    "Description": "Catfish Implementation Recipe of simple scale-out monolithic server",
++    "UUID": "BADFACED-DEAD-BEEF-1313-131313131313",
++    "HostName": "catfishHostname",
++    "PowerState": "On",
++    "BiosVersion": "X00.1.2.3.4(build-23)",
++    "Status": {
++        "State": "Enabled",
++        "Health": "OK"
++    },
++    "IndicatorLED": "Off",
++    "Boot": {
++        "BootSourceOverrideEnabled": "Once",
++        "BootSourceOverrideMode": "UEFI",
++        "BootOptions": {
++            "@odata.id": "/redfish/v1/Systems/2M220101SL/BootOptions"
++        },
++        "BootSourceOverrideTarget": "UefiBootNext",
++        "BootNext": "",
++        "BootOrder": [
++        ],
++        "BootSourceOverrideTarget@Redfish.AllowableValues": [
++          "None",
++          "Pxe",
++          "Usb",
++          "Hdd",
++          "BiosSetup",
++          "UefiTarget",
++          "UefiHttp",
++          "UefiBootNext"
++        ]
++    },
++    "Bios": {
++        "@odata.id": "/redfish/v1/Systems/2M220101SL/Bios"
++    },
++    "LogServices": {
++        "@odata.id": "/redfish/v1/Systems/2M220101SL/LogServices"
++    },
++    "Links": {
++        "Chassis": [
++            {
++                "@odata.id": "/redfish/v1/Chassis/A33"
++            }
++        ],
++        "ManagedBy": [
++            {
++                "@odata.id": "/redfish/v1/Managers/bmc"
++            }
++        ],
++        "Oem": {}
++    },
++    "Actions": {
++        "#ComputerSystem.Reset": {
++            "target": "/redfish/v1/Systems/2M220101SL/Actions/ComputerSystem.Reset",
++            "ResetType@Redfish.AllowableValues": [
++                "On",
++                "ForceOff",
++                "GracefulShutdown",
++                "ForceRestart",
++                "Nmi",
++                "GracefulRestart",
++                "ForceOn"
++            ]
++        }
++    },
++    "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
++    "@odata.id": "/redfish/v1/Systems/2M220101SL",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/Settings/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/Settings/index.json
+new file mode 100644
+index 0000000..f2094e6
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/Settings/index.json
+@@ -0,0 +1,31 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "SD",
++    "Name": "BIOS Configuration Pending Settings",
++    "Description": "BIOS Configuration Pending Settings. These settings will be applied on next system reboot.",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {
++        "ns_Dev9_iSCSIInitiatorName": "iqn.test.init",
++        "ns_Dev9_iSCSIMacAddr": "8C:DC:D4:26:C9:74",
++        "ns_Dev9_iSCSIAddAttempts": "attempt:2",
++        "ns_Dev9_iSCSIAttemptName2": "Attempt 2",
++        "ns_Dev9_iSCSIBootEnable2": 1,
++        "ns_Dev9_iSCSIIpAddressType2": 0,
++        "ns_Dev9_iSCSIConnectRetry2": 5,
++        "ns_Dev9_iSCSIConnectTimeout2": 300,
++        "ns_Dev9_iSCSIISID2": "0CDCD4654321",
++        "ns_Dev9_iSCSIInitiatorIpAddress2": "192.168.111.101",
++        "ns_Dev9_iSCSIInitiatorNetmask2": "255.255.255.0",
++        "ns_Dev9_iSCSIInitiatorGateway2": "192.168.111.1",
++        "ns_Dev9_iSCSITargetTcpPort2": 3260,
++        "ns_Dev9_iSCSITargetName2": "iqn.2016-06:067",
++        "ns_Dev9_iSCSITargetIpAddress2": "192.168.111.1",
++        "ns_Dev9_iSCSILUN2": "0",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSIAuthenticationMethod2": 0,
++        "ns_Dev9_iSCSIChapType2": 0
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/Bios/SD",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/index.json
+new file mode 100644
+index 0000000..168a1f0
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/Bios/index.json
+@@ -0,0 +1,202 @@
++{
++    "@odata.type": "#Bios.v1_0_2.Bios",
++    "Id": "Bios",
++    "Name": "BIOS Configuration Current Settings",
++    "Description": "BIOS Configuration Current Settings",
++    "AttributeRegistry": "/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0",
++    "Attributes": {
++        "ns_Dev9_iSCSIInitiatorName": "iqn.test.init",
++        "ns_Dev9_iSCSIMacAddr": "8C:DC:D4:26:C9:74",
++        "ns_Dev9_iSCSIAttemptOrder": "",
++        "ns_Dev9_iSCSIAddAttempts": "",
++        "ns_Dev9_iSCSIDeleteAttempts": "",
++        "ns_Dev9_iSCSIDisplayAttemptList": "Attempt:2 ",
++        "ns_Dev9_iSCSIAttemptName1": "",
++        "ns_Dev9_iSCSIBootEnable1": 0,
++        "ns_Dev9_iSCSIIpAddressType1": 0,
++        "ns_Dev9_iSCSIConnectRetry1": 0,
++        "ns_Dev9_iSCSIConnectTimeout1": 0,
++        "ns_Dev9_iSCSIISID1": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP1": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress1": "",
++        "ns_Dev9_iSCSIInitiatorNetmask1": "",
++        "ns_Dev9_iSCSIInitiatorGateway1": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP1": 0,
++        "ns_Dev9_iSCSITargetTcpPort1": 0,
++        "ns_Dev9_iSCSITargetName1": "",
++        "ns_Dev9_iSCSITargetIpAddress1": "",
++        "ns_Dev9_iSCSILUN1": "",
++        "ns_Dev9_iSCSIAuthenticationMethod1": 0,
++        "ns_Dev9_iSCSIChapType1": 0,
++        "ns_Dev9_iSCSIChapUsername1": "",
++        "ns_Dev9_iSCSIChapSecret1": "",
++        "ns_Dev9_iSCSIReverseChapUsername1": "",
++        "ns_Dev9_iSCSIReverseChapSecret1": "",
++        "ns_Dev9_iSCSIAttemptName2": "Attempt 2",
++        "ns_Dev9_iSCSIBootEnable2": 0,
++        "ns_Dev9_iSCSIIpAddressType2": 0,
++        "ns_Dev9_iSCSIConnectRetry2": 5,
++        "ns_Dev9_iSCSIConnectTimeout2": 300,
++        "ns_Dev9_iSCSIISID2": "0CDCD4654321",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress2": "192.168.1.188",
++        "ns_Dev9_iSCSIInitiatorNetmask2": "255.255.255.0",
++        "ns_Dev9_iSCSIInitiatorGateway2": "192.168.1.177",
++        "ns_Dev9_iSCSITargetInfoViaDHCP2": 0,
++        "ns_Dev9_iSCSITargetTcpPort2": 3260,
++        "ns_Dev9_iSCSITargetName2": "iqn.test.target",
++        "ns_Dev9_iSCSITargetIpAddress2": "192.168.1.155",
++        "ns_Dev9_iSCSILUN2": "1",
++        "ns_Dev9_iSCSIAuthenticationMethod2": 0,
++        "ns_Dev9_iSCSIChapType2": 0,
++        "ns_Dev9_iSCSIChapUsername2": "",
++        "ns_Dev9_iSCSIChapSecret2": "",
++        "ns_Dev9_iSCSIReverseChapUsername2": "",
++        "ns_Dev9_iSCSIReverseChapSecret2": "",
++        "ns_Dev9_iSCSIAttemptName3": "",
++        "ns_Dev9_iSCSIBootEnable3": 0,
++        "ns_Dev9_iSCSIIpAddressType3": 0,
++        "ns_Dev9_iSCSIConnectRetry3": 0,
++        "ns_Dev9_iSCSIConnectTimeout3": 0,
++        "ns_Dev9_iSCSIISID3": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP3": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress3": "",
++        "ns_Dev9_iSCSIInitiatorNetmask3": "",
++        "ns_Dev9_iSCSIInitiatorGateway3": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP3": 0,
++        "ns_Dev9_iSCSITargetTcpPort3": 0,
++        "ns_Dev9_iSCSITargetName3": "",
++        "ns_Dev9_iSCSITargetIpAddress3": "",
++        "ns_Dev9_iSCSILUN3": "",
++        "ns_Dev9_iSCSIAuthenticationMethod3": 0,
++        "ns_Dev9_iSCSIChapType3": 0,
++        "ns_Dev9_iSCSIChapUsername3": "",
++        "ns_Dev9_iSCSIChapSecret3": "",
++        "ns_Dev9_iSCSIReverseChapUsername3": "",
++        "ns_Dev9_iSCSIReverseChapSecret3": "",
++        "ns_Dev9_iSCSIAttemptName4": "",
++        "ns_Dev9_iSCSIBootEnable4": 0,
++        "ns_Dev9_iSCSIIpAddressType4": 0,
++        "ns_Dev9_iSCSIConnectRetry4": 0,
++        "ns_Dev9_iSCSIConnectTimeout4": 0,
++        "ns_Dev9_iSCSIISID4": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP4": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress4": "",
++        "ns_Dev9_iSCSIInitiatorNetmask4": "",
++        "ns_Dev9_iSCSIInitiatorGateway4": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP4": 0,
++        "ns_Dev9_iSCSITargetTcpPort4": 0,
++        "ns_Dev9_iSCSITargetName4": "",
++        "ns_Dev9_iSCSITargetIpAddress4": "",
++        "ns_Dev9_iSCSILUN4": "",
++        "ns_Dev9_iSCSIAuthenticationMethod4": 0,
++        "ns_Dev9_iSCSIChapType4": 0,
++        "ns_Dev9_iSCSIChapUsername4": "",
++        "ns_Dev9_iSCSIChapSecret4": "",
++        "ns_Dev9_iSCSIReverseChapUsername4": "",
++        "ns_Dev9_iSCSIReverseChapSecret4": "",
++        "ns_Dev9_iSCSIAttemptName5": "",
++        "ns_Dev9_iSCSIBootEnable5": 0,
++        "ns_Dev9_iSCSIIpAddressType5": 0,
++        "ns_Dev9_iSCSIConnectRetry5": 0,
++        "ns_Dev9_iSCSIConnectTimeout5": 0,
++        "ns_Dev9_iSCSIISID5": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP5": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress5": "",
++        "ns_Dev9_iSCSIInitiatorNetmask5": "",
++        "ns_Dev9_iSCSIInitiatorGateway5": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP5": 0,
++        "ns_Dev9_iSCSITargetTcpPort5": 0,
++        "ns_Dev9_iSCSITargetName5": "",
++        "ns_Dev9_iSCSITargetIpAddress5": "",
++        "ns_Dev9_iSCSILUN5": "",
++        "ns_Dev9_iSCSIAuthenticationMethod5": 0,
++        "ns_Dev9_iSCSIChapType5": 0,
++        "ns_Dev9_iSCSIChapUsername5": "",
++        "ns_Dev9_iSCSIChapSecret5": "",
++        "ns_Dev9_iSCSIReverseChapUsername5": "",
++        "ns_Dev9_iSCSIReverseChapSecret5": "",
++        "ns_Dev9_iSCSIAttemptName6": "",
++        "ns_Dev9_iSCSIBootEnable6": 0,
++        "ns_Dev9_iSCSIIpAddressType6": 0,
++        "ns_Dev9_iSCSIConnectRetry6": 0,
++        "ns_Dev9_iSCSIConnectTimeout6": 0,
++        "ns_Dev9_iSCSIISID6": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP6": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress6": "",
++        "ns_Dev9_iSCSIInitiatorNetmask6": "",
++        "ns_Dev9_iSCSIInitiatorGateway6": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP6": 0,
++        "ns_Dev9_iSCSITargetTcpPort6": 0,
++        "ns_Dev9_iSCSITargetName6": "",
++        "ns_Dev9_iSCSITargetIpAddress6": "",
++        "ns_Dev9_iSCSILUN6": "",
++        "ns_Dev9_iSCSIAuthenticationMethod6": 0,
++        "ns_Dev9_iSCSIChapType6": 0,
++        "ns_Dev9_iSCSIChapUsername6": "",
++        "ns_Dev9_iSCSIChapSecret6": "",
++        "ns_Dev9_iSCSIReverseChapUsername6": "",
++        "ns_Dev9_iSCSIReverseChapSecret6": "",
++        "ns_Dev9_iSCSIAttemptName7": "",
++        "ns_Dev9_iSCSIBootEnable7": 0,
++        "ns_Dev9_iSCSIIpAddressType7": 0,
++        "ns_Dev9_iSCSIConnectRetry7": 0,
++        "ns_Dev9_iSCSIConnectTimeout7": 0,
++        "ns_Dev9_iSCSIISID7": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP7": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress7": "",
++        "ns_Dev9_iSCSIInitiatorNetmask7": "",
++        "ns_Dev9_iSCSIInitiatorGateway7": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP7": 0,
++        "ns_Dev9_iSCSITargetTcpPort7": 0,
++        "ns_Dev9_iSCSITargetName7": "",
++        "ns_Dev9_iSCSITargetIpAddress7": "",
++        "ns_Dev9_iSCSILUN7": "",
++        "ns_Dev9_iSCSIAuthenticationMethod7": 0,
++        "ns_Dev9_iSCSIChapType7": 0,
++        "ns_Dev9_iSCSIChapUsername7": "",
++        "ns_Dev9_iSCSIChapSecret7": "",
++        "ns_Dev9_iSCSIReverseChapUsername7": "",
++        "ns_Dev9_iSCSIReverseChapSecret7": "",
++        "ns_Dev9_iSCSIAttemptName8": "",
++        "ns_Dev9_iSCSIBootEnable8": 0,
++        "ns_Dev9_iSCSIIpAddressType8": 0,
++        "ns_Dev9_iSCSIConnectRetry8": 0,
++        "ns_Dev9_iSCSIConnectTimeout8": 0,
++        "ns_Dev9_iSCSIISID8": "",
++        "ns_Dev9_iSCSIInitiatorInfoViaDHCP8": 0,
++        "ns_Dev9_iSCSIInitiatorIpAddress8": "",
++        "ns_Dev9_iSCSIInitiatorNetmask8": "",
++        "ns_Dev9_iSCSIInitiatorGateway8": "",
++        "ns_Dev9_iSCSITargetInfoViaDHCP8": 0,
++        "ns_Dev9_iSCSITargetTcpPort8": 0,
++        "ns_Dev9_iSCSITargetName8": "",
++        "ns_Dev9_iSCSITargetIpAddress8": "",
++        "ns_Dev9_iSCSILUN8": "",
++        "ns_Dev9_iSCSIAuthenticationMethod8": 0,
++        "ns_Dev9_iSCSIChapType8": 0,
++        "ns_Dev9_iSCSIChapUsername8": "",
++        "ns_Dev9_iSCSIChapSecret8": "",
++        "ns_Dev9_iSCSIReverseChapUsername8": "",
++        "ns_Dev9_iSCSIReverseChapSecret8": ""
++    },
++    "@Redfish.Settings": {
++        "@odata.type": "#Settings.v1_0_4.Settings",
++        "ETag": "someetag",
++        "Messages": [
++            {
++                "MessageId": "Base.1.0.SettingsFailed",
++                "RelatedProperties": [
++                    "#/Attributes/BootMode"
++                ]
++            }
++        ],
++        "SettingsObject": {
++            "@odata.id": "/redfish/v1/Systems/2M220102SL/Bios/Settings"
++        },
++        "Time": "2012-03-07T14:44.30-05:00"
++    },
++    "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/Bios",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1/index.json
+new file mode 100644
+index 0000000..1f0b732
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1/index.json
+@@ -0,0 +1,28 @@
++{
++    "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++    "Id": "1",
++    "Name": "Log Entry 1",
++    "EntryType": "SEL",
++    "OemRecordFormat": "CompanyX",
++    "RecordId": 1,
++    "Severity": "Critical",
++    "Created": "2012-03-07T14:44",
++    "EntryCode": "Assert",
++    "SensorType": "Temperature",
++    "SensorNumber": 1,
++    "Message": "Message for Event, Description for SEL, OEM depends",
++    "MessageId": "Event.1.0.TempAssert",
++    "MessageArgs": [
++        "ArrayOfMessageArgs"
++    ],
++    "Links": {
++        "OriginOfCondition": {
++            "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++        },
++        "Oem": {}
++    },
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2/index.json
+new file mode 100644
+index 0000000..23e64a2
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2/index.json
+@@ -0,0 +1,28 @@
++{
++    "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++    "Id": "2",
++    "Name": "Log Entry 2",
++    "EntryType": "SEL",
++    "OEMRecordFormat": "CompanyX",
++    "RecordId": 2,
++    "Severity": "Critical",
++    "Created": "2012-03-07T14:45",
++    "EntryCode": "Assert",
++    "SensorType": "Temperature",
++    "SensorNumber": 2,
++    "Message": "Message for Event, Description for SEL, OEM depends",
++    "MessageId": "Event.1.0.TempAssert",
++    "MessageArgs": [
++        "ArrayOfMessageArgs"
++    ],
++    "Links": {
++        "OriginOfCondition": {
++            "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++        },
++        "Oem": {}
++    },
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/index.json
+new file mode 100644
+index 0000000..f808237
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/index.json
+@@ -0,0 +1,64 @@
++{
++    "@odata.type": "#LogEntryCollection.LogEntryCollection",
++    "Name": "Log Service Collection",
++    "Description": "Collection of Logs for this System",
++    "Members@odata.count": 2,
++    "Members": [
++        {
++            "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++            "Id": "1",
++            "Name": "Log Entry 1",
++            "EntryType": "SEL",
++            "OemRecordFormat": "CompanyX",
++            "RecordId": 1,
++            "Severity": "Critical",
++            "Created": "2012-03-07T14:44",
++            "EntryCode": "Assert",
++            "SensorType": "Temperature",
++            "Number": 1,
++            "Message": "Message for Event, Description for SEL, OEM depends",
++            "MessageId": "Event.1.0.TempAssert",
++            "MessageArgs": [
++                "ArrayOfMessageArgs"
++            ],
++            "Links": {
++                "OriginOfCondition": {
++                    "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++                },
++                "Oem": {}
++            },
++            "Oem": {},
++            "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/1"
++        },
++        {
++            "@odata.type": "#LogEntry.v1_0_2.LogEntry",
++            "Id": "2",
++            "Name": "Log Entry 2",
++            "EntryType": "SEL",
++            "OEMRecordFormat": "CompanyX",
++            "RecordId": 2,
++            "Severity": "Critical",
++            "Created": "2012-03-07T14:45",
++            "EntryCode": "Assert",
++            "SensorType": "Temperature",
++            "Number": 2,
++            "Message": "Message for Event, Description for SEL, OEM depends",
++            "MessageId": "Event.1.0.TempAssert",
++            "MessageArgs": [
++                "ArrayOfMessageArgs"
++            ],
++            "Links": {
++                "OriginOfCondition": {
++                    "@odata.id": "/redfish/v1/Chassis/1/Thermal"
++                },
++                "Oem": {}
++            },
++            "Oem": {},
++            "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries/2"
++        }
++    ],
++    "@odata.nextLink": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries?$skiptoken=2",
++    "@odata.context": "/redfish/v1/$metadata#LogEntryCollection.LogEntryCollection",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries",
++    "@Redfish.Copyright":"Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/index.json
+new file mode 100644
+index 0000000..c6bc74c
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/SEL/index.json
+@@ -0,0 +1,27 @@
++{
++    "@odata.type": "#LogService.v1_0_2.LogService",
++    "Id": "SEL",
++    "Name": "System Log Service",
++    "MaxNumberOfRecords": 1000,
++    "OverWritePolicy": "WrapsWhenFull",
++    "DateTime": "2015-03-13T04:14:33+06:00",
++    "DateTimeLocalOffset": "+06:00",
++    "ServiceEnabled": true,
++    "Status": {
++        "State": "Enabled",
++        "Health": "OK"
++    },
++    "Oem": {},
++    "Actions": {
++        "#LogService.ClearLog": {
++            "target": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Actions/LogService.Reset"
++        },
++        "Oem": {}
++    },
++    "Entries": {
++        "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL/Entries"
++    },
++    "@odata.context": "/redfish/v1/$metadata#LogService.LogService",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL",
++    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/index.json
+new file mode 100644
+index 0000000..ef4fc81
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/LogServices/index.json
+@@ -0,0 +1,15 @@
++{
++    "@odata.type": "#LogServiceCollection.LogServiceCollection",
++    "Name": "Log Service Collection",
++    "Description": "Collection of Logs for this System",
++    "Members@odata.count": 1,
++    "Members": [
++        {
++            "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices/SEL"
++        }
++    ],
++    "Oem": {},
++    "@odata.context": "/redfish/v1/$metadata#LogServiceCollection.LogServiceCollection",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices",
++    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/index.json
+new file mode 100644
+index 0000000..562c184
+--- /dev/null
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/2M220102SL/index.json
+@@ -0,0 +1,73 @@
++{
++    "@odata.type": "#ComputerSystem.v1_1_0.ComputerSystem",
++    "Id": "2M220102SL",
++    "Name": "Catfish System",
++    "SystemType": "Physical",
++    "AssetTag": "CATFISHASSETTAG",
++    "Manufacturer": "CatfishManufacturer",
++    "Model": "YellowCat1000",
++    "SerialNumber": "2M220102SL",
++    "SKU": "",
++    "PartNumber": "",
++    "Description": "Catfish Implementation Recipe of simple scale-out monolithic server",
++    "UUID": "badfaced-5555-beef-1313-131313131313",
++    "HostName": "catfishHostname",
++    "PowerState": "On",
++    "BiosVersion": "X00.1.2.3.4(build-23)",
++    "Status": {
++        "State": "Enabled",
++        "Health": "OK"
++    },
++    "IndicatorLED": "Off",
++    "Boot": {
++        "BootSourceOverrideEnabled": "Once",
++        "BootSourceOverrideMode": "UEFI",
++        "UefiTargetBootSourceOverride": "uefiDevicePath",
++        "BootSourceOverrideTarget": "Pxe",
++        "BootSourceOverrideTarget@Redfish.AllowableValues": [
++            "None",
++            "Pxe",
++            "Usb",
++            "Hdd",
++            "BiosSetup",
++            "UefiTarget",
++            "UefiHttp"
++        ]
++    },
++    "Bios": {
++        "@odata.id": "/redfish/v1/Systems/2M220102SL/Bios"
++    },
++    "LogServices": {
++        "@odata.id": "/redfish/v1/Systems/2M220102SL/LogServices"
++    },
++    "Links": {
++        "Chassis": [
++            {
++                "@odata.id": "/redfish/v1/Chassis/A33"
++            }
++        ],
++        "ManagedBy": [
++            {
++                "@odata.id": "/redfish/v1/Managers/bmc"
++            }
++        ],
++        "Oem": {}
++    },
++    "Actions": {
++        "#ComputerSystem.Reset": {
++            "target": "/redfish/v1/Systems/2M220102SL/Actions/ComputerSystem.Reset",
++            "ResetType@Redfish.AllowableValues": [
++                "On",
++                "ForceOff",
++                "GracefulShutdown",
++                "ForceRestart",
++                "Nmi",
++                "GracefulRestart",
++                "ForceOn"
++            ]
++        }
++    },
++    "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
++    "@odata.id": "/redfish/v1/Systems/2M220102SL",
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++}
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/index.json
+index 9248c4a..f722467 100644
+--- a/MockupData/SimpleOcpServerV1/redfish/v1/Systems/index.json
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/Systems/index.json
+@@ -1,13 +1,19 @@
+ {
+     "@odata.type": "#ComputerSystemCollection.ComputerSystemCollection",
+     "Name": "Computer System Collection",
+-    "Members@odata.count": 1,
++    "Members@odata.count": 3,
+     "Members": [
+         {
+             "@odata.id": "/redfish/v1/Systems/2M220100SL"
++        },
++        {
++            "@odata.id": "/redfish/v1/Systems/2M220101SL"
++        },
++        {
++            "@odata.id": "/redfish/v1/Systems/2M220102SL"
+         }
+     ],
+     "@odata.context": "/redfish/v1/$metadata#ComputerSystemCollection.ComputerSystemCollection",
+     "@odata.id": "/redfish/v1/Systems",
+-    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+ }
+diff --git a/MockupData/SimpleOcpServerV1/redfish/v1/index.json b/MockupData/SimpleOcpServerV1/redfish/v1/index.json
+index df6afc1..b2c9664 100644
+--- a/MockupData/SimpleOcpServerV1/redfish/v1/index.json
++++ b/MockupData/SimpleOcpServerV1/redfish/v1/index.json
+@@ -1,11 +1,11 @@
+ {
+     "@odata.type": "#ServiceRoot.v1_0_2.ServiceRoot",
+     "Id": "RootService",
+     "Name": "Root Service",
+     "RedfishVersion": "1.0.2",
+-    "UUID": "92384634-2938-2342-8820-489239905423",
++    "UUID": "3FB208AC-2185-498C-BF46-DC23DA587B55",
+     "Systems": {
+         "@odata.id": "/redfish/v1/Systems"
+     },
+     "Chassis": {
+         "@odata.id": "/redfish/v1/Chassis"
+@@ -17,15 +17,18 @@
+         "@odata.id": "/redfish/v1/SessionService"
+     },
+     "AccountService": {
+         "@odata.id": "/redfish/v1/AccountService"
+     },
++    "Registries": {
++        "@odata.id": "/redfish/v1/Registries"
++    },
+     "Links": {
+         "Sessions": {
+             "@odata.id": "/redfish/v1/SessionService/Sessions"
+         }
+     },
+     "Oem": {},
+     "@odata.context": "/redfish/v1/$metadata#ServiceRoot.ServiceRoot",
+     "@odata.id": "/redfish/v1/",
+-    "@Redfish.Copyright": "Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
++    "@Redfish.Copyright": "Copyright (c) 2019, Intel Corporation. All rights reserved. SPDX-License-Identifier: BSD-2-Clause-Patent. <BR> Copyright 2014-2016 Distributed Management Task Force, Inc. (DMTF). For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+ }
+diff --git a/redfishProfileSimulator.py b/redfishProfileSimulator.py
+index 8d63d91..e9196d8 100644
+--- a/redfishProfileSimulator.py
++++ b/redfishProfileSimulator.py
+@@ -1,23 +1,31 @@
+ # Copyright Notice:
++#
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++# Copyright Notice:
+ # Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+ # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/Redfish-Profile-Simulator/LICENSE.md
+-
++#
+ # This program is dependent on the following Python packages that should be installed separately with pip:
+ #    pip install Flask
+ #
+ # standard python packages
+ import sys
+ import getopt
+ import os
++import functools
++import flask
++import werkzeug
+ 
+ rfVersion = "0.9.49"
+ rfProgram1 = "redfishProfileSimulator"
+ rfProgram2 = "                "
+ rfUsage1 = "[-Vh]  [--Version][--help]"
+-rfUsage2 = "[-H<hostIP>] [-P<port>] [-p<profile_path>]"
+-rfUsage3 = "[--Host=<hostIP>] [--Port=<port>] [--profile_path=<profile_path>]"
++rfUsage2 = "[-H<hostIP>] [-P<port>] [-C<cert>] [-K<key>] [-p<profile_path>]"
++rfUsage3 = "[--Host=<hostIP>] [--Port=<port>] [--Cert=<cert>] [--Key=<key>] [--profile_path=<profile_path>]"
+ 
+ 
+ def rf_usage():
+         print("Usage:")
+         print("  ", rfProgram1, "  ", rfUsage1)
+@@ -25,43 +33,94 @@ def rf_usage():
+         print("  ", rfProgram2, "  ", rfUsage3)
+ 
+ 
+ def rf_help():
+         print(rfProgram1,"implements a simulation of a redfish service for the \"Simple OCP Server V1\" Mockup.")
+-        print(" The simulation includes an http server, RestEngine, and dynamic Redfish datamodel.")
++        print(" The simulation includes an http/https server, RestEngine, and dynamic Redfish datamodel.")
+         print(" You can GET, PATHCH,... to the service just like a real Redfish service.")
+         print(" Both Basic and Redfish Session/Token authentication is supported (for a single user/passwd and token")
+         print("    the user/passwd is:   root/password123456.    The authToken is: 123456SESSIONauthcode")
+         print("    these can be changed by editing the redfishURIs.py file.  will make dynamic later.")
+-        print(" The http service and Rest engine is built on Flask, and all code is Python 3.4+")
++        print(" The http/https service and Rest engine is built on Flask, and all code is Python 3.4+")
+         print(" The data model resources are \"initialized\" from the SPMF \"SimpleOcpServerV1\" Mockup.")
+         print("     and stored as python dictionaries--then the dictionaries are updated with patches, posts, deletes.")
+         print(" The program can be extended to support other mockup \"profiles\".")
+         print("")
+-        print(" By default, the simulation runs on localhost (127.0.0.1), on port 5000.")
+-        print(" These can be changed with CLI options: -P<port> -H <hostIP>  | --port=<port> --host=<hostIp>")
++        print(" By default, the simulation runs over http, on localhost (127.0.0.1), on port 5000.")
++        print(" These can be changed with CLI options: -P<port> -C<cert> -K<key> -H <hostIP> | --port=<port> --Cert=<cert> --Key=<key> --host=<hostIp>")
++        print(" -C<cert> -K<key> | --Cert=<cert> --Key=<key> options must be used together with port 443 to enable https session.")
+         print("")
+         print("Version: ", rfVersion)
+         rf_usage()
+         print("")
+         print("       -V,          --Version,                       --- the program version")
+         print("       -h,          --help,                          --- help")
+         print("       -H<hostIP>,  --Host=<hostIp>                  --- host IP address. dflt=127.0.0.1")
+         print("       -P<port>,    --Port=<port>                    --- the port to use. dflt=5000")
++        print("       -C<cert>,    --Cert=<cert>                    --- Server certificate.")
++        print("       -K<key>,     --Key=<key>                      --- Server key.")
+         print("       -p<profile_path>, --profile=<profile_path>    --- the path to the Redfish profile to use. "
+               "dflt=\"./MockupData/SimpleOcpServerV1\" ")
+ 
++# Conditional Requests with ETags
++# http://flask.pocoo.org/snippets/95/
++def conditional(func):
++    '''Start conditional method execution for this resource'''
++    @functools.wraps(func)
++    def wrapper(*args, **kwargs):
++        flask.g.condtnl_etags_start = True
++        return func(*args, **kwargs)
++    return wrapper
++
++class NotModified(werkzeug.exceptions.HTTPException):
++    code = 304
++    def get_response(self, environment):
++        return flask.Response(status=304)
++
++class PreconditionRequired(werkzeug.exceptions.HTTPException):
++    code = 428
++    description = ('<p>This request is required to be '
++                   'conditional; try using "If-Match".')
++    name = 'Precondition Required'
++    def get_response(self, environment):
++        resp = super(PreconditionRequired,
++                     self).get_response(environment)
++        resp.status = str(self.code) + ' ' + self.name.upper()
++        return resp
+ 
+ def main(argv):
++    #Monkey patch the set_etag() method for conditional request.
++    _old_set_etag = werkzeug.ETagResponseMixin.set_etag
++    @functools.wraps(werkzeug.ETagResponseMixin.set_etag)
++    def _new_set_etag(self, etag, weak=False):
++        # only check the first time through; when called twice
++        # we're modifying
++        if (hasattr(flask.g, 'condtnl_etags_start') and
++                                   flask.g.condtnl_etags_start):
++            if flask.request.method in ('PUT', 'DELETE', 'PATCH'):
++                if not flask.request.if_match:
++                    raise PreconditionRequired
++                if etag not in flask.request.if_match:
++                    flask.abort(412)
++            elif (flask.request.method == 'GET' and
++                  flask.request.if_none_match and
++                  etag in flask.request.if_none_match):
++                raise NotModified
++            flask.g.condtnl_etags_start = False
++        _old_set_etag(self, etag, weak)
++    werkzeug.ETagResponseMixin.set_etag = _new_set_etag
++
+     # set default option args
+     rf_profile_path = os.path.abspath("./MockupData/SimpleOcpServerV1")
+-    rf_host = "127.0.0.1"
++    rf_host = "0.0.0.0"
+     rf_port = 5000
+-    
++    rf_cert =""
++    rf_key=""
++
+     try:
+-        opts, args = getopt.getopt(argv[1:], "VhH:P:p:",
+-                                   ["Version", "help", "Host=", "Port=", "profile="])
++        opts, args = getopt.getopt(argv[1:], "VhH:P:C:K:p:",
++                                   ["Version", "help", "Host=", "Port=", "Cert=", "Key=", "profile="])
+     except getopt.GetoptError:
+         print(rfProgram1, ":  Error parsing options")
+         rf_usage()
+         sys.exit(2)
+     for opt, arg in opts:
+@@ -75,15 +134,28 @@ def main(argv):
+             rf_profile_path = arg
+         elif opt in "--Host=":
+             rf_host = arg
+         elif opt in "--Port=":
+             rf_port=int(arg)
++        elif opt in "--Cert=":
++            rf_cert=arg
++        elif opt in "--Key=":
++            rf_key=arg  
+         else:
+             print("  ", rfProgram1, ":  Error: unsupported option")
+             rf_usage()
+             sys.exit(2)
+ 
++    if rf_port == 443:
++        if rf_cert == "" or rf_key == "":
++            print("  ", rfProgram1, ":  Error: port 443 must be used together with -C<cert> and -K<key> to enable https session")
++            sys.exit(2)
++    else:
++        if rf_cert != "" or rf_key != "":
++            print("  ", rfProgram1, ":  Error: -C<cert> and -K<key> options must be used together with port 443 to enable https session")
++            sys.exit(2)
++
+     print("{} Version: {}".format(rfProgram1,rfVersion))
+     print("   Starting redfishProfileSimulator at:  hostIP={},  port={}".format(rf_host, rf_port))
+     print("   Using Profile at {}".format(rf_profile_path))
+ 
+     if os.path.isdir(rf_profile_path):
+@@ -100,26 +172,21 @@ def main(argv):
+         # create the version resource for GET /redfish
+         versions = RfServiceVersions(rf_profile_path, "redfish")
+         root = RfServiceRoot(rf_profile_path, root_path)
+ 
+         # start the flask REST API service
+-        rfApi_SimpleServer(root, versions, host=rf_host, port=rf_port)
++        rfApi_SimpleServer(root, versions, host=rf_host, port=rf_port, cert=rf_cert, key=rf_key)
+     else:
+         print("invalid profile path")
+ 
+ 
+ if __name__ == "__main__":
+     main(sys.argv)
+ 
+ 
+-
+-    
+     #http://127.0.0.1:5000/
+ 
+     #app.run(host="0.0.0.0") # run on all IPs
+     #run(host=None, port=None, debug=None, **options)
+     #   host=0.0.0.0 server avail externally -- all IPs
+     #   host=127.0.0.1 is default
+     #   port=5000 default, or port defined in SERVER_NAME config var
+-
+-
+-
+diff --git a/v1sim/network.py b/v1sim/network.py
+index d8bbd09..836555b 100644
+--- a/v1sim/network.py
++++ b/v1sim/network.py
+@@ -1,5 +1,10 @@
++#
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
+ import os
+ 
+ from .resource import RfCollection, RfResource
+ 
+ 
+@@ -30,12 +35,12 @@ class RfVLanCollection(RfCollection):
+ 
+ class RfVLan(RfResource):
+     pass
+ 
+ 
+-class RfNetworkAdapterCollection(RfCollection):
++class RfNetworkInterfaceCollection(RfCollection):
+     def element_type(self):
+-        return RfNetworkAdapter
++        return RfNetworkInterface
+ 
+ 
+-class RfNetworkAdapter(RfResource):
++class RfNetworkInterface(RfResource):
+     pass
+diff --git a/v1sim/redfishURIs.py b/v1sim/redfishURIs.py
+index edfdb05..7aa4d59 100644
+--- a/v1sim/redfishURIs.py
++++ b/v1sim/redfishURIs.py
+@@ -1,30 +1,40 @@
++#
++# Copyright Notice:
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
+ # Copyright Notice:
+ # Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+ # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/Redfish-Profile-Simulator/LICENSE.md
++#
+ 
+ import json
++from collections import OrderedDict
+ 
+ from flask import Flask
+ from flask import request
+ 
+ from .flask_redfish_auth import RfHTTPBasicOrTokenAuth
+ from .resource import RfResource, RfCollection
++from redfishProfileSimulator import conditional
++from OpenSSL import SSL
+ 
++from werkzeug.serving import WSGIRequestHandler
+ 
+-def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000):
++def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000, cert="", key=""):
+     app = Flask(__name__)
+ 
+     # create auth class that does basic or redifish session auth
+     auth = RfHTTPBasicOrTokenAuth()
+ 
+     # define basic auth decorator used by flask
+     # for basic auth, we only support user=catfish, passwd=hunter
+     @auth.verify_basic_password
+     def verify_rf_passwd(user, passwd):
+-        if user == "root":
+-            if passwd == "password123456":
++        if user == "admin":
++            if passwd == "pwd123456":
+                 return True
+         return False
+ 
+     # define Redfish Token/Session auth decorator used by flask
+     # for session token auth, only support toden: 123456CATFISHauthcode
+@@ -41,23 +51,24 @@ def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000):
+ 
+     # define redfish URI APIs for flask
+ 
+     # GET /redfish
+     @app.route("/redfish", methods=['GET'])
+-    @app.route("/redfish/", methods=['GET'])
++    #@app.route("/redfish/", methods=['GET'])
+     def rf_versions():
+         return versions.get_resource()
+ 
+     # GET /rest/v1
+     @app.route("/redfish/v1", methods=['GET'])
+-    @app.route("/redfish/v1/", methods=['GET'])
++    #@app.route("/redfish/v1/", methods=['GET'])
+     def rf_service_root():
+         return root.get_resource()
+ 
+     @app.route("/redfish/v1/<path:rf_path>", methods=['GET'])
+-    @app.route("/redfish/v1/<path:rf_path>/", methods=['GET'])
++    #@app.route("/redfish/v1/<path:rf_path>/", methods=['GET'])
+     @auth.rfAuthRequired
++    @conditional
+     def rf_subsystems(rf_path):
+         return resolve_path(root, rf_path)
+ 
+     # this is a special test API -- an authenticated service root
+     @app.route("/redfish/v1/A", methods=['GET'])
+@@ -65,148 +76,202 @@ def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000):
+     def rf_service_root2():
+         print("root2")
+         return root.get_resource()
+ 
+     @app.route("/redfish/v1/Systems/<path:sys_path>", methods=['PATCH'])
+-    @app.route("/redfish/v1/Systems/<path:sys_path>/", methods=['PATCH'])
++    #@app.route("/redfish/v1/Systems/<path:sys_path>/", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_computer_systempatch(sys_path):
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         print("rdata:{}".format(rdata))
+-        obj = patch_path(root.systems, sys_path)
++        obj = patch_path(root.components['Systems'], sys_path)
+         rc, status_code, err_string, resp = obj.patch_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
++        else:
++            return err_string, status_code
++        
++    @app.route("/redfish/v1/Systems/<string:system_id>/BootOptions/<string:bootOptIdx>", methods=['GET'])
++    @auth.rfAuthRequired
++    def rf_computer_bootoptions_get(system_id, bootOptIdx):
++        return root.components['Systems'].get_element(system_id).components['BootOptions'].get_bootOpt(bootOptIdx)
++    
++    @app.route("/redfish/v1/Systems/<string:system_id>/BootOptions/<string:bootOptIdx>", methods=['DELETE'])
++    @auth.rfAuthRequired
++    def rf_computer_bootoptions_del(system_id, bootOptIdx):
++        print("in rf_computer_bootoptions_del")
++        rc, status_code, err_string, resp =  root.components['Systems'].get_element(system_id).components['BootOptions'].delete_bootOpt(bootOptIdx)
++        if rc == 0:
++            return resp, status_code
++        else:
++            return err_string, status_code
++        
++    @app.route("/redfish/v1/Systems/<string:system_id>/BootOptions/<string:bootOptIdx>", methods=['PATCH'])
++    @auth.rfAuthRequired
++    def rf_computer_bootoption_patch(system_id, bootOptIdx):
++        print ("in POST boot options")
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
++        print("rdata:{}".format(rdata))
++        rc, status_code, err_string, resp = root.components['Systems'].get_element(system_id).components['BootOptions'].patch_bootOpt(bootOptIdx, rdata)
++        if rc == 0:
++            return resp, status_code
++        else:
++            return err_string, status_code
++        
++    @app.route("/redfish/v1/Systems/<string:system_id>/BootOptions", methods=['POST'])
++    @auth.rfAuthRequired
++    def rf_computer_bootoptions_post(system_id):
++        print ("in POST boot options")
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
++        print("rdata:{}".format(rdata))
++        rc, status_code, err_string, resp = root.components['Systems'].get_element(system_id).components['BootOptions'].post_resource(rdata)
++        if rc == 0:
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     @app.route("/redfish/v1/Systems/<string:system_id>/Actions/ComputerSystem.Reset", methods=['POST'])
+-    @app.route("/redfish/v1/Systems/<string:system_id>/Actions/ComputerSystem.Reset/", methods=['POST'])
++    #@app.route("/redfish/v1/Systems/<string:system_id>/Actions/ComputerSystem.Reset/", methods=['POST'])
+     @auth.rfAuthRequired
+     def rf_computer_systemreset(system_id):
+         # print("in reset")
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.components['Systems'].get_element(system_id).reset_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+-    @app.route("/redfish/v1/Systems/<string:system_id>/bios/Actions/Bios.ResetBios", methods=['POST'])
+-    @app.route("/redfish/v1/Systems/<string:system_id>/bios/Actions/Bios.ResetBios/", methods=['POST'])
++    @app.route("/redfish/v1/Systems/<string:system_id>/Bios/Actions/Bios.ResetBios", methods=['POST'])
++    #@app.route("/redfish/v1/Systems/<string:system_id>/Bios/Actions/Bios.ResetBios/", methods=['POST'])
+     @auth.rfAuthRequired
+     def rf_computer_biosreset(system_id):
+         # print("in reset")
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         system = root.systems.get_element(system_id)
+-        bios = system.get_component("bios")
++        bios = system.get_component("Bios")
+         rc, status_code, err_string, resp = bios.reset_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+-    @app.route("/redfish/v1/Systems/<string:system_id>/bios/Actions/Bios.ChangePassword", methods=['PATCH'])
+-    @app.route("/redfish/v1/Systems/<string:system_id>/bios/Actions/Bios.ChangePassword/", methods=['PATCH'])
++    @app.route("/redfish/v1/Systems/<string:system_id>/Bios/Actions/Bios.ChangePassword", methods=['PATCH'])
++    #@app.route("/redfish/v1/Systems/<string:system_id>/Bios/Actions/Bios.ChangePassword/", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_computer_change_pswd(system_id):
+         # print("in reset")
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         system = root.systems.get_element(system_id)
+-        bios = system.get_component("bios")
++        bios = system.get_component("Bios")
+         rc, status_code, err_string, resp = bios.change_password(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     @app.route("/redfish/v1/Chassis/<string:chassis_id>/Actions/Chassis.Reset", methods=['POST'])
+-    @app.route("/redfish/v1/Chassis/<string:chassis_id>/Actions/Chassis.Reset/", methods=['POST'])
++    #@app.route("/redfish/v1/Chassis/<string:chassis_id>/Actions/Chassis.Reset/", methods=['POST'])
+     @auth.rfAuthRequired
+     def rf_computer_chassisreset(chassis_id):
+         # print("in reset")
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.chassis.get_element(chassis_id).reset_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     @app.route("/redfish/v1/Chassis/<string:chassis_id>/Power", methods=['PATCH'])
+-    @app.route("/redfish/v1/Chassis/<string:chassis_id>/Power/", methods=['PATCH'])
++    #@app.route("/redfish/v1/Chassis/<string:chassis_id>/Power/", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_chassis_powerpatch(chassis_id):
+         # rawdata=request.data
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("RRrdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.chassis.get_element(chassis_id).power.patch_resource(rdata)
++        if rc == 0:
++            return resp, status_code
++        else:
++            return err_string, status_code
++    
++    @app.route("/redfish/v1/Registries/<path:sys_path>", methods=['PATCH'])
++    @auth.rfAuthRequired
++    def rf_registries_patch(sys_path):
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
++        print("rdata:{}".format(rdata))
++        obj = patch_path(root.components['Registries'], sys_path)
++        rc, status_code, err_string, resp = obj.patch_resource(rdata)
+         if rc == 0:
+             return "", status_code
+         else:
+             return err_string, status_code
+ 
+     @app.route("/redfish/v1/Managers/<string:manager_id>", methods=['PATCH'])
+-    @app.route("/redfish/v1/Managers/<string:manager_id>/", methods=['PATCH'])
++    #@app.route("/redfish/v1/Managers/<string:manager_id>/", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_patch_manager_entity(manager_id):
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("RRrdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.managers.get_element(manager_id).patch_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     # rest/v1/Managers/1
+     @app.route("/redfish/v1/Managers/<string:manager_id>/Actions/Manager.Reset", methods=['POST'])
+-    @app.route("/redfish/v1/Managers/<string:manager_id>/Actions/Manager.Reset/", methods=['POST'])
++    #@app.route("/redfish/v1/Managers/<string:manager_id>/Actions/Manager.Reset/", methods=['POST'])
+     @auth.rfAuthRequired
+     def rf_reset_manager(manager_id):
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.managers.get_element(manager_id).reset_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     @app.route("/redfish/v1/Managers/<string:manager_id>/EthernetInterfaces/<string:eth_id>", methods=['PATCH'])
+-    @app.route("/redfish/v1/Managers/<string:manager_id>/EthernetInterfaces/<string:eth_id>/", methods=['PATCH'])
++    #@app.route("/redfish/v1/Managers/<string:manager_id>/EthernetInterfaces/<string:eth_id>/", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_patch_manager_nic_entity(manager_id, eth_id):
+         resp = root.managers.get_element(manager_id).ethernetColl.get_interface(eth_id).get_resource()
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("RRrdata:{}".format(rdata))
+         ethernet_coll = root.managers.get_element(manager_id).ethernetColl
+         rc, status_code, err_string, resp = ethernet_coll.get_interface(eth_id).patch_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
++        
++    @app.route("/redfish/v1/SessionService", methods=['GET'])
++    def rf_get_session_service():
++        return root.components['SessionService'].get_resource()
+ 
+     @app.route("/redfish/v1/SessionService", methods=['PATCH'])
+-    @app.route("/redfish/v1/SessionService/", methods=['PATCH'])
+-    @auth.rfAuthRequired
++    #@app.route("/redfish/v1/SessionService/", methods=['PATCH'])
+     def rf_patch_session_service():
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("RRrdata:{}".format(rdata))
+         rc, status_code, err_string, resp = root.sessionService.patch_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+ 
+     # TODO: call root.sessionService.sessions.sessionLogin(usr,pwd), return resp, status_code, hdr
+     # login API,  user catfish, password=hunter, authToken=123456CATFISHauthcode
+     @app.route("/redfish/v1/SessionService/Sessions", methods=['POST'])
+     def rf_login():
+         print("login")
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         print("rdata:{}".format(rdata))
+         if rdata["UserName"] == "root" and rdata["Password"] == "password123456":
+             x = {"Id": "SESSION123456"}
+             resp = json.dumps(x)
+             print("resp:{}".format(resp))
+@@ -220,21 +285,21 @@ def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000):
+     # logout API
+     @app.route("/redfish/v1/SessionService/Sessions/<string:session_id>", methods=['DELETE'])
+     @auth.rfAuthRequired
+     def rf_session_logout(session_id):
+         print("session logout %s" % session_id)
+-        # rdata=request.get_json(cache=True)
++        # rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         # print("rdata:{}".format(rdata))
+         return "", 204
+ 
+     @app.route("/redfish/v1/AccountService", methods=['PATCH'])
+     @auth.rfAuthRequired
+     def rf_patch_account_service():
+-        rdata = request.get_json(cache=True)
++        rdata = json.loads(request.data,object_pairs_hook=OrderedDict)
+         rc, status_code, err_string, resp = root.accountService.patch_resource(rdata)
+         if rc == 0:
+-            return "", status_code
++            return resp, status_code
+         else:
+             return err_string, status_code
+         
+     def resolve_path(service, path):
+         parts = path.split('/')
+@@ -280,16 +345,18 @@ def rfApi_SimpleServer(root, versions, host="127.0.0.1", port=5000):
+         resp=xxx.getObject()
+         return(resp)
+     '''
+ 
+     # END file redfishURIs
+-
+     # start Flask REST engine running
+-    app.run(host=host, port=port)
+ 
+-    # never returns
++    if key != "" and cert != "":       
++        app.run(host=host, port=port, ssl_context=(cert, key))
++    else:
++        app.run(host=host, port=port)
+ 
++    # never returns
+ 
+ '''
+ reference source links:
+ https://gist.github.com/lrei/2408383
+ http://docs.python-requests.org/en/v0.10.6/api/
+diff --git a/v1sim/registry.py b/v1sim/registry.py
+new file mode 100644
+index 0000000..d5220ca
+--- /dev/null
++++ b/v1sim/registry.py
+@@ -0,0 +1,14 @@
++#
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
++
++from .resource import RfResource, RfCollection
++
++class RfRegistryCollection(RfCollection):
++    def element_type(self):
++        return RfRegistry
++
++#subclass Bios
++class RfRegistry(RfResource):
++    pass
+diff --git a/v1sim/resource.py b/v1sim/resource.py
+index 48e8b3d..df170ce 100644
+--- a/v1sim/resource.py
++++ b/v1sim/resource.py
+@@ -1,14 +1,22 @@
++#
++# Copyright Notice:
++#
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
+ # Copyright Notice:
+ # Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+ # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/Redfish-Profile-Simulator/LICENSE.md
++#
+ 
+ import json
+ import os
+ 
+ import flask
+-
++from collections import OrderedDict
++import hashlib
+ 
+ class RfResource:
+     def __init__(self, base_path, rel_path, parent=None):
+         self.parent = parent
+         self.components = {}
+@@ -17,11 +25,11 @@ class RfResource:
+         indx_file_path = os.path.join(path, "index.json")
+         print("*****Loading Mockup json file:{}".format(indx_file_path))
+         if os.path.exists(indx_file_path):
+             res_file = open(indx_file_path, "r")
+             res_rawdata = res_file.read()
+-            self.res_data = json.loads(res_rawdata)
++            self.res_data = json.loads(res_rawdata,object_pairs_hook=OrderedDict)
+             self.create_sub_objects(base_path, rel_path)
+             self.final_init_processing(base_path, rel_path)
+         else:
+             self.res_data = {}
+ 
+@@ -30,11 +38,19 @@ class RfResource:
+ 
+     def final_init_processing(self, base_path, rel_path):
+         pass
+ 
+     def get_resource(self):
+-        return flask.jsonify(self.res_data)
++        self.response=json.dumps(self.res_data,indent=4)
++        try:
++            # SHA1 should generate well-behaved etags
++            response = flask.make_response(self.response)
++            etag = hashlib.sha1(self.response.encode('utf-8')).hexdigest()
++            response.set_etag(etag)
++            return response
++        except KeyError:
++            flask.abort(404)
+ 
+     def get_attribute(self, attribute):
+         return flask.jsonify(self.res_data[attribute])
+ 
+     def get_component(self, component):
+@@ -47,11 +63,19 @@ class RfResource:
+         for key in patch_data.keys():
+             if key in self.res_data:
+                 self.res_data[key] = patch_data[key]
+             else:
+                 raise Exception("attribute %s not found" % key)
++        
++        resp = flask.Response(json.dumps(self.res_data,indent=4))
++        return 0, 200, None, resp
+ 
++    def post_resource(self, post_data):
++        pass
++
++    def delete_resource(self):
++        pass
+ 
+ class RfResourceRaw:
+     def __init__(self, base_path, rel_path, parent=None):
+         self.parent = parent
+         path = os.path.join(base_path, rel_path)
+diff --git a/v1sim/systems.py b/v1sim/systems.py
+index 22264e0..c6dcda4 100644
+--- a/v1sim/systems.py
++++ b/v1sim/systems.py
+@@ -1,16 +1,25 @@
++#
++# Copyright Notice:
++#
++# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
++# SPDX-License-Identifier: BSD-2-Clause-Patent
++#
+ # Copyright Notice:
+ # Copyright 2016 Distributed Management Task Force, Inc. All rights reserved.
+ # License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/Redfish-Profile-Simulator/LICENSE.md
++#
+ 
+ import os
+ 
+ from .common_services import RfLogServiceCollection
+-from .network import RfEthernetCollection, RfNetworkAdapterCollection
++from .network import RfEthernetCollection, RfNetworkInterfaceCollection
+ from .resource import RfResource, RfCollection
+ from .storage import RfSimpleStorageCollection, RfSmartStorage
+-
++import flask
++import json
++from collections import OrderedDict
+ 
+ class RfSystemsCollection(RfCollection):
+     def element_type(self):
+         return RfSystemObj
+ 
+@@ -18,11 +27,11 @@ class RfSystemsCollection(RfCollection):
+ class RfSystemObj(RfResource):
+     def create_sub_objects(self, base_path, rel_path):
+         resource_path = os.path.join(base_path, rel_path)
+         contents = os.listdir(resource_path)
+         for item in contents:
+-            if item == "bios":
++            if item == "Bios":
+                 self.components[item] = RfBios(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "EthernetInterfaces":
+                 self.components[item] = RfEthernetCollection(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "LogServices":
+                 self.components[item] = RfLogServiceCollection(base_path, os.path.join(rel_path, item), parent=self)
+@@ -34,38 +43,42 @@ class RfSystemObj(RfResource):
+                 self.components[item] = RfSimpleStorageCollection(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "SmartStorage":
+                 self.components[item] = RfSmartStorage(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "SecureBoot":
+                 self.components[item] = RfSecureBoot(base_path, os.path.join(rel_path, item), parent=self)
+-            elif item == "NetworkAdapters":
+-                self.components[item] = RfNetworkAdapterCollection(base_path, os.path.join(rel_path, item), parent=self)
+-            elif item == "PCIDevices":
+-                self.components[item] = RfPCIDeviceCollection(base_path, os.path.join(rel_path, item), parent=self)
++            elif item == "NetworkInterfaces":
++                self.components[item] = RfNetworkInterfaceCollection(base_path, os.path.join(rel_path, item), parent=self)
++            elif item == "PCIeDevices":
++                self.components[item] = RfPCIeDeviceCollection(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "PCISlots":
+                 self.components[item] = RfPCISlotCollection(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "FirmwareInventory":
+                 self.components[item] = RfSystemFirmwareInventory(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "USBDevices":
+                 self.components[item] = RfUSBDeviceCollection(base_path, os.path.join(rel_path, item), parent=self)
+             elif item == "USBPorts":
+                 self.components[item] = RfUSBPortCollection(base_path, os.path.join(rel_path, item), parent=self)
++            elif item == "BootOptions":
++                self.components[item] = RfBootOptionCollection(base_path, os.path.join(rel_path, item), parent=self)
+ 
+     def patch_resource(self, patch_data):
+         # first verify client didn't send us a property we cant patch
+         for key in patch_data.keys():
+-            if key != "AssetTag" and key != "IndicatorLED" and key != "Boot":
++            if key != "AssetTag" and key != "IndicatorLED" and key != "Boot" and key != "BiosVersion":
+                 return 4, 400, "Invalid Patch Property Sent", ""
+             elif key == "Boot":
+                 for prop2 in patch_data["Boot"].keys():
+-                    if prop2 != "BootSourceOverrideEnabled" and prop2 != "BootSourceOverrideTarget":
++                    if prop2 != "BootSourceOverrideEnabled" and prop2 != "BootSourceOverrideTarget" and prop2 != "BootNext" and prop2 != "BootOrder":
+                         return 4, 400, "Invalid Patch Property Sent", ""
+         # now patch the valid properties sent
+         if "AssetTag" in patch_data:
+             print("assetTag:{}".format(patch_data["AssetTag"]))
+             self.res_data['AssetTag'] = patch_data['AssetTag']
+         if "IndicatorLED" in patch_data:
+             self.res_data['IndicatorLED'] = patch_data['IndicatorLED']
++        if "BiosVersion" in patch_data:
++            self.res_data['BiosVersion'] = patch_data['BiosVersion']
+         if "Boot" in patch_data:
+             boot_data = patch_data["Boot"]
+             if "BootSourceOverrideEnabled" in boot_data:
+                 value = boot_data["BootSourceOverrideEnabled"]
+                 valid_values = ["Once", "Disabled", "Continuous"]
+@@ -78,11 +91,17 @@ class RfSystemObj(RfResource):
+                 valid_values = self.res_data['Boot']['BootSourceOverrideTarget@Redfish.AllowableValues']
+                 if value in valid_values:
+                     self.res_data['Boot']['BootSourceOverrideTarget'] = value
+                 else:
+                     return 4, 400, "Invalid_Value_Specified: BootSourceOverrideTarget", ""
+-        return 0, 204, None, None
++            if "BootNext" in boot_data:
++                self.res_data['Boot']['BootNext'] = boot_data['BootNext']
++            if "BootOrder" in boot_data:
++                self.res_data['Boot']['BootOrder'] = boot_data['BootOrder']
++
++        resp = flask.Response(json.dumps(self.res_data,indent=4))
++        return 0, 200, None, resp
+ 
+     def reset_resource(self, reset_data):
+         if "ResetType" in reset_data:
+             # print("RESETDATA: {}".format(resetData))
+             value = reset_data['ResetType']
+@@ -143,31 +162,35 @@ class RfBios(RfResource):
+ 
+ class RfBiosSettings(RfResource):
+     def patch_resource(self, patch_data):
+         if "Attributes" not in patch_data:
+             return 4, 400, "Invalid Payload. No Attributes found", ""
++        self.res_data["Attributes"] = OrderedDict()
+         for key in patch_data["Attributes"].keys():
++            print("Check key in patch_data:{}".format(key))
+             # verify client didn't send us a property we cant patch
+-            if key not in self.res_data["Attributes"]:
++            if key not in self.parent.res_data["Attributes"]:
++                print("Invalid Patch Property Sent")
+                 return 4, 400, "Invalid Patch Property Sent", ""
+             else:
+-                self.parent.res_data["Attributes"][key] = patch_data["Attributes"][key]
+-        return 0, 204, None, None
++                self.res_data["Attributes"][key] = patch_data["Attributes"][key]
++        resp = flask.Response(json.dumps(self.res_data,indent=4))
++        return 0, 200, None, resp
+ 
+ 
+-class RfPCIDeviceCollection(RfCollection):
++class RfPCIeDeviceCollection(RfCollection):
+     def element_type(self):
+-        return RfPCIDevice
++        return RfPCIeDevice
+ 
+ 
+-class RfPCIDevice(RfResource):
++class RfPCIeDevice(RfResource):
+     pass
+ 
+ 
+ class RfPCISlotCollection(RfCollection):
+     def element_type(self):
+-        return RfPCIDevice
++        return RfPCISlot
+ 
+ 
+ class RfPCISlot(RfResource):
+     pass
+ 
+@@ -194,5 +217,54 @@ class RfUSBPortCollection(RfCollection):
+         return RfUSBPort
+ 
+ 
+ class RfUSBPort(RfResource):
+     pass
++
++class RfBootOptionCollection(RfCollection):
++    def final_init_processing(self, base_path, rel_path):
++        self.maxIdx = 0
++        self.bootOptions = {}
++
++    def element_type(self):
++        return RfBootOption
++
++    def post_resource(self, post_data):       
++        print("Members@odata.count:{}".format(self.res_data["Members@odata.count"]))
++        print("Members:{}".format(self.res_data["Members"]))
++        print("post_data:{}".format(post_data))
++
++        self.res_data["Members@odata.count"] = self.res_data["Members@odata.count"] + 1
++        self.maxIdx = self.maxIdx + 1
++        newBootOptIdx = self.maxIdx
++        newBootOptUrl = self.res_data["@odata.id"] + "/" + str(newBootOptIdx)
++        self.res_data["Members"].append({"@odata.id":newBootOptUrl})
++
++        post_data["@odata.id"] = newBootOptUrl
++        self.bootOptions[str(newBootOptIdx)] = post_data
++
++        resp = flask.Response(json.dumps(post_data,indent=4))
++        resp.headers["Location"] = newBootOptUrl
++        return 0, 200, None, resp
++
++    def patch_bootOpt(self, Idx, patch_data):
++        self.bootOptions[str(Idx)] = {**self.bootOptions[str(Idx)], **patch_data}
++        resp = flask.Response(json.dumps(self.bootOptions[str(Idx)],indent=4))
++        return 0, 200, None, resp
++
++    def get_bootOpt(self, Idx):
++        return json.dumps(self.bootOptions[Idx],indent=4)
++
++    def delete_bootOpt(self, Idx):
++        print("in delete_bootOpt")
++
++        resp = flask.Response(json.dumps(self.bootOptions[Idx],indent=4)) 
++
++        self.bootOptions.pop(Idx)
++        self.res_data["Members@odata.count"] = self.res_data["Members@odata.count"] - 1
++
++        bootOptUrl = self.res_data["@odata.id"] + "/" + str(Idx)
++        self.res_data["Members"].remove({"@odata.id":bootOptUrl})
++        return 0, 200, None, resp
++
++class RfBootOption(RfResource):
++    pass
+\ No newline at end of file
+-- 
+2.16.2.windows.1
+

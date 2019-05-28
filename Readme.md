@@ -62,6 +62,8 @@ One of the design goals for UEFI Redfish solution is to provide a scalable imple
 
    * Nt32Pkg - 1) Enable UEFI Redfish feature in NT32 platform. 2) Fix TLS build error with CryptoPkg from edk2-stable201811 tag.
 
+   * Profile Simulator - 1) A guidance and a patch to enable UEFI support for Redfish Profile Simulator. 2) An user guide for how to configure UEFI Redfish through Postman (**RedfishTool\PostmanToConfigUefiRedfish UserGuide\UserGuide.md**).
+
 ## Delivery of FW authentication information to UEFI Redfish
 The platform using this Redfish solution need to have a platform driver to install Redfish Credential Protocol (see RedfishPkg/Include/Protocol/RedfishCredential.h) to allow UEFI firmware to get firmware-BMC authentication credential for use, instead of using the “RedfishFWCredentials” variable defined in DSP0270, in order to avoid storing the firmware-BMC authentication credential into any insecure storage.
 

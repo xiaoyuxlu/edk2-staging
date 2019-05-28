@@ -1,0 +1,31 @@
+=============================================================================
+                             Introduction
+=============================================================================
+Redfish Profile Simulator is a Python real simulator of the "simple monolithic
+server" feature profile. More information can be retrieved from:
+
+    https://github.com/DMTF/Redfish-Profile-Simulator
+
+This HOWTO document provides the steps to enable a simulator for UEFI support.
+
+=============================================================================
+                      HOW to Enable A Simulator for UEFI
+=============================================================================
+  1. The user can use the below command to clone Redfish Profile Simulator under
+  RedfishTool/Redfish-Profile-Simulator:
+
+  $ git clone https://github.com/DMTF/Redfish-Profile-Simulator.git
+
+  2. Enter into the downloaded simulator folder, and checkout to the version with
+  command:
+
+  $ git checkout -b UEFI_Simulator 5376a3815160176a7b7780026ebf557a64adcb1f
+  
+  3. The user needs to copy the file: Patch-Simulator-For-UEFI.patch to simulator
+  folder and patch it with command:
+  
+  $ git am Patch-Simulator-For-UEFI.patch
+  
+  4. Run the simulator with command:
+  
+  $ py -3 redfishProfileSimulator.py -H 0.0.0.0
