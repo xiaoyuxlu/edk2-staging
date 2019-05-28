@@ -54,8 +54,8 @@ TestGcdIo (
 /**
   The main() function for setting up and running the tests.
 
-  @retval CUE_SUCCESS on successful running
-  @retval Other CUnit error code on failure.
+  @retval EFI_SUCCESS on successful running.
+  @retval Other error code on failure.
 **/
 int main()
 {
