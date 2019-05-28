@@ -21,8 +21,8 @@
 
   DEFINE UNIT_TEST_XML_MODE = FALSE
 
-  # Valid option: HOST, CUNIT, CMOCKA
-  DEFINE UNIT_TEST_FRAMEWORK_MODE = CUNIT
+  # Valid option: HOST, CMOCKA
+  DEFINE UNIT_TEST_FRAMEWORK_MODE = HOST
 
 [PcdsFixedAtBuild]
 !if $(UNIT_TEST_XML_MODE)
@@ -89,11 +89,6 @@
   XmlTreeLib|XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
   UnitTestResultReportLib|UefiHostUnitTestPkg/Library/UnitTestResultReportLibJUnitFormatHost/UnitTestResultReportLibJUnitFormatHost.inf
 !endif
-!endif
-
-!if $(UNIT_TEST_FRAMEWORK_MODE) == CUNIT
-  UnitTestLib|UefiHostUnitTestPkg/Library/UnitTestLibCUnit/UnitTestLibCUnit.inf
-  UnitTestAssertLib|UefiHostUnitTestPkg/Library/UnitTestAssertLibCUnit/UnitTestAssertLibCUnit.inf
 !endif
 
 !if $(UNIT_TEST_FRAMEWORK_MODE) == CMOCKA
