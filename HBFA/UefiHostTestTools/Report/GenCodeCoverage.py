@@ -50,6 +50,19 @@ def CreateGcovTool(path):
     with open(path, 'w') as fd:
         fd.write('#!/bin/bash\nexec llvm-cov gcov "$@"')
     os.system("chmod +x {}".format(path))
+    
+def CheckIsPeach(path):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if file == 'status.txt':
+                statusPath=os.path.join(root,file)
+                with open(statusPath) as f:
+                    contents=f.read()
+                    if 'Peach Fuzzing Run' in contents:
+                        return True
+            elif file.endswith('Initial.Action.bin'):
+                return True
+    return False
 
 def Run_All_Seeds(TestModuleBinPath, SeedPath, TestIniPath):
     TestModuleBinFolder = os.path.dirname(TestModuleBinPath)
@@ -202,12 +215,12 @@ def main():
         print("Please check the input report path.")
         os._exit(0)
 
-
-    if SysType == "Linux" and "CLANG8" not in ModuleBinPath:
+    IsPeach = CheckIsPeach(OutputSeedPath)
+    if SysType == "Linux" and "CLANG8" not in ModuleBinPath and not IsPeach:
         # delete .gcda files before collect code coverage
         delete_gcda_file(ModuleBinPath)
 
-    if "CLANG8" not in ModuleBinPath:
+    if "CLANG8" not in ModuleBinPath and not IsPeach:
         # Run binary with all seeds
         Run_All_Seeds(ModuleBinPath, OutputSeedPath, TestIniPath)
 
