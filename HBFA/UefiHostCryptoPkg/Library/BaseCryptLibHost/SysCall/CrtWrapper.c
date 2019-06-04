@@ -88,3 +88,5 @@ gid_t getegid (void)
 {
   return 0;
 }
+
+int errno = 0;

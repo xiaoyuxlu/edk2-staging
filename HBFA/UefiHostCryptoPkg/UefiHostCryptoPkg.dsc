@@ -15,7 +15,7 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
-  DEFINE OPENSSL_FLAGS           = -DL_ENDIAN -DOPENSSL_SMALL_FOOTPRINT -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -DNO_SYSLOG
+  DEFINE OPENSSL_FLAGS           = -DL_ENDIAN -DOPENSSL_SMALL_FOOTPRINT -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 
 [LibraryClasses]
   BaseLib|UefiHostTestPkg/Library/BaseLibHost/BaseLibHost.inf
@@ -54,17 +54,20 @@
     # Disables the following Visual Studio compiler warnings brought by openssl source,
     # so we do not break the build with /WX option:
     #   C4090: 'function' : different 'const' qualifiers
+    #   C4132: 'object' : const object should be initialized (tls13_enc.c)
     #   C4244: conversion from type1 to type2, possible loss of data
     #   C4245: conversion from type1 to type2, signed/unsigned mismatch
     #   C4267: conversion from size_t to type, possible loss of data
     #   C4306: 'identifier' : conversion from 'type1' to 'type2' of greater size
+    #   C4310: cast truncates constant value
     #   C4389: 'operator' : signed/unsigned mismatch (xxxx)
+    #   C4700: uninitialized local variable 'name' used. (conf_sap.c(71))
     #   C4702: unreachable code
     #   C4706: assignment within conditional expression
     #   C4819: The file contains a character that cannot be represented in the current code page
     #
-    MSFT:*_*_IA32_CC_FLAGS   = -U_WIN32 -U_WIN64 -U_MSC_VER $(OPENSSL_FLAGS) /wd4090 /wd4244 /wd4245 /wd4267 /wd4389 /wd4702 /wd4706 /wd4819
-    MSFT:*_*_X64_CC_FLAGS    = -U_WIN32 -U_WIN64 -U_MSC_VER $(OPENSSL_FLAGS) /wd4090 /wd4244 /wd4245 /wd4267 /wd4306 /wd4389 /wd4702 /wd4706 /wd4819
+    MSFT:*_*_IA32_CC_FLAGS   = -U_WIN32 -U_WIN64 -U_MSC_VER $(OPENSSL_FLAGS) /wd4090 /wd4132 /wd4244 /wd4245 /wd4267 /wd4310 /wd4389 /wd4700 /wd4702 /wd4706 /wd4819
+    MSFT:*_*_X64_CC_FLAGS    = -U_WIN32 -U_WIN64 -U_MSC_VER $(OPENSSL_FLAGS) /wd4090 /wd4132 /wd4244 /wd4245 /wd4267 /wd4306 /wd4310 /wd4700 /wd4389 /wd4702 /wd4706 /wd4819
 
     INTEL:*_*_IA32_CC_FLAGS  = -U_WIN32 -U_WIN64 -U_MSC_VER -U__ICC $(OPENSSL_FLAGS) /w
     INTEL:*_*_X64_CC_FLAGS   = -U_WIN32 -U_WIN64 -U_MSC_VER -U__ICC $(OPENSSL_FLAGS) /w
@@ -74,11 +77,14 @@
     #   -Werror=maybe-uninitialized: there exist some other paths for which the variable is not initialized.
     #   -Werror=format: Check calls to printf and scanf, etc., to make sure that the arguments supplied have
     #                   types appropriate to the format string specified.
+    #   -Werror=unused-but-set-variable: Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
     #
-    GCC:*_*_IA32_CC_FLAGS    = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized
-    GCC:*_*_X64_CC_FLAGS     = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=format -Wno-format -DNO_MSABI_VA_FUNCS
-    GCC:*_*_ARM_CC_FLAGS     = $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized
-    GCC:*_*_AARCH64_CC_FLAGS = $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-format
+    GCC:*_*_IA32_CC_FLAGS    = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=unused-but-set-variable
+    GCC:*_*_X64_CC_FLAGS     = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=format -Wno-format -Wno-error=unused-but-set-variable -DNO_MSABI_VA_FUNCS
+    GCC:*_*_ARM_CC_FLAGS     = $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=unused-but-set-variable
+    GCC:*_*_AARCH64_CC_FLAGS = $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-format -Wno-error=unused-but-set-variable
+    GCC:*_CLANG35_*_CC_FLAGS = -std=c99 -Wno-error=uninitialized
+    GCC:*_CLANG38_*_CC_FLAGS = -std=c99 -Wno-error=uninitialized
 
     # suppress the following warnings in openssl so we don't break the build with warnings-as-errors:
     # 1295: Deprecated declaration <entity> - give arg types
@@ -100,8 +106,8 @@
     # 3017: <entity> may be used before being set (NOTE: This was fixed in OpenSSL 1.1 HEAD with
     #       commit d9b8b89bec4480de3a10bdaf9425db371c19145b, and can be dropped then.)
     RVCT:*_*_ARM_CC_FLAGS     = $(OPENSSL_FLAGS) --library_interface=aeabi_clib99 --diag_suppress=1296,1295,550,1293,111,68,177,223,144,513,188,128,546,1,3017 -JCryptoPkg/Include
-    XCODE:*_*_IA32_CC_FLAGS   = -mmmx -msse -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -w
-    XCODE:*_*_X64_CC_FLAGS    = -mmmx -msse -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -w
+    XCODE:*_*_IA32_CC_FLAGS   = -mmmx -msse -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -w -std=c99 -Wno-error=uninitialized
+    XCODE:*_*_X64_CC_FLAGS    = -mmmx -msse -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -w -std=c99 -Wno-error=uninitialized
 
     #
     # AARCH64 uses strict alignment and avoids SIMD registers for code that may execute
