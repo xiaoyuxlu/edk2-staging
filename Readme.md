@@ -52,10 +52,8 @@ Computer platform firmware is a critical element in the root-of-trust. Firmware 
     Please refer to [`HBFA/UefiHostFuzzTestPkg/ReadMe-ErrorInjection.txt`](HBFA/UefiHostFuzzTestPkg/ReadMe-ErrorInjection.txt).
 
 4. Do unit test  
-    * How to run Cunit for UEFI code?  
-    Please refer to [`HBFA/UefiHostUnitTestPkg/ReadMe-CUnit.txt`](HBFA/UefiHostUnitTestPkg/ReadMe-CUnit.txt).  
     *  How to run cmocka for UEFI code?  
-    Please refer to [`HBFA/UefiHostUnitTestPkg/ReadMe-CUnit.txt`](HBFA/UefiHostUnitTestPkg/ReadMe-CUnit.txt).
+    Please refer to [`HBFA/UefiHostUnitTestPkg/ReadMe-cmocka.txt`](HBFA/UefiHostUnitTestPkg/ReadMe-cmocka.txt).
     * How to run HOST for UEFI code?  
     Example:  
     Build in Linux  
